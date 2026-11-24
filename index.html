@@ -137,6 +137,21 @@ nav button.on svg{stroke:var(--accent)}
 .lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.lrow:first-child{border-top:0}
 .lrow .d{width:10px;height:10px;border-radius:50%;flex:none;background:var(--faint)}.lrow .d.g{background:var(--good)}.lrow .d.r{background:var(--bad)}.lrow .d.a{background:var(--warn)}
 .lrow small{color:var(--mute);margin-left:auto;text-align:right;font-size:12px}
+.hr{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.hr>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-left:5px solid var(--good)}
+.hr>summary::-webkit-details-marker{display:none}
+.hr.r>summary{border-left-color:var(--bad)}.hr.a>summary{border-left-color:var(--warn)}
+.hr .tm{font:700 19px var(--display);min-width:56px}
+.hr .cs{display:flex;gap:10px;flex:1;justify-content:space-around}
+.hr .c{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--mute);gap:2px}
+.hr .c .d{width:16px;height:16px;border-radius:50%;background:var(--faint)}.hr .c .d.g{background:var(--good)}.hr .c .d.r{background:var(--bad)}.hr .c .d.a{background:var(--warn)}
+.hr .q{display:grid;grid-template-columns:repeat(4,10px);gap:2px}.hr .q i{height:22px;border-radius:2px;background:var(--bad)}.hr .q i.g{background:var(--good)}
+.hr .qs{border-top:1px solid var(--line);padding:6px 14px 10px}
+.qr{padding:8px 0;border-top:1px solid var(--line);font-size:13px}.qr:first-child{border-top:0}
+.qh{display:flex;align-items:center;gap:10px}.qh b{font:700 15px var(--display);min-width:48px}
+.qh .tag{font-size:11px;font-weight:700;border-radius:99px;padding:2px 9px;background:rgba(255,48,48,.18);color:var(--bad)}.qh .tag.g{background:rgba(51,214,134,.18);color:var(--good)}
+.qh .cn{margin-left:auto;color:var(--mute);font-size:12px}.qh .cn u{text-decoration:none;color:var(--bad);font-weight:700}
+.qw{color:var(--mute);font-size:12px;margin-top:3px}
 .g-row{margin-bottom:8px}.g-n{font-size:12px;color:var(--mute);display:flex;justify-content:space-between}.g-n b{color:var(--ink);font-weight:600}
 .g-bar{display:grid;grid-template-columns:repeat(96,1fr);height:14px;border-radius:3px;overflow:hidden;background:var(--raise)}
 .g-bar i{display:block}.g-bar i.on{background:var(--good)}.g-bar i:nth-child(4n+1){box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
@@ -178,11 +193,9 @@ nav button.on svg{stroke:var(--accent)}
 
 <section class="tab" id="t-live">
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
-  <div class="card"><h2>Next 24 hours (green = on the run)</h2><div class="strip" id="lstrip"></div><div class="strip-l" id="lstripl"></div></div>
-  <div class="card"><h2>Crewing now</h2><div id="lrows"></div></div>
+  <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. A 15 minute slot is on the run only if every row is green for the whole slot.</p><div id="lhours"></div></div>
   <div class="card"><h2>On now</h2><div id="lon"></div></div>
   <div class="card"><h2>Off now: next on</h2><div id="loff"></div></div>
-  <div class="card"><h2>Who is on, next 24 hours (15 min sections)</h2><div id="lgantt"></div><div class="strip-l" id="lganttl"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
@@ -512,19 +525,24 @@ function renderLive(){
   el.className='live-hero '+(stale?'stale':(ok?'go':'stop'));
   el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(ok?'All crewing rows green this hour':'Not green: '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
   if(h<0||h>47)return;
-  const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
-  $('lstrip').style.gridTemplateColumns='repeat('+hs.length+',1fr)';
-  $('lstrip').innerHTML=hs.map((i,k)=>{const c=allGreen(snap,i)?'g':(snap.rows.some(r=>r.c[i]==='r')?'r':'a');return '<i class="'+c+(k===0?' now':'')+'" title="'+fmT(snap.base+i*60)+'"></i>'}).join('');
-  $('lstripl').innerHTML=[0,6,12,18,23].filter(k=>k<hs.length).map(k=>'<span>'+fmT(snap.base+hs[k]*60)+'</span>').join('');
-  $('lrows').innerHTML=snap.rows.map(r=>'<div class="lrow"><span class="d '+(r.c[h]==='x'?'':r.c[h])+'"></span>'+r.name+'<small>'+(r.n[h]||'0')+' of '+r.min+' needed</small></div>').join('');
   const P=snap.people.map(p=>{const cur=p.iv.find(v=>v[0]<=rel&&rel<v[1]);const nxt=p.iv.find(v=>v[0]>rel);return Object.assign({},p,{cur,nxt})});
   const absOf=m=>snap.base+m, sub=p=>p.role+(p.q?' · '+p.q:'');
   const on=P.filter(p=>p.cur).sort((a,b)=>a.cur[1]-b.cur[1]), off=P.filter(p=>!p.cur).sort((a,b)=>(a.nxt?a.nxt[0]:1e9)-(b.nxt?b.nxt[0]:1e9));
   $('lon').innerHTML=on.length?on.map(p=>{const next=p.iv.find(v=>v[0]>p.cur[1]);return '<div class="lrow"><span class="d g"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):'')+'</small></div>'}).join(''):'<p class="note">Nobody on</p>';
   $('loff').innerHTML=off.map(p=>'<div class="lrow"><span class="d"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>'+(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days')+'</small></div>').join('');
-  const t0=Math.floor(rel/15)*15, order=on.concat(off.filter(p=>p.nxt&&p.nxt[0]<t0+1440),off.filter(p=>!(p.nxt&&p.nxt[0]<t0+1440)));
-  $('lgantt').innerHTML=order.map(p=>{let cells='';for(let k=0;k<96;k++){const t=t0+k*15;cells+='<i'+(p.iv.some(v=>v[0]<=t&&t<v[1])?' class="on"':'')+'></i>'}return '<div class="g-row"><div class="g-n"><b>'+p.name+'</b><span>'+p.role+'</span></div><div class="g-bar">'+cells+'</div></div>'}).join('');
-  $('lganttl').innerHTML=[0,24,48,72,95].map(k=>'<span>'+fmT(snap.base+t0+k*15)+'</span>').join('');
+  const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
+  const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');
+  const need={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
+  const slot=t=>{const w=snap.people.filter(p=>p.iv.some(v=>v[0]<=t&&t+15<=v[1]));const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};return{w,c,ok:key.every(k=>c[k]>=need[k])}};
+  const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
+  $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
+  $('lhours').innerHTML=hs.map((i,k)=>{
+    const cl=key.map(n=>R[n].c[i]),cls=cl.includes('r')?'r':(cl.includes('a')?'a':'g');
+    const qs=[0,1,2,3].map(j=>{const t=i*60+j*15;return Object.assign({t},slot(t))});
+    const lab=k===0?'Now':fmT(snap.base+i*60);
+    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(R[n].n[i]||'0')+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.ok?'g':'')+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
+      const miss=key.filter(n=>x.c[n]<need[n]).map(n=>'<u>'+x.c[n]+'/'+need[n]+' '+n+'</u>');
+      return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.ok?'g':'')+'">'+(x.ok?'ON THE RUN':'OFF THE RUN')+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
 }
 $('lrefresh').onclick=fetchLive;
 
