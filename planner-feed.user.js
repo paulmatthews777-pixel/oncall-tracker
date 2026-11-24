@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.0
+// @version      1.1
 // @description  Reads the Winterton station planner in FireWatch and pushes a snapshot to the tracker app's Live tab
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -46,11 +46,15 @@ const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map
 function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path,headers:{'Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap){
-  const g=await gh('GET','/contents/'+FILE+'?ref='+BRANCH);
-  const sha=g.status===200?JSON.parse(g.responseText).sha:undefined;
-  const r=await gh('PUT','/contents/'+FILE,{message:'planner '+new Date(snap.t).toISOString().slice(11,16),content:b64(JSON.stringify(snap)),branch:BRANCH,sha});
-  if(r.status>=300)throw new Error('push '+r.status);
-  lastPush=Date.now();
+  for(let i=0;i<3;i++){
+    const g=await gh('GET','/contents/'+FILE+'?ref='+BRANCH);
+    if(g.status!==200&&g.status!==404)throw new Error('get '+g.status+' '+(g.responseText||'').slice(0,60));
+    const sha=g.status===200?JSON.parse(g.responseText).sha:undefined;
+    const r=await gh('PUT','/contents/'+FILE,{message:'planner '+new Date(snap.t).toISOString().slice(11,16),content:b64(JSON.stringify(snap)),branch:BRANCH,sha});
+    if(r.status<300){lastPush=Date.now();return}
+    if(i===2||(r.status!==409&&r.status!==422))throw new Error('push '+r.status+' '+(r.responseText||'').slice(0,80));
+    await new Promise(x=>setTimeout(x,1500));
+  }
 }
 async function tick(){
   if(busy)return;busy=true;
