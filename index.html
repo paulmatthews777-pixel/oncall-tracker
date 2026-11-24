@@ -509,6 +509,8 @@ let snap=null, snapErr='';
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
 function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2)snap=x}catch(e){}}
 function setSnap(x){if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
+const CONTRACT_URL='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/contract.json';
+async function fetchContract(){try{const r=await fetch(CONTRACT_URL+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(!j||!j.t||!j.text)return;if(importedAt&&j.t<=importedAt)return;const p=parsePaste(j.text);if(!p.length)return;entries=p;source='firewatch';importedAt=j.t;save();render()}catch(e){}}
 async function fetchLive(){try{const r=await fetch(LIVE_URL+'?_='+Date.now(),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive()}
 function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
 function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
@@ -548,9 +550,9 @@ $('lrefresh').onclick=fetchLive;
 
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); loadSnap(); const gotP=fromPHash(); render(); renderLive(); if(gotP)show('live'); fetchLive(); setInterval(()=>{if(document.visibilityState==='visible')fetchLive()},60000);
+load(); fromHash(); loadSnap(); const gotP=fromPHash(); render(); renderLive(); if(gotP)show('live'); fetchLive(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract()}},60000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive()}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 </body>

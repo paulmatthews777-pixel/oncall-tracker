@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.4
-// @description  Reads the Winterton station planner in FireWatch and pushes a snapshot to the tracker app's Live tab
+// @version      1.5
+// @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
@@ -56,17 +56,70 @@ async function fwPlannerSnapshot(stationId){
   return {v:2,t:Date.now(),base,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
 }
 
+
+/* ---- Contract hours feed (same rules as the FireWatch contract tracker 1.6) ---- */
+const CF={pad:n=>String(n).padStart(2,'0')};
+const cMid=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const cAdd=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const cMon=d=>{const m=cMid(d);return cAdd(m,-((m.getDay()+6)%7))};
+const cIso=d=>d.getFullYear()+'-'+CF.pad(d.getMonth()+1)+'-'+CF.pad(d.getDate());
+const CBODY={"SelectedDisplayType":"Day","SelectedDate":null,"SelectedEndDate":null,"StationIDs":null,"StationID":null,"StationDesc":null,"Bookings":true,"Events":false,"Defects":false,"Services":false,"Works":false,"Exceptions":true,"Detachments":true,"Absences":true,"Training":true,"Temporary":false,"Sickness":true,"Qualifications":false,"Fleet":false,"Crewing":false,"Resource":false,"MaxLevels":false,"Holidays":true,"HolidayRequests":true,"QualExclusions":false,"Activities":true,"Drills":false,"ResourceRequests":false,"RoleReassignment":true,"ContractTypeID":null,"ContractTypeIDs":null,"WatchIDs":null,"WatchDesc":null,"ViewID":null,"TeamID":null,"CalendarView":"Week","Fuelling":false,"EmployeeID":null,"Reviews":true,"AbsenceRequests":true,"Rotas":true};
+function cRecords(grid){const j=grid.indexOf('"Records":');if(j<0)return[];const s=grid.indexOf('[',j);let depth=0,inStr=false,esc=false,k=s;for(;k<grid.length;k++){const c=grid[k];if(inStr){if(esc)esc=false;else if(c==='\\')esc=true;else if(c==='"')inStr=false;continue}if(c==='"')inStr=true;else if(c==='[')depth++;else if(c===']'){depth--;if(depth===0)break}}return JSON.parse(grid.slice(s,k+1))}
+async function cWeek(monday,tok){
+  const body=Object.assign({},CBODY,{SelectedDate:cIso(monday)+'T00:00:00.000Z'});
+  const r=await fetch('/FireWatchWebClient/Calendar/GetEmployeeCalendar',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','X-Requested-With':'XMLHttpRequest','__RequestVerificationToken':tok},body:JSON.stringify(body)});
+  if(r.status!==200)throw new Error('calendar '+r.status);
+  const arr=JSON.parse(await r.text()),grid=arr.find(a=>a.updateTargetId==='employeeCalendarGridContainer');
+  if(!grid)throw new Error('calendar grid missing');
+  const seen=new Set(),items=[];
+  cRecords(grid.html).forEach(rec=>Object.keys(rec).forEach(k=>{if(!/^\d\d:\d\d$/.test(k)||!rec[k])return;let o;try{o=JSON.parse(rec[k])}catch(e){return}
+    const add=p=>{if(!p||!p.itemDateTimeStart||!p.itemDateTimeEnd||!p.type)return;const id=p.type+'|'+p.itemDateTimeStart+'|'+p.itemDateTimeEnd+'|'+p.id;if(seen.has(id))return;seen.add(id);items.push({type:p.type,tip:p.tooltip||'',s:new Date(p.itemDateTimeStart),e:new Date(p.itemDateTimeEnd)})};
+    (o.plannerItem||[]).forEach(p=>{add(p);(p.appointments||[]).forEach(add)})}));
+  return items;
+}
+function cClass(it){const t=it.type+' '+it.tip;if(/detach/i.test(t))return'X';if(it.type==='Holiday')return'C';if(it.type==='Sickness'||it.type==='OtherAbsence')return'A';if(it.type==='RotaAssignment')return/Unavailable/i.test(t)?'X':'C';if(it.type==='DrillEmployeeActivity')return'C';if(it.type==='Activity'){if(/Unavailable/i.test(t))return'X';if(/Turn Out/i.test(t))return'C';if(/Available/i.test(t))return'C';return'X'}return'I'}
+function cMerge(iv){iv=iv.filter(x=>x[1]>x[0]).sort((a,b)=>a[0]-b[0]);const out=[];iv.forEach(x=>{const l=out[out.length-1];if(l&&x[0]<=l[1])l[1]=Math.max(l[1],x[1]);else out.push([x[0],x[1]])});return out}
+function cSub(a,b){const out=[];a.forEach(x=>{let cur=x[0];b.forEach(y=>{if(y[1]<=cur||y[0]>=x[1])return;if(y[0]>cur)out.push([cur,y[0]]);cur=Math.max(cur,y[1])});if(cur<x[1])out.push([cur,x[1]])});return out}
+function cClip(iv,f,t){return iv.map(x=>[Math.max(x[0],f),Math.min(x[1],t)]).filter(x=>x[1]>x[0])}
+function cBand(day,part){const wd=day.getDay();if(part==='day')return(wd>=1&&wd<=5)?'P1':'P4';if(part==='eve')return(wd===5||wd===6)?'P3':'U';return(wd===6||wd===0)?'P3':'U'}
+function cExport(items,from,to){
+  const C=[],X=[],A=[];items.forEach(it=>{const k=cClass(it),seg=[it.s.getTime(),it.e.getTime()];if(k==='I')return;(k==='C'?C:k==='A'?A:X).push(seg)});
+  const Cm=cMerge(C),Xm=cMerge(X),Am=cMerge(A);
+  const counted=cClip(cSub(cSub(Cm,Xm),Am),from,to),absence=cClip(cSub(Am,Xm),from,to);
+  const hm=t=>{const d=new Date(t);return CF.pad(d.getHours())+':'+CF.pad(d.getMinutes())};
+  const rows=[];
+  const walk=(iv,type,fb)=>iv.forEach(x=>{let d=cMid(new Date(x[0]));while(d.getTime()<x[1]){const d6=new Date(d.getFullYear(),d.getMonth(),d.getDate(),6),d18=new Date(d.getFullYear(),d.getMonth(),d.getDate(),18),next=cAdd(d,1);
+    [[d,d6,'early'],[d6,d18,'day'],[d18,next,'eve']].forEach(sg=>{const a=Math.max(x[0],sg[0].getTime()),b=Math.min(x[1],sg[1].getTime());if(b>a)rows.push([cIso(d),hm(a),hm(b),type,fb||cBand(d,sg[2])].join(','))});d=next}});
+  walk(counted,'avail');walk(absence,'absence','U');
+  return rows.join('\n');
+}
+async function contractText(){
+  const tok=(document.querySelector('input[name=__RequestVerificationToken]')||{}).value;
+  if(!tok)throw new Error('no token');
+  const now=new Date(),nextFirst=new Date(now.getFullYear(),now.getMonth()+1,1),after=new Date(now.getFullYear(),now.getMonth()+2,1);
+  const from=cMon(cAdd(nextFirst,-56)).getTime(),to=cAdd(cMon(cAdd(after,-1)),7).getTime();
+  let items=[];for(let m=new Date(from);m.getTime()<to;m=cAdd(m,7))items=items.concat(await cWeek(m,tok));
+  return cExport(items,from,to);
+}
+let lastCText='',lastCPush=0;
+async function contractTick(){
+  if(!GM_getValue('ghtoken',''))return;
+  const text=await contractText();
+  if(text&&(text!==lastCText||Date.now()-lastCPush>15*60000)){await push({v:1,t:Date.now(),text},'contract.json','contract');lastCText=text;lastCPush=Date.now()}
+}
+
 let lastSig='', lastPush=0, busy=false;
 const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv])]);
 function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
-async function push(snap){
+async function push(snap,file,label){
+  file=file||FILE;label=label||'planner';
   for(let i=0;i<3;i++){
-    const g=await gh('GET','/contents/'+FILE+'?ref='+BRANCH);
+    const g=await gh('GET','/contents/'+file+'?ref='+BRANCH);
     if(g.status!==200&&g.status!==404)throw new Error('get '+g.status+' '+(g.responseText||'').slice(0,60));
     const sha=g.status===200?JSON.parse(g.responseText).sha:undefined;
-    const r=await gh('PUT','/contents/'+FILE,{message:'planner '+new Date(snap.t).toISOString().slice(11,16),content:b64(JSON.stringify(snap)),branch:BRANCH,sha});
-    if(r.status<300){lastPush=Date.now();return}
+    const r=await gh('PUT','/contents/'+file,{message:label+' '+new Date(snap.t).toISOString().slice(11,16),content:b64(JSON.stringify(snap)),branch:BRANCH,sha});
+    if(r.status<300){if(file===FILE)lastPush=Date.now();return}
     if(i===2||(r.status!==409&&r.status!==422))throw new Error('push '+r.status+' '+(r.responseText||'').slice(0,80));
     await new Promise(x=>setTimeout(x,1500));
   }
@@ -77,7 +130,8 @@ async function tick(){
     const snap=await fwPlannerSnapshot(STATION_ID), sg=sig(snap);
     window.__plannerSnap=snap;
     if(GM_getValue('ghtoken','')&&(sg!==lastSig||Date.now()-lastPush>5*60000)){await push(snap);lastSig=sg}
-    badge('Live feed OK '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
+    let cOk='';try{await contractTick();cOk=' + hours'}catch(e){cOk=' (hours: '+e.message+')'}
+    badge('Live feed OK'+cOk+' '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
   }catch(e){badge('Live feed: '+e.message,false)}
   busy=false;
 }
