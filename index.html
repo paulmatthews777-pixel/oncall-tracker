@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ff0a54">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>On-Call Contract Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: phone-app look. Pink app bar, dark grey page, outlined rounded cards, status dots. Verdict first, then bands, then entries. */
+:root{
+  --bg:#4a4a4c; --panel:#3b3b3d; --ink:#ffffff; --mute:#c4c4c8; --line:#8c8c90;
+  --accent:#ff0a54; --good:#22d35a; --warn:#ffb020; --bad:#ff3b6b; --track:#2a2a2c;
+  --display:'Poppins',system-ui,sans-serif; --body:'Poppins',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);min-height:100%}
+.appbar{background:var(--accent);height:56px;display:flex;align-items:center;padding:0 16px;font-weight:600;font-size:18px;letter-spacing:.01em}
+main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding:16px}
+h1{font:600 20px/1.2 var(--display);margin:0;text-align:center}
+h2{font:600 15px/1.2 var(--display);margin:0 0 10px;color:var(--ink)}
+.sub{color:var(--mute);font-size:13px;margin:4px 0 0;text-align:center}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:14px}
+.verdict{border-color:var(--good)}
+.verdict.short{border-color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.pill::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--good)}
+.short .pill::before{background:var(--bad)}
+.big{font:600 40px/1 var(--display);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:10px;min-width:0;text-align:center}
+.tile b{display:block;font:600 22px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--mute)}
+.bar{margin:12px 0}
+.bar .top{display:flex;justify-content:space-between;font-size:14px;font-variant-numeric:tabular-nums}
+.track{height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:5px}
+.fill{height:100%;background:var(--accent);border-radius:6px}
+.fill.done{background:var(--good)}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute);min-width:0}
+input,select,textarea,button{font:inherit;color:var(--ink);background:var(--track);border:2px solid var(--line);border-radius:10px;padding:9px 10px;min-width:0}
+textarea{width:100%;min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+button{cursor:pointer;background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.list{max-height:320px;overflow:auto;border:2px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);color:var(--mute);font-weight:500}
+tr.out td{color:var(--mute);text-decoration:line-through}
+.x{padding:2px 8px;background:transparent;color:var(--mute);border:1px solid var(--line)}
+.note{font-size:13px;color:var(--mute)}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--warn);color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="appbar">Contract tracker</div>
+<main>
+  <header>
+    <h1>On-Call Contract Tracker</h1>
+    <p class="sub">85P retained contract · rolling 8-week audit · <span class="tag" id="datatag">Loading</span></p>
+  </header>
+
+  <section class="card verdict" id="verdict" aria-live="polite"></section>
+  <section class="tiles" id="tiles"></section>
+  <section class="card" id="weekcard">
+    <div class="row"><h2 style="margin:0" id="weektitle">Week</h2>
+      <div class="actions" style="margin:0"><button class="ghost" id="pw" aria-label="Previous week">&lsaquo;</button><button class="ghost" id="tw">This week</button><button class="ghost" id="nw" aria-label="Next week">&rsaquo;</button></div></div>
+    <div class="list" style="margin-top:10px;max-height:none"><table id="weektable"></table></div>
+  </section>
+  <section class="card"><h2>Specified bands</h2><div id="bars"></div></section>
+
+  <section class="card">
+    <h2>Audit settings</h2>
+    <div class="grid">
+      <label>Audit date (looks back 56 days)<input type="date" id="auditDate"></label>
+      <label>Specified band<select id="sub"><option>Prime</option><option>C</option><option>B</option><option>A</option></select></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Add an entry</h2>
+    <div class="grid">
+      <label>Date<input type="date" id="fDate"></label>
+      <label>Type<select id="fType">
+        <option value="avail">Available</option><option value="turnout">Turn out</option><option value="drill">Drill</option>
+        <option value="rota">Rota</option><option value="leave">Annual leave</option><option value="absence">Absence (Total only)</option>
+        <option value="detach">Detachment (not counted)</option><option value="unavail">Unavailable (not counted)</option><option value="course">Course (not counted)</option>
+      </select></label>
+      <label>Start<input type="time" id="fStart" value="18:00"></label>
+      <label>End<input type="time" id="fEnd" value="23:00"></label>
+      <label>Band<select id="fBand"><option value="P1">P1</option><option value="P3">P3</option><option value="P4">P4</option><option value="U">Unspecified</option></select></label>
+    </div>
+    <div class="actions"><button id="add">Add entry</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Entries in this audit</h2>
+    <div class="list"><table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Band</th><th>Hours</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+    <p class="note">Struck-through rows are outside the 56-day window or never count.</p>
+  </section>
+
+  <section class="card">
+    <h2>Paste from FireWatch</h2>
+    <p class="note">One line per entry: date,start,end,type,band (for example 2026-11-20,18:00,23:00,avail,P1). Types: avail, turnout, drill, rota, leave, absence, detach, unavail, course.</p>
+    <textarea id="paste" aria-label="Entries to import"></textarea>
+    <div class="actions"><button id="clip">Paste from clipboard</button><button id="import">Replace entries with this</button><button class="ghost" id="copy">Copy current entries</button><button class="ghost" id="sample">Load example data</button></div>
+  </section>
+</main>
+
+<script>
+/* ===== Contract rules (confirmed from the A8 audit table and the policy PDF) ===== */
+const COUNTS = ['avail','turnout','drill','rota','leave'];      // add to their band
+const NEVER  = ['detach','unavail','course'];                    // never count
+const WEEKLY = { P1:35, P3:13, P4:12, U:25 };                    // Prime split at 85h
+const SPEC_BY_SUB = { Prime:60, C:54, B:46, A:39 };              // specified hours a week
+const CONTRACT = 85, WEEKS = 8, WINDOW_DAYS = 56;
+
+function toMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+function entryHours(e){ let d = toMin(e.end) - toMin(e.start); if (d<=0) d += 1440; return d/60; }
+function dayNum(s){ const [y,m,d]=s.split('-').map(Number); return Math.round(Date.UTC(y,m-1,d)/86400000); }
+function inWindow(e, audit){ const a=dayNum(audit), x=dayNum(e.date); return x>=a-WINDOW_DAYS && x<a; }
+
+function compute(entries, audit, sub){
+  const got = { P1:0, P3:0, P4:0, U:0 }; let absence = 0;
+  for (const e of entries){
+    if (!inWindow(e,audit)) continue;
+    const h = entryHours(e);
+    if (e.type==='absence') absence += h * CONTRACT/168;
+    else if (COUNTS.includes(e.type) && got[e.band]!==undefined) got[e.band] += h;
+  }
+  const specTarget = SPEC_BY_SUB[sub]*WEEKS;
+  const totalTarget = CONTRACT*8; // 680
+  const spec = got.P1+got.P3+got.P4;
+  const unspecTarget = totalTarget - specTarget;
+  const total = spec + got.U + absence;
+  return { got, absence, spec, specTarget, unspecTarget, total, totalTarget,
+           specShort: Math.max(0,specTarget-spec-absence), totalShort: Math.max(0,totalTarget-total) };
+}
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'oncall-tracker-v2';
+let entries = [], isExample = true, isSnap = false;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function iso(dn){ const d=new Date(dn*86400000); return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate()); }
+function defaultAudit(){ const n=new Date(); let y=n.getFullYear(), m=n.getMonth()+2; if(m>12){m=1;y++;} return y+'-'+pad(m)+'-01'; }
+
+function sampleEntries(audit){
+  const out=[], a=dayNum(audit);
+  for (let i=WINDOW_DAYS;i>=1;i--){
+    const d=iso(a-i), dow=new Date((a-i)*86400000).getUTCDay();
+    if (dow>=1&&dow<=5){ out.push({date:d,start:'17:00',end:'23:00',type:'avail',band:'P1'}); }
+    if (dow===6){ out.push({date:d,start:'08:00',end:'19:00',type:'avail',band:'P3'}); }
+    if (dow===0){ out.push({date:d,start:'08:00',end:'18:00',type:'avail',band:'P4'}); }
+    if (dow>=1&&dow<=5){ out.push({date:d,start:'23:00',end:'04:30',type:'avail',band:'U'}); }
+  }
+  out.push({date:iso(a-12),start:'09:00',end:'17:00',type:'detach',band:'U'});
+  return out;
+}
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({entries,isExample,isSnap,audit:$('auditDate').value,sub:$('sub').value})); }catch(e){} }
+function load(){ try{ const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s){ entries=s.entries||[]; isExample=!!s.isExample; isSnap=!!s.isSnap; if(s.audit)$('auditDate').value=s.audit; if(s.sub)$('sub').value=s.sub; return true; } }catch(e){} return false; }
+
+let weekStart = 0; // day number of the Monday shown
+function mondayNum(dn){ const wd=(new Date(dn*86400000).getUTCDay()+6)%7; return dn-wd; }
+const f2 = n => (Math.round(n*100)/100).toFixed(2);
+function weekCalc(){
+  const w=weekStart, now=Date.now();
+  const done={P1:0,P3:0,P4:0,U:0,ABS:0}, all={P1:0,P3:0,P4:0,U:0,ABS:0};
+  for(const e of entries){
+    const dn=dayNum(e.date); if(dn<w||dn>=w+7) continue;
+    const h=entryHours(e), s=new Date(e.date+'T'+e.start).getTime();
+    const dh=Math.max(0,Math.min(h,(now-s)/36e5));
+    if(e.type==='absence'){ all.ABS+=h*CONTRACT/168; done.ABS+=dh*CONTRACT/168; }
+    else if(COUNTS.includes(e.type)&&all[e.band]!==undefined){ all[e.band]+=h; done[e.band]+=dh; }
+  }
+  const mk=o=>Object.assign({},o,{S:o.P1+o.P3+o.P4,T:o.P1+o.P3+o.P4+o.U+o.ABS});
+  return {done:mk(done),all:mk(all)};
+}
+function renderWeek(){
+  const r=weekCalc(), ws=new Date(weekStart*86400000), we=new Date((weekStart+6)*86400000);
+  const fm=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+  $('weektitle').textContent='Week '+fm(ws)+' – '+fm(we);
+  const rows=[['P1 weekdays','P1',WEEKLY.P1],['P3 weekend nights','P3',WEEKLY.P3],['P4 weekend days','P4',WEEKLY.P4],['Specified','S',60],['Unspecified','U',WEEKLY.U],['Absence credit','ABS',null],['Total','T',85]];
+  let h='<thead><tr><th></th><th>Target</th><th>Done</th><th>Booked ahead</th><th>Total</th><th>Over/short</th></tr></thead><tbody>';
+  for(const [name,k,t] of rows){
+    if(k==='ABS'&&r.all.ABS<0.005) continue;
+    const d=r.done[k], a=r.all[k];
+    if(k==='ABS'){ h+='<tr><td>'+name+'</td><td></td><td>'+f2(d)+'</td><td>'+f2(a-d)+'</td><td>'+f2(a)+'</td><td></td></tr>'; continue; }
+    const diff=a-t, cell=k==='U'?'<td></td>':'<td style="color:var(--'+(diff>=-0.005?'good':'bad')+');font-weight:600">'+(diff>=0?'+':'')+f2(diff)+'</td>';
+    h+='<tr'+(k==='T'?' style="font-weight:600"':'')+'><td>'+name+'</td><td>'+f2(t)+'</td><td>'+f2(d)+'</td><td>'+f2(a-d)+'</td><td>'+f2(a)+'</td>'+cell+'</tr>';
+    if(k==='S'&&r.all.ABS>0.005){ const sd=d+r.done.ABS, sa=a+r.all.ABS, df=sa-t; h+='<tr><td>Specified + absence (A8)</td><td>'+f2(t)+'</td><td>'+f2(sd)+'</td><td>'+f2(sa-sd)+'</td><td>'+f2(sa)+'</td><td style="color:var(--'+(df>=-0.005?'good':'bad')+');font-weight:600">'+(df>=0?'+':'')+f2(df)+'</td></tr>'; }
+  }
+  $('weektable').innerHTML=h+'</tbody>';
+}
+const f1 = n => (Math.round(n*10)/10).toFixed(1);
+function bar(label,got,target){
+  const pct=Math.min(100,target?got/target*100:0);
+  return '<div class="bar"><div class="top"><span>'+label+'</span><span>'+f1(got)+' / '+f1(target)+' h</span></div><div class="track"><div class="fill'+(got>=target?' done':'')+'" style="width:'+pct+'%"></div></div></div>';
+}
+const NAMES={avail:'Available',turnout:'Turn out',drill:'Drill',rota:'Rota',leave:'Annual leave',absence:'Absence',detach:'Detachment',unavail:'Unavailable',course:'Course'};
+
+function render(){
+  const audit=$('auditDate').value, sub=$('sub').value;
+  const r=compute(entries,audit,sub);
+  const ok = r.specShort===0 && r.totalShort===0;
+  const v=$('verdict'); v.className='card verdict'+(ok?'':' short');
+  v.innerHTML='<div class="row"><span class="pill">'+(ok?'On track':'Short')+'</span><span class="note">Audit '+audit+' · last 56 days</span></div>'
+    +'<div class="big" style="margin-top:8px">'+f1(r.total)+' <span style="font-size:22px;color:var(--mute)">/ '+r.totalTarget+' h</span></div>'
+    +'<div class="note">'+(ok?'Specified and total both met.':'Short '+f1(r.specShort)+' h specified, '+f1(r.totalShort)+' h in total.')+'</div>';
+  $('tiles').innerHTML=
+    '<div class="tile"><b>'+f1(r.spec+r.absence)+'</b><span>Specified + absence of '+r.specTarget+'</span></div>'
+   +'<div class="tile"><b>'+f1(r.got.U)+'</b><span>Unspecified of '+r.unspecTarget+'</span></div>'
+   +'<div class="tile"><b>'+f1(r.absence)+'</b><span>Absence credit</span></div>';
+  $('bars').innerHTML=bar('P1',r.got.P1,WEEKLY.P1*WEEKS)+bar('P3',r.got.P3,WEEKLY.P3*WEEKS)+bar('P4',r.got.P4,WEEKLY.P4*WEEKS)
+    +bar('Specified overall (P1 + P3 + P4)',r.spec,r.specTarget);
+  const sorted=entries.map((e,i)=>({e,i})).sort((a,b)=>b.e.date.localeCompare(a.e.date)||b.e.start.localeCompare(a.e.start));
+  $('rows').innerHTML=sorted.map(({e,i})=>{
+    const out=!inWindow(e,audit)||NEVER.includes(e.type);
+    return '<tr class="'+(out?'out':'')+'"><td>'+e.date+'</td><td>'+e.start+'–'+e.end+'</td><td>'+(NAMES[e.type]||e.type)+'</td><td>'+e.band+'</td><td>'+f1(entryHours(e))+'</td><td><button class="x" data-i="'+i+'" aria-label="Delete entry">×</button></td></tr>';
+  }).join('');
+  renderWeek();
+  $('datatag').textContent=isExample?'Example data':(isSnap?'FireWatch snapshot':(entries.length?'Your data':'No data yet')); $('datatag').style.display='';
+  save();
+}
+
+function parsePaste(text){
+  const out=[];
+  for (const line of text.split(/\r?\n/)){
+    const p=line.split(',').map(s=>s.trim()); if(p.length<5||!/^\d{4}-\d{2}-\d{2}$/.test(p[0])) continue;
+    out.push({date:p[0],start:p[1],end:p[2],type:p[3].toLowerCase(),band:p[4].toUpperCase()});
+  }
+  return out;
+}
+
+$('clip').onclick=async()=>{ try{ const t=await navigator.clipboard.readText(); $('paste').value=t; const p=parsePaste(t); if(p.length){ entries=p; isExample=false; isSnap=false; render(); } }catch(e){ $('paste').placeholder='Clipboard blocked. Paste into this box instead.'; } };
+function fromHash(){ const m=/^#d=(.+)$/.exec(location.hash); if(!m) return; try{ const t=decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))); const p=parsePaste(t); if(p.length){ entries=p; isExample=false; isSnap=false; } }catch(e){} history.replaceState(null,'',location.pathname+location.search); }
+$('add').onclick=()=>{ const d=$('fDate').value; if(!d) return;
+  if(isExample||isSnap){ if(isExample) entries=[]; isExample=false; isSnap=false; }
+  entries.push({date:d,start:$('fStart').value,end:$('fEnd').value,type:$('fType').value,band:$('fBand').value}); render(); };
+$('rows').onclick=e=>{ const b=e.target.closest('button[data-i]'); if(!b) return; entries.splice(+b.dataset.i,1); render(); };
+$('import').onclick=()=>{ const p=parsePaste($('paste').value); if(!p.length){ $('paste').placeholder='No valid lines found. Use date,start,end,type,band.'; return; } entries=p; isExample=false; isSnap=false; render(); };
+$('copy').onclick=async()=>{ const t=entries.map(e=>[e.date,e.start,e.end,e.type,e.band].join(',')).join('\n'); $('paste').value=t; try{ await navigator.clipboard.writeText(t); }catch(e){} };
+$('sample').onclick=()=>{ entries=sampleEntries($('auditDate').value); isExample=true; render(); };
+$('pw').onclick=()=>{weekStart-=7;renderWeek();}; $('nw').onclick=()=>{weekStart+=7;renderWeek();}; $('tw').onclick=()=>{weekStart=mondayNum(Math.floor(Date.now()/86400000));renderWeek();};
+$('auditDate').onchange=render; $('sub').onchange=render;
+
+weekStart=mondayNum(Math.floor(Date.now()/86400000));
+$('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
+if(!load()){ entries=[]; isExample=false; isSnap=false; }
+fromHash(); render();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+window.addEventListener('hashchange',()=>{ fromHash(); render(); });
+</script>
+</body>
+</html>
