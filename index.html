@@ -125,6 +125,18 @@ nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width
 nav button.on{color:var(--ink)}
 nav button.on svg{stroke:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.tab.on{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.live-hero{border-radius:20px;padding:22px 18px;text-align:center;border:1px solid var(--line)}
+.live-hero b{display:block;font:700 30px var(--display);letter-spacing:.02em}
+.live-hero span{display:block;margin-top:6px;font-size:14px;color:var(--mute)}
+.live-hero.go{background:rgba(51,214,134,.14);border-color:rgba(51,214,134,.5)}.live-hero.go b{color:var(--good)}
+.live-hero.stop{background:rgba(255,48,48,.14);border-color:rgba(255,48,48,.5)}.live-hero.stop b{color:var(--bad)}
+.live-hero.stale{background:rgba(255,179,64,.12);border-color:rgba(255,179,64,.45)}.live-hero.stale b{color:var(--warn)}
+.strip{display:grid;grid-template-columns:repeat(24,1fr);gap:2px}
+.strip i{height:26px;border-radius:4px;background:var(--raise)}.strip i.g{background:var(--good)}.strip i.r{background:var(--bad)}.strip i.a{background:var(--warn)}.strip i.now{outline:2px solid #fff;outline-offset:1px}
+.strip-l{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:4px}
+.lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.lrow:first-child{border-top:0}
+.lrow .d{width:10px;height:10px;border-radius:50%;flex:none;background:var(--faint)}.lrow .d.g{background:var(--good)}.lrow .d.r{background:var(--bad)}.lrow .d.a{background:var(--warn)}
+.lrow small{color:var(--mute);margin-left:auto;text-align:right;font-size:12px}
 </style>
 </head>
 <body>
@@ -161,6 +173,15 @@ nav button.on svg{stroke:var(--accent)}
   </div>
 </section>
 
+<section class="tab" id="t-live">
+  <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
+  <div class="card"><h2>Today, hour by hour (green = on the run)</h2><div class="strip" id="lstrip"></div><div class="strip-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div></div>
+  <div class="card"><h2>Crewing now</h2><div id="lrows"></div></div>
+  <div class="card"><h2>On now</h2><div id="lon"></div></div>
+  <div class="card"><h2>Off now</h2><div id="loff"></div></div>
+  <button class="btn" id="lrefresh">Refresh now</button>
+</section>
+
 <div style="display:none"><div class="card"><div class="hero" id="ohero"></div></div></div>
 
 <section class="tab" id="t-data">
@@ -193,6 +214,7 @@ nav button.on svg{stroke:var(--accent)}
 <nav aria-label="Sections">
   <button class="on" data-t="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Week</button>
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
+  <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
   <button data-t="data"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Data</button>
 </nav>
 
@@ -463,11 +485,38 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.
 
 function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{const t=decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))));const p=parsePaste(t);if(p.length){entries=p;source='firewatch';importedAt=Date.now()}}catch(e){}history.replaceState(null,'',location.pathname+location.search)}
 
+
+/* ===== Live: Winterton station planner ===== */
+const LIVE_URL='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/planner.json';
+let snap=null, snapErr='';
+function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
+function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===1)snap=x}catch(e){}}
+function setSnap(x){if(x&&x.v===1&&x.rows&&(!snap||x.t>=snap.t)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
+async function fetchLive(){try{const r=await fetch(LIVE_URL+'?_='+Date.now(),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive()}
+function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
+function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
+function renderLive(){
+  const L=londonNow(), el=$('lhero');
+  if(!snap){el.className='live-hero stale';el.innerHTML='<b>No planner data</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';return}
+  const ageMin=Math.round((Date.now()-snap.t)/60000), stale=snap.date!==L.date||ageMin>15, h=L.hour;
+  const ok=!stale&&allGreen(snap,h);
+  const bad=snap.rows.filter(r=>r.c[h]!=='g');
+  el.className='live-hero '+(stale?'stale':(ok?'go':'stop'));
+  el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?(snap.date!==L.date?'Planner data is from '+snap.date:'Last updated '+ageMin+' min ago')+'. Do not rely on this':(ok?'All crewing rows green this hour':'Not green: '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
+  $('lstrip').innerHTML=[...Array(24).keys()].map(i=>{const c=snap.date!==L.date?'':(allGreen(snap,i)?'g':(snap.rows.some(r=>r.c[i]==='r')?'r':'a'));return '<i class="'+c+(i===h?' now':'')+'" title="'+String(i).padStart(2,'0')+':00"></i>'}).join('');
+  $('lrows').innerHTML=snap.rows.map(r=>'<div class="lrow"><span class="d '+(r.c[h]==='x'?'':r.c[h])+'"></span>'+r.name+'<small>'+(r.n[h]||'0')+' of '+r.min+' needed</small></div>').join('');
+  const on=snap.people.filter(p=>p.on[h]==='1'), off=snap.people.filter(p=>p.on[h]!=='1');
+  const row=(p,c)=>'<div class="lrow"><span class="d '+c+'"></span>'+p.name+'<small>'+p.role+(p.q?' · '+p.q:'')+'</small></div>';
+  $('lon').innerHTML=on.length?on.map(p=>row(p,'g')).join(''):'<p class="note">Nobody on</p>';
+  $('loff').innerHTML=off.map(p=>row(p,'')).join('');
+}
+$('lrefresh').onclick=fetchLive;
+
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); render();
-window.addEventListener('hashchange',()=>{fromHash();render()});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')render()});
+load(); fromHash(); loadSnap(); const gotP=fromPHash(); render(); renderLive(); if(gotP)show('live'); fetchLive(); setInterval(()=>{if(document.visibilityState==='visible')fetchLive()},60000);
+window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 </body>
