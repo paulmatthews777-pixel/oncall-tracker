@@ -14,7 +14,7 @@
 :root{
   --bg:#0e1014; --surface:#171a21; --raise:#1f232c; --line:#2a2f3a;
   --ink:#f3f5f8; --mute:#9aa3b2; --faint:#646d7c;
-  --accent:#ff2a5f; --good:#33d686; --warn:#ffb340; --bad:#ff5d7d;
+  --accent:#ff2a5f; --good:#ff3030; --warn:#ffb340; --bad:#ffb340;
   --display:'Sora',system-ui,sans-serif; --body:'DM Sans',system-ui,sans-serif;
   color-scheme:dark;
 }
@@ -40,8 +40,8 @@ h2{font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;co
 .verdict{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pill{align-self:flex-start;font:600 13px var(--display);padding:5px 12px;border-radius:99px;display:inline-flex;gap:8px;align-items:center}
 .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
-.pill.ok{background:rgba(51,214,134,.14);color:var(--good)}
-.pill.no{background:rgba(255,93,125,.14);color:var(--bad)}
+.pill.ok{background:rgba(255,48,48,.16);color:var(--good)}
+.pill.no{background:rgba(255,179,64,.16);color:var(--bad)}
 .verdict p{margin:0;color:var(--mute);font-size:14px}
 .verdict strong{color:var(--ink);font-variant-numeric:tabular-nums}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -64,8 +64,8 @@ h2{font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;co
 .legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:12px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .diff{font:600 13px var(--display);padding:2px 8px;border-radius:99px;font-variant-numeric:tabular-nums}
-.diff.ok{background:rgba(51,214,134,.14);color:var(--good)}
-.diff.no{background:rgba(255,93,125,.14);color:var(--bad)}
+.diff.ok{background:rgba(255,48,48,.16);color:var(--good)}
+.diff.no{background:rgba(255,179,64,.16);color:var(--bad)}
 .wk{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .wk .t{font:600 17px var(--display)}
 .wk .t small{display:block;font:400 12px var(--body);color:var(--mute)}
@@ -145,7 +145,6 @@ nav button.on svg{stroke:var(--accent)}
   <div class="card"><div class="hero" id="ahero"></div></div>
   <div class="card"><h2>Specified bands</h2><div id="abands"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
   <div class="stats" id="astats"></div>
-  <div class="card"><h2>Where you can book off</h2><div id="afree"></div></div>
   <div class="card"><h2>What is left</h2><div id="aneed"></div></div>
   <div class="card"><h2>Full numbers</h2><div id="afull" style="display:flex;flex-direction:column;gap:10px"></div></div>
   <div class="card"><h2>Week by week</h2><div id="aweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
@@ -156,6 +155,12 @@ nav button.on svg{stroke:var(--accent)}
       <label>Specified band<select id="sub"><option>Prime</option><option>C</option><option>B</option><option>A</option></select></label>
     </div>
   </div>
+</section>
+
+<section class="tab" id="t-off">
+  <div class="card"><div class="hero" id="ohero"></div></div>
+  <div class="card"><h2>Audit: days you can book off</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
+  <div class="card"><h2>Week on week</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
 </section>
 
 <section class="tab" id="t-data">
@@ -188,6 +193,7 @@ nav button.on svg{stroke:var(--accent)}
 <nav aria-label="Sections">
   <button class="on" data-t="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Week</button>
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
+  <button data-t="off"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></svg>Time off</button>
   <button data-t="data"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Data</button>
 </nav>
 
@@ -319,23 +325,33 @@ function extras(w,r,audit,sub,specT,totT,now){
   n+=kv('Short even with everything booked',(needS+needT<0.005)?'Nothing, you are covered':('P1 '+f1(need('P1'))+' · P3 '+f1(need('P3'))+' · P4 '+f1(need('P4'))+' · specified '+f1(needS)+' · total '+f1(needT)));
   n+=kv('Spare over target','Specified '+f1(Math.max(0,r.all.S+r.all.ABS-specT))+' · total '+f1(Math.max(0,r.all.T-totT))+' h');
   $('aneed').innerHTML=n;
-  // ---- time off finder: remove whole future days while every target still holds
+  // ---- time off planner
+  const planDays=(sp,from,to)=>{const rows=[];
+    for(let dn=from;dn<to;dn++){
+      const ds=iso(dn), es=entries.filter(e=>e.date===ds&&COUNTS.includes(e.type));
+      const d={P1:0,P3:0,P4:0,U:0};
+      es.forEach(e=>{if(d[e.band]!==undefined)d[e.band]+=entryHours(e)});
+      const tot=d.P1+d.P3+d.P4+d.U, spec=d.P1+d.P3+d.P4; if(tot<0.005)continue;
+      const ok=sp.P1-d.P1>=-0.005&&sp.P3-d.P3>=-0.005&&sp.P4-d.P4>=-0.005&&sp.S-spec>=-0.005&&sp.T-tot>=-0.005;
+      if(ok){sp.P1-=d.P1;sp.P3-=d.P3;sp.P4-=d.P4;sp.S-=spec;sp.T-=tot}
+      rows.push({dn,tot,off:ok});}
+    return rows;};
+  const rowH=x=>'<div class="kv"><span>'+DAYN[(x.dn+3)%7]+' '+fm(x.dn)+'</span><b style="color:'+(x.off?'var(--good)':'var(--mute)')+'">'+(x.off?'Book off':'Keep')+' · '+f1(x.tot)+' h</b></div>';
   const sp={P1:r.all.P1-T.P1,P3:r.all.P3-T.P3,P4:r.all.P4-T.P4,S:r.all.S+r.all.ABS-specT,T:r.all.T-totT};
-  let fh='',freed=0,days=0;
-  for(let dn=today+1;dn<dayNum(audit);dn++){
-    const ds=iso(dn), es=entries.filter(e=>e.date===ds&&COUNTS.includes(e.type));
-    if(!es.length)continue;
-    const d={P1:0,P3:0,P4:0,U:0};
-    es.forEach(e=>{if(d[e.band]!==undefined)d[e.band]+=entryHours(e)});
-    const tot=d.P1+d.P3+d.P4+d.U, spec=d.P1+d.P3+d.P4;
-    if(tot<0.005)continue;
-    const ok=sp.P1-d.P1>=-0.005&&sp.P3-d.P3>=-0.005&&sp.P4-d.P4>=-0.005&&sp.S-spec>=-0.005&&sp.T-tot>=-0.005;
-    if(ok){sp.P1-=d.P1;sp.P3-=d.P3;sp.P4-=d.P4;sp.S-=spec;sp.T-=tot;freed+=tot;days++;
-      fh+='<div class="kv"><span>'+DAYN[(dn+3)%7]+' '+fm(dn)+'</span><b style="color:var(--good)">Book off · '+f1(tot)+' h</b></div>';}
-    else fh+='<div class="kv"><span>'+DAYN[(dn+3)%7]+' '+fm(dn)+'</span><b style="color:var(--mute)">Keep · '+f1(tot)+' h</b></div>';
+  const arows=planDays(sp,today+1,dayNum(audit)), aoff=arows.filter(x=>x.off), afh=aoff.reduce((q,x)=>q+x.tot,0);
+  $('afree').innerHTML=arows.length?kv('Days you can drop',aoff.length+' ('+f1(afh)+' h)')+kv('Spare left after that','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)))+arows.map(rowH).join('')+'<p class="rule" style="margin-top:10px">Dropped in date order. Every audit target still holds with all Book off days removed together.</p>':'<p class="note">No future on-call booked in this audit.</p>';
+  window.__off=aoff.map(x=>DAYN[(x.dn+3)%7]+' '+fm(x.dn)+' ('+f1(x.tot)+' h)').join('\n');
+  $('copyoff').onclick=()=>{try{navigator.clipboard.writeText('Book off:\n'+window.__off);$('copyoff').textContent='Copied'}catch(e){$('copyoff').textContent='Copy failed'}setTimeout(()=>$('copyoff').textContent='Copy list to book in FireWatch',1800)};
+  // week on week: each week against its own weekly targets
+  let wh='',wTot=0;
+  for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
+    const x=calcRange(entries,m,m+7,now); if(x.all.T<0.005)continue;
+    const wsp={P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT};
+    const rows=planDays(wsp,Math.max(m,today+1),m+7), off=rows.filter(y=>y.off), h=off.reduce((q,y)=>q+y.tot,0); wTot+=h;
+    wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Spare over weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>')+'</div></details>';
   }
-  $('afree').innerHTML=(fh?kv('Days you can drop',days+' ('+f1(freed)+' h)')+kv('Spare left after that','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)))+fh+'<p class="rule" style="margin-top:10px">Days are dropped in date order. Every target (P1, P3, P4, specified, total) still holds after all the Book off days are removed together.</p>':'<p class="note">No future on-call booked in this audit.</p>');
-  $('afull').innerHTML=fullTable(r,T);
+  $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
+  $('ohero').style.display='block';$('ohero').innerHTML='<p style="margin:0">Hours you can book off (audit)</p><div style="font:700 48px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div><p style="margin:0">'+aoff.length+' day'+(aoff.length===1?'':'s')+' over the audit · '+f1(wTot)+' h free week on week</p>';
   // ---- audit: week by week
   const a0=dayNum(audit)-WINDOW_DAYS, a1=dayNum(audit); let wk='';
   for(let m=mondayNum(a0);m<a1;m+=7){
