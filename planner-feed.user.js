@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.7
+// @version      1.8
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -44,16 +44,19 @@ async function fwPlannerSnapshot(stationId){
     for(let di=0;di<2;di++){const rr=grp(days[di],g).find(x=>x.RowData.Name===name);for(const h of H){let cell={c:'x',n:''};try{const p=JSON.parse(rr.RowData[h]).needSlot[0];cell={c:cls(light(p.colour)),n:p.cellText||''}}catch(e){}c+=cell.c;n.push(cell.n)}}
     rows.push({name,min:r.RowData.Min,plan:r.RowData.Plan,c,n});
   }
-  const byName={};
-  days.forEach(A=>{for(const r of grp(A,'Resource')){const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[]};
+  const byName={},types={},seenB=new Set();
+  days.forEach(A=>{for(const r of grp(A,'Resource')){const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
     for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
       const list=[cell].concat(cell.appointments||[]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
         const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call - (Available|Turn Out)/i.test(tip));
         if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
-        if(!isOn)continue;const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;o.iv.push([s-base,e-base]);}}}});
+        const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
+        const tk=String(it.type)+'|'+tip.split(/[\r\n<]/)[0].slice(0,50)+'|'+light(it.colour);types[tk]=(types[tk]||0)+1;
+        if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),tip.split(/[\r\n<]/)[0].slice(0,50),light(it.colour),s-base,e-base])}continue}
+        o.iv.push([s-base,e-base]);}}}});
   const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
-  return {v:2,t:Date.now(),base,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
+  return {v:2,t:Date.now(),base,types,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
 }
 
 
@@ -109,7 +112,7 @@ async function contractTick(){
 }
 
 let lastSig='', lastPush=0, busy=false;
-const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv])]);
+const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv,p.bars])]);
 function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,timeout:20000,onload:r=>res(r),onerror:()=>rej(new Error('network')),ontimeout:()=>rej(new Error('timeout')),onabort:()=>rej(new Error('abort'))})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap,file,label){
