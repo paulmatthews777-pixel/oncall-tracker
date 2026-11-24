@@ -159,8 +159,9 @@ nav button.on svg{stroke:var(--accent)}
 
 <section class="tab" id="t-off">
   <div class="card"><div class="hero" id="ohero"></div></div>
-  <div class="card"><h2>Audit: days you can book off</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
-  <div class="card"><h2>Week on week</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <div class="card"><h2>This week: to still hit 85</h2><div id="wcur"></div></div>
+  <div class="card"><h2>8 week audit: to still pass</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
+  <div class="card"><h2>Coming weeks: to still hit 85</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
 </section>
 
 <section class="tab" id="t-data">
@@ -353,15 +354,19 @@ function extras(w,r,audit,sub,specT,totT,now){
   window.__off=listTxt(arows);
   $('copyoff').onclick=()=>{try{navigator.clipboard.writeText('Book off:\n'+window.__off);$('copyoff').textContent='Copied'}catch(e){$('copyoff').textContent='Copy failed'}setTimeout(()=>$('copyoff').textContent='Copy list to book in FireWatch',1800)};
   // week on week: each week against its own weekly targets
-  let wh='',wTot=0;
+  let wh='',wTot=0,curH=0,curHtml='<p class="note">Nothing booked this week.</p>';
   for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
     const x=calcRange(entries,m,m+7,now); if(x.all.T<0.005)continue;
     const wsp={P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT};
-    const rows=planDays(wsp,Math.max(m,today+1),m+7), h=rows.reduce((q,y)=>q+freeH(y),0); wTot+=h;
-    wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Spare over weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>')+'</div></details>';
+    const rows=planDays(wsp,Math.max(m,today+1),m+7), h=rows.reduce((q,y)=>q+freeH(y),0);
+    const body=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+kv('You can take off',f1(h)+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>');
+    if(m===mondayNum(today)){curH=h;curHtml=body+'<p class="rule" style="margin-top:10px">Keeps this week at 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
+    wTot+=h;
+    wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
+  $('wcur').innerHTML=curHtml;
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
-  $('ohero').style.display='block';$('ohero').innerHTML='<p style="margin:0">Hours you can book off (audit)</p><div style="font:700 48px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div><p style="margin:0">'+adays+' whole day'+(adays===1?'':'s')+' plus part days over the audit · '+f1(wTot)+' h free week on week</p>';
+  $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
   const a0=dayNum(audit)-WINDOW_DAYS, a1=dayNum(audit); let wk='';
   for(let m=mondayNum(a0);m<a1;m+=7){
