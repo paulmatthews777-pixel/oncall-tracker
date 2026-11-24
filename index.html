@@ -381,17 +381,25 @@ function extras(w,r,audit,sub,specT,totT,now){
     };
     draw();
     const b=$(btnId); b.textContent='Save and send to Claude';
-    b.onclick=async()=>{const lines=[];
+    b.onclick=()=>{const lines=[];let tot=0;
       [...new Set(blocks.map(x=>x.dn))].forEach(dn=>{const bs=blocks.filter(x=>x.dn===dn),ch=bs.filter(x=>st.sel.has(x.id));if(!ch.length)return;
-        const hh=ch.reduce((q,x)=>q+x.h,0);
+        const hh=ch.reduce((q,x)=>q+x.h,0);tot+=hh;
         if(ch.length===bs.length){lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' all day ('+f1(hh)+' h)')}
         else{const m=[];ch.forEach(x=>{const l=m[m.length-1];if(l&&l.e===x.s)l.e=x.e;else m.push({s:x.s,e:x.e})});lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' '+m.map(x=>x.s+'-'+x.e).join(', ')+' ('+f1(hh)+' h)')}});
-      const txt=title+':\n'+(lines.join('\n')||'(nothing selected)');
-      try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
-      try{await navigator.clipboard.writeText(txt)}catch(e){}
-      b.textContent='Saved and copied – paste it to Claude';
-      try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
-      setTimeout(()=>b.textContent='Save and send to Claude',3000)};
+      const old=document.getElementById('cfm');if(old)old.remove();
+      const ov=document.createElement('div');ov.id='cfm';ov.style.cssText='position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;padding:16px';
+      const sp=(function(){const q={...sp0};blocks.forEach(x=>{if(st.sel.has(x.id))take(q,x)});return q})();
+      const bad=['P1','P3','P4','S','T'].filter(k=>sp[k]<-0.005);
+      ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:440px;width:100%;max-height:85vh;overflow:auto"><h2 style="margin:0 0 6px;font:700 20px var(--display)">Confirm booking off</h2><p style="margin:0 0 12px;color:var(--mute);font-size:14px">'+(lines.length?'This sends your choice to Claude. Claude then books these in FireWatch using your PIN shortcut and tells you what each Confirmation Required box said. Nothing changes in FireWatch until Claude does it.':'Nothing is selected.')+'</p>'+(lines.length?'<div style="background:var(--raise);border-radius:12px;padding:6px 12px;margin-bottom:12px">'+lines.map(l=>'<div style="padding:8px 0;border-top:1px solid var(--line);font-size:14px">'+l+'</div>').join('')+'<div style="padding:8px 0;border-top:1px solid var(--line);font-weight:700">Total '+f1(tot)+' h off</div></div><p style="margin:0 0 14px;font-size:14px;color:'+(bad.length?'var(--bad)':'var(--good)')+'">'+(bad.length?'Warning: short on '+bad.map(k=>k==='S'?'specified':k==='T'?'total':k).join(', ')+' with this choice.':'Your contract targets still hold.')+'</p>':'')+'<div style="display:flex;gap:10px"><button class="btn" id="cfmNo" style="flex:1">Cancel</button>'+(lines.length?'<button class="btn primary" id="cfmYes" style="flex:2">Confirm and send</button>':'')+'</div></div>';
+      document.body.appendChild(ov);
+      $('cfmNo').onclick=()=>ov.remove();
+      const y=$('cfmYes');if(y)y.onclick=async()=>{
+        const txt=title+' – please book these in FireWatch now:\n'+lines.join('\n');
+        try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
+        let copied=false;try{await navigator.clipboard.writeText(txt);copied=true}catch(e){}
+        ov.remove();b.textContent='Sent – paste it to Claude if it did not open';
+        try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
+        setTimeout(()=>b.textContent='Save and send to Claude',4000)}};
   };
   const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
     b.onclick=async()=>{const sel=[...$(box).querySelectorAll('.offc:checked')].map(c=>c.dataset.l);
