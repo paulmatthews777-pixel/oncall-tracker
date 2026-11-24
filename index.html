@@ -164,7 +164,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v26';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v27';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Contract tracker</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -516,14 +516,14 @@ function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{con
 
 
 /* ===== Live: Winterton station planner ===== */
-const LIVE_URL='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/planner.json';
+const LIVE_URL='https://api.github.com/repos/paulmatthews777-pixel/oncall-tracker/contents/planner.json?ref=live';
 let snap=null, snapErr='';
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
 function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2)snap=x}catch(e){}}
 function setSnap(x){if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
-const CONTRACT_URL='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/contract.json';
-async function fetchContract(){try{const r=await fetch(CONTRACT_URL+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(!j||!j.t||!j.text)return;if(importedAt&&j.t<=importedAt)return;const p=parsePaste(j.text);if(!p.length)return;entries=p;source='firewatch';importedAt=j.t;save();render()}catch(e){}}
-async function fetchLive(){try{const r=await fetch(LIVE_URL+'?_='+Date.now(),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive();updChip()}
+const CONTRACT_URL='https://api.github.com/repos/paulmatthews777-pixel/oncall-tracker/contents/contract.json?ref=live';
+async function fetchContract(){try{const r=await fetch(CONTRACT_URL,{cache:'no-cache',headers:{Accept:'application/vnd.github.raw+json'}});if(!r.ok)return;const j=await r.json();if(!j||!j.t||!j.text)return;if(importedAt&&j.t<=importedAt)return;const p=parsePaste(j.text);if(!p.length)return;entries=p;source='firewatch';importedAt=j.t;save();render()}catch(e){}}
+async function fetchLive(){try{const r=await fetch(LIVE_URL,{cache:'no-cache',headers:{Accept:'application/vnd.github.raw+json'}});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive();updChip()}
 function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
 function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
 function runState(x,h){if(!x.rows.length)return'off';const c=x.rows.map(r=>r.c[h]);if(c.some(v=>v!=='g'&&v!=='a'))return'off';return c.includes('a')?'min':'full'}
