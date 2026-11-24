@@ -138,11 +138,14 @@ nav button.on svg{stroke:var(--accent)}
   <div class="stats" id="wstats"></div>
   <div class="card"><h2>Day by day</h2><div id="wdays" style="display:flex;flex-direction:column;gap:10px"></div></div>
   <div class="card"><h2>Full numbers</h2><div id="wfull" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <div class="card"><h2>Save hours: this week (to still hit 85)</h2><div id="wcur"></div></div>
+  <div class="card"><h2>Save hours: coming weeks (to still hit 85)</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
   <button class="btn" id="tw">Back to this week</button>
 </section>
 
 <section class="tab" id="t-audit">
   <div class="card"><div class="hero" id="ahero"></div></div>
+  <div class="card"><h2>Save hours: 8 week audit (to still pass)</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
   <div class="card"><h2>Specified bands</h2><div id="abands"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
   <div class="stats" id="astats"></div>
   <div class="card"><h2>What is left</h2><div id="aneed"></div></div>
@@ -157,12 +160,7 @@ nav button.on svg{stroke:var(--accent)}
   </div>
 </section>
 
-<section class="tab" id="t-off">
-  <div class="card"><div class="hero" id="ohero"></div></div>
-  <div class="card"><h2>This week: to still hit 85</h2><div id="wcur"></div></div>
-  <div class="card"><h2>8 week audit: to still pass</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
-  <div class="card"><h2>Coming weeks: to still hit 85</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
-</section>
+<div style="display:none"><div class="card"><div class="hero" id="ohero"></div></div></div>
 
 <section class="tab" id="t-data">
   <div class="card">
@@ -194,7 +192,6 @@ nav button.on svg{stroke:var(--accent)}
 <nav aria-label="Sections">
   <button class="on" data-t="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Week</button>
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
-  <button data-t="off"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/></svg>Time off</button>
   <button data-t="data"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Data</button>
 </nav>
 
