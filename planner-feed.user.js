@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.5
+// @version      1.6
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -129,7 +129,7 @@ async function tick(){
   try{
     const snap=await fwPlannerSnapshot(STATION_ID), sg=sig(snap);
     window.__plannerSnap=snap;
-    if(GM_getValue('ghtoken','')&&(sg!==lastSig||Date.now()-lastPush>5*60000)){await push(snap);lastSig=sg}
+    if(GM_getValue('ghtoken','')&&(sg!==lastSig||Date.now()-lastPush>50000)){await push(snap);lastSig=sg}
     let cOk='';try{await contractTick();cOk=' + hours'}catch(e){cOk=' (hours: '+e.message+')'}
     badge('Live feed OK'+cOk+' '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
   }catch(e){badge('Live feed: '+e.message,false)}
