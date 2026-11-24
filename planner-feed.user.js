@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.2
+// @version      1.3
 // @description  Reads the Winterton station planner in FireWatch and pushes a snapshot to the tracker app's Live tab
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -19,30 +19,45 @@ const STATION_ID=28, REPO='paulmatthews777-pixel/oncall-tracker', BRANCH='live',
 const APP='https://paulmatthews777-pixel.github.io/oncall-tracker/';
 /* Winterton planner snapshot. Shared by the userscript; runs on humberside.firewatch.cloud.
    Returns a compact object the tracker app's Live tab understands. */
-async function fwPlannerSnapshot(stationId){
-  const pad=n=>String(n).padStart(2,'0'), now=new Date();
-  const day=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T00:00:00.000Z';
-  const tok=(document.querySelector('input[name=__RequestVerificationToken]')||{}).value;
-  if(!tok)throw new Error('no token');
+async function fwDay(stationId,off,tok){
+  const pad=n=>String(n).padStart(2,'0'), d=new Date();d.setDate(d.getDate()+off);
+  const day=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T00:00:00.000Z';
   const body={SelectedDisplayType:'Day',SelectedDate:day,SelectedEndDate:day,StationIDs:[stationId],StationID:null,StationDesc:null,Bookings:true,Events:true,Defects:false,Services:false,Works:false,Exceptions:true,Detachments:true,Absences:true,Training:true,Temporary:true,Sickness:true,Qualifications:true,Fleet:true,Crewing:true,Resource:true,MaxLevels:false,Holidays:true,HolidayRequests:true,QualExclusions:true,Activities:true,Drills:true,ResourceRequests:false,RoleReassignment:true,ContractTypeID:null,ContractTypeIDs:[],WatchIDs:[],WatchDesc:'',ViewID:null,TeamID:null};
   const r=await fetch('/FireWatchWebClient/Planner/GetPlannerRows',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json','__RequestVerificationToken':tok,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(body)});
   if(!r.ok)throw new Error('planner '+r.status);
-  const j=await r.json(), A=j.ResourceContainer[0].Appliances[0];
-  const grp=n=>(A.RowChildren.find(c=>c.RowData.Description===n)||{RowChildren:[]}).RowChildren;
+  return (await r.json()).ResourceContainer[0].Appliances[0];
+}
+async function fwPlannerSnapshot(stationId){
+  const pad=n=>String(n).padStart(2,'0');
+  const tok=(document.querySelector('input[name=__RequestVerificationToken]')||{}).value;
+  if(!tok)throw new Error('no token');
   const H=[...Array(24).keys()].map(i=>pad(i));
   const light=c=>String(c||'').replace(/light-dark\(/,'').split(',')[0].replace('#','').trim();
   const cls=hex=>{const n=parseInt(hex,16);if(isNaN(n))return 'x';const R=n>>16&255,G=n>>8&255,B=n&255;if(R>200&&G<100)return 'r';if(R>200&&G>=100&&B<100)return 'a';if(G>R&&G>B)return 'g';return 'x'};
+  const E=s=>Math.round(new Date(s).getTime()/60000);
+  const t0=new Date();const base=Math.round(new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()).getTime()/60000);
+  const days=[];for(let i=0;i<4;i++)days.push(await fwDay(stationId,i,tok));
+  const grp=(A,n)=>(A.RowChildren.find(c=>c.RowData.Description===n)||{RowChildren:[]}).RowChildren;
   const rows=[];
-  for(const g of ['Crewing','Qualifications'])for(const r of grp(g)){
-    const d=r.RowData,cells=H.map(h=>{try{const p=JSON.parse(d[h]).needSlot[0];return {c:cls(light(p.colour)),n:p.cellText||''}}catch(e){return {c:'x',n:''}}});
-    rows.push({name:d.Name,min:d.Min,plan:d.Plan,c:cells.map(x=>x.c).join(''),n:cells.map(x=>x.n)});
+  for(const g of ['Crewing','Qualifications'])for(const r of grp(days[0],g)){
+    const name=r.RowData.Name;let c='',n=[];
+    for(let di=0;di<2;di++){const rr=grp(days[di],g).find(x=>x.RowData.Name===name);for(const h of H){let cell={c:'x',n:''};try{const p=JSON.parse(rr.RowData[h]).needSlot[0];cell={c:cls(light(p.colour)),n:p.cellText||''}}catch(e){}c+=cell.c;n.push(cell.n)}}
+    rows.push({name,min:r.RowData.Min,plan:r.RowData.Plan,c,n});
   }
-  const people=grp('Resource').map(r=>{const d=r.RowData;let s='';for(const h of H){try{const p=JSON.parse(d[h]).plannerItem[0];s+=(p.type==='RotaAssignment'||cls(light(p.colour))==='g')?'1':'0'}catch(e){s+='0'}}return {name:d.Name,role:d.Role||'',q:d.Call||'',on:s}});
-  return {v:1,t:Date.now(),date:day.slice(0,10),station:'Winterton',rows,people};
+  const byName={};
+  days.forEach(A=>{for(const r of grp(A,'Resource')){const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[]};
+    for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
+      const list=[cell].concat(cell.appointments||[]);
+      for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
+        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/Turn Out/i.test(tip));
+        if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
+        if(!isOn)continue;const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;o.iv.push([s-base,e-base]);}}}});
+  const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
+  return {v:2,t:Date.now(),base,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
 }
 
 let lastSig='', lastPush=0, busy=false;
-const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.on])]);
+const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv])]);
 function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap){

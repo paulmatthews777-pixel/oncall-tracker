@@ -137,6 +137,9 @@ nav button.on svg{stroke:var(--accent)}
 .lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.lrow:first-child{border-top:0}
 .lrow .d{width:10px;height:10px;border-radius:50%;flex:none;background:var(--faint)}.lrow .d.g{background:var(--good)}.lrow .d.r{background:var(--bad)}.lrow .d.a{background:var(--warn)}
 .lrow small{color:var(--mute);margin-left:auto;text-align:right;font-size:12px}
+.g-row{margin-bottom:8px}.g-n{font-size:12px;color:var(--mute);display:flex;justify-content:space-between}.g-n b{color:var(--ink);font-weight:600}
+.g-bar{display:grid;grid-template-columns:repeat(96,1fr);height:14px;border-radius:3px;overflow:hidden;background:var(--raise)}
+.g-bar i{display:block}.g-bar i.on{background:var(--good)}.g-bar i:nth-child(4n+1){box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
 </style>
 </head>
 <body>
@@ -175,10 +178,11 @@ nav button.on svg{stroke:var(--accent)}
 
 <section class="tab" id="t-live">
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
-  <div class="card"><h2>Today, hour by hour (green = on the run)</h2><div class="strip" id="lstrip"></div><div class="strip-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div></div>
+  <div class="card"><h2>Next 24 hours (green = on the run)</h2><div class="strip" id="lstrip"></div><div class="strip-l" id="lstripl"></div></div>
   <div class="card"><h2>Crewing now</h2><div id="lrows"></div></div>
   <div class="card"><h2>On now</h2><div id="lon"></div></div>
-  <div class="card"><h2>Off now</h2><div id="loff"></div></div>
+  <div class="card"><h2>Off now: next on</h2><div id="loff"></div></div>
+  <div class="card"><h2>Who is on, next 24 hours (15 min sections)</h2><div id="lgantt"></div><div class="strip-l" id="lganttl"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
@@ -490,25 +494,37 @@ function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{con
 const LIVE_URL='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/planner.json';
 let snap=null, snapErr='';
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
-function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===1)snap=x}catch(e){}}
-function setSnap(x){if(x&&x.v===1&&x.rows&&(!snap||x.t>=snap.t)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
+function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2)snap=x}catch(e){}}
+function setSnap(x){if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
 async function fetchLive(){try{const r=await fetch(LIVE_URL+'?_='+Date.now(),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive()}
 function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
 function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
+const fmT=m=>new Date(m*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/London'});
+const fmD=m=>new Date(m*60000).toLocaleDateString('en-GB',{weekday:'short',timeZone:'Europe/London'});
+const dKey=m=>new Date(m*60000).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
+function fmAt(m,nowAbs){return (dKey(m)===dKey(nowAbs)?'':fmD(m)+' ')+fmT(m)}
 function renderLive(){
-  const L=londonNow(), el=$('lhero');
-  if(!snap){el.className='live-hero stale';el.innerHTML='<b>No planner data</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';return}
-  const ageMin=Math.round((Date.now()-snap.t)/60000), stale=snap.date!==L.date||ageMin>15, h=L.hour;
-  const ok=!stale&&allGreen(snap,h);
-  const bad=snap.rows.filter(r=>r.c[h]!=='g');
+  const el=$('lhero');
+  if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';return}
+  const nowAbs=Math.floor(Date.now()/60000), rel=nowAbs-snap.base, h=Math.floor(rel/60);
+  const ageMin=Math.round((Date.now()-snap.t)/60000), stale=ageMin>15||h<0||h>47;
+  const ok=!stale&&allGreen(snap,h), bad=snap.rows.filter(r=>r.c[h]!=='g');
   el.className='live-hero '+(stale?'stale':(ok?'go':'stop'));
-  el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?(snap.date!==L.date?'Planner data is from '+snap.date:'Last updated '+ageMin+' min ago')+'. Do not rely on this':(ok?'All crewing rows green this hour':'Not green: '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
-  $('lstrip').innerHTML=[...Array(24).keys()].map(i=>{const c=snap.date!==L.date?'':(allGreen(snap,i)?'g':(snap.rows.some(r=>r.c[i]==='r')?'r':'a'));return '<i class="'+c+(i===h?' now':'')+'" title="'+String(i).padStart(2,'0')+':00"></i>'}).join('');
+  el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(ok?'All crewing rows green this hour':'Not green: '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
+  if(h<0||h>47)return;
+  const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
+  $('lstrip').style.gridTemplateColumns='repeat('+hs.length+',1fr)';
+  $('lstrip').innerHTML=hs.map((i,k)=>{const c=allGreen(snap,i)?'g':(snap.rows.some(r=>r.c[i]==='r')?'r':'a');return '<i class="'+c+(k===0?' now':'')+'" title="'+fmT(snap.base+i*60)+'"></i>'}).join('');
+  $('lstripl').innerHTML=[0,6,12,18,23].filter(k=>k<hs.length).map(k=>'<span>'+fmT(snap.base+hs[k]*60)+'</span>').join('');
   $('lrows').innerHTML=snap.rows.map(r=>'<div class="lrow"><span class="d '+(r.c[h]==='x'?'':r.c[h])+'"></span>'+r.name+'<small>'+(r.n[h]||'0')+' of '+r.min+' needed</small></div>').join('');
-  const on=snap.people.filter(p=>p.on[h]==='1'), off=snap.people.filter(p=>p.on[h]!=='1');
-  const row=(p,c)=>'<div class="lrow"><span class="d '+c+'"></span>'+p.name+'<small>'+p.role+(p.q?' · '+p.q:'')+'</small></div>';
-  $('lon').innerHTML=on.length?on.map(p=>row(p,'g')).join(''):'<p class="note">Nobody on</p>';
-  $('loff').innerHTML=off.map(p=>row(p,'')).join('');
+  const P=snap.people.map(p=>{const cur=p.iv.find(v=>v[0]<=rel&&rel<v[1]);const nxt=p.iv.find(v=>v[0]>rel);return Object.assign({},p,{cur,nxt})});
+  const absOf=m=>snap.base+m, sub=p=>p.role+(p.q?' · '+p.q:'');
+  const on=P.filter(p=>p.cur).sort((a,b)=>a.cur[1]-b.cur[1]), off=P.filter(p=>!p.cur).sort((a,b)=>(a.nxt?a.nxt[0]:1e9)-(b.nxt?b.nxt[0]:1e9));
+  $('lon').innerHTML=on.length?on.map(p=>{const next=p.iv.find(v=>v[0]>p.cur[1]);return '<div class="lrow"><span class="d g"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):'')+'</small></div>'}).join(''):'<p class="note">Nobody on</p>';
+  $('loff').innerHTML=off.map(p=>'<div class="lrow"><span class="d"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>'+(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days')+'</small></div>').join('');
+  const t0=Math.floor(rel/15)*15, order=on.concat(off.filter(p=>p.nxt&&p.nxt[0]<t0+1440),off.filter(p=>!(p.nxt&&p.nxt[0]<t0+1440)));
+  $('lgantt').innerHTML=order.map(p=>{let cells='';for(let k=0;k<96;k++){const t=t0+k*15;cells+='<i'+(p.iv.some(v=>v[0]<=t&&t<v[1])?' class="on"':'')+'></i>'}return '<div class="g-row"><div class="g-n"><b>'+p.name+'</b><span>'+p.role+'</span></div><div class="g-bar">'+cells+'</div></div>'}).join('');
+  $('lganttl').innerHTML=[0,24,48,72,95].map(k=>'<span>'+fmT(snap.base+t0+k*15)+'</span>').join('');
 }
 $('lrefresh').onclick=fetchLive;
 
