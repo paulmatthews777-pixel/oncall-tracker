@@ -130,8 +130,8 @@ nav button.on svg{stroke:var(--accent)}
 .live-hero span{display:block;margin-top:6px;font-size:14px;color:var(--mute)}
 .live-hero.go{background:rgba(51,214,134,.14);border-color:rgba(51,214,134,.5)}.live-hero.go b{color:var(--good)}
 .live-hero.stop{background:rgba(255,48,48,.14);border-color:rgba(255,48,48,.5)}.live-hero.stop b{color:var(--bad)}
-.live-hero.min{background:rgba(255,214,10,.14);border-color:rgba(255,214,10,.5)}.live-hero.min b{color:#ffd60a}
-.q i.a{background:#ffd60a}.tag.a{background:rgba(255,214,10,.18);color:#ffd60a}
+.live-hero.min{background:rgba(255,179,64,.14);border-color:rgba(255,179,64,.5)}.live-hero.min b{color:var(--warn)}
+.hr .q i.a{background:var(--warn)}.qh .tag.a{background:rgba(255,179,64,.18);color:var(--warn)}
 .live-hero.stale{background:rgba(255,179,64,.12);border-color:rgba(255,179,64,.45)}.live-hero.stale b{color:var(--warn)}
 .strip{display:grid;grid-template-columns:repeat(24,1fr);gap:2px}
 .strip i{height:26px;border-radius:4px;background:var(--raise)}.strip i.g{background:var(--good)}.strip i.r{background:var(--bad)}.strip i.a{background:var(--warn)}.strip i.now{outline:2px solid #fff;outline-offset:1px}
@@ -164,7 +164,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v25';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v26';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Contract tracker</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -326,7 +326,7 @@ function render(){
 
 function updChip(){const src=$('src');if(!src||!entries.length)return;if(source==='example'){src.textContent='Example data';src.className='chip warn';return}
  const tt=Math.max(importedAt||0,(source==='firewatch'&&snap&&snap.t)?snap.t:0),age=tt?(Date.now()-tt)/60000:1e9;
- if(age<=5){src.textContent='\u25CF Live \u00B7 '+new Date(tt).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit'});src.className='chip';src.style.color='#33d686';src.style.borderColor='rgba(51,214,134,.5)'}
+ if(age<=10){src.textContent='\u25CF Live \u00B7 '+new Date(tt).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit'});src.className='chip';src.style.color='#33d686';src.style.borderColor='rgba(51,214,134,.5)'}
  else{src.textContent='Updated '+(tt?new Date(tt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'from FireWatch');src.className='chip'+(age>20?' warn':'');src.style.color='';src.style.borderColor=''}
 }
 const cell=(l,v,cls)=>'<div class="fc"><small>'+l+'</small><b'+(cls?' class="'+cls+'"':'')+'>'+v+'</b></div>';
