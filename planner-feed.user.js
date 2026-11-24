@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.9
+// @version      1.10
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -25,17 +25,17 @@ async function fwDay(stationId,off,tok){
   const body={SelectedDisplayType:'Day',SelectedDate:day,SelectedEndDate:day,StationIDs:[stationId],StationID:null,StationDesc:null,Bookings:true,Events:true,Defects:false,Services:false,Works:false,Exceptions:true,Detachments:true,Absences:true,Training:true,Temporary:true,Sickness:true,Qualifications:true,Fleet:true,Crewing:true,Resource:true,MaxLevels:false,Holidays:true,HolidayRequests:true,QualExclusions:true,Activities:true,Drills:true,ResourceRequests:false,RoleReassignment:true,ContractTypeID:null,ContractTypeIDs:[],WatchIDs:[],WatchDesc:'',ViewID:null,TeamID:null};
   const r=await fetch('/FireWatchWebClient/Planner/GetPlannerRows',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json','__RequestVerificationToken':tok,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
   if(!r.ok)throw new Error('planner '+r.status);
-  return (await r.json()).ResourceContainer[0].Appliances[0];
+  const j=(await r.json()).ResourceContainer[0],A=j.Appliances[0];A.__root=j;return A;
 }
 const tipName=t=>String(t||'').split(/[\r\n]+|<br\s*\/?>/i).map(x=>x.replace(/<[^>]*>/g,'').trim()).filter(x=>x&&!/^\w{3} \d+ \w+ \d\d:\d\d - /.test(x)).join(' / ').slice(0,70);
 let scanDone=false,scanTypes={};
 async function fwScan(stationId,tok){
   const light=c=>String(c||'').replace(/light-dark\(/,'').split(',')[0].replace('#','').trim();
-  for(const off of [-1,-2,-3,-4,-5,-6,-7,4,5,6,7,8,9,10]){
+  for(const off of [-1,-2,-3,-4,-5,-6,-7,-14,-21,-28,-35,-42,-49,-56,4,5,6,7,8,9,10,14,21,28]){
     try{const A=await fwDay(stationId,off,tok);
-    const g=(A.RowChildren.find(c=>c.RowData.Description==='Resource')||{RowChildren:[]}).RowChildren;
+    const rr0=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');const g=((A.RowChildren.find(c=>c.RowData.Description==='Resource')||{RowChildren:[]}).RowChildren).concat(rr0?rr0.RowChildren:[]);
     for(const r of g)for(const h in r.RowData){let c;try{c=JSON.parse(r.RowData[h]).plannerItem[0]}catch(e){continue}
-      for(const it of [c].concat(c.appointments||[])){if(!it.type||it.type==='RotaAssignment')continue;
+      for(const it of [c].concat(c.appointments||[])){if(!it.type)continue;
         const k=String(it.type)+'|'+tipName(it.tooltip)+'|'+light(it.colour);scanTypes[k]=(scanTypes[k]||0)+1}}}catch(e){}
   }
   scanDone=true;
@@ -58,7 +58,7 @@ async function fwPlannerSnapshot(stationId){
     rows.push({name,min:r.RowData.Min,plan:r.RowData.Plan,c,n});
   }
   const byName={},types={},seenB=new Set();
-  days.forEach(A=>{for(const r of grp(A,'Resource')){const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
+  days.forEach(A=>{const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');const seenN=new Set();for(const r of grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[])){if(seenN.has(r.RowData.Name))continue;seenN.add(r.RowData.Name);const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
     for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
       const list=[cell].concat(cell.appointments||[]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
