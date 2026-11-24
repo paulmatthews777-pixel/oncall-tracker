@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.6
+// @version      1.7
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -23,7 +23,7 @@ async function fwDay(stationId,off,tok){
   const pad=n=>String(n).padStart(2,'0'), d=new Date();d.setDate(d.getDate()+off);
   const day=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T00:00:00.000Z';
   const body={SelectedDisplayType:'Day',SelectedDate:day,SelectedEndDate:day,StationIDs:[stationId],StationID:null,StationDesc:null,Bookings:true,Events:true,Defects:false,Services:false,Works:false,Exceptions:true,Detachments:true,Absences:true,Training:true,Temporary:true,Sickness:true,Qualifications:true,Fleet:true,Crewing:true,Resource:true,MaxLevels:false,Holidays:true,HolidayRequests:true,QualExclusions:true,Activities:true,Drills:true,ResourceRequests:false,RoleReassignment:true,ContractTypeID:null,ContractTypeIDs:[],WatchIDs:[],WatchDesc:'',ViewID:null,TeamID:null};
-  const r=await fetch('/FireWatchWebClient/Planner/GetPlannerRows',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json','__RequestVerificationToken':tok,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(body)});
+  const r=await fetch('/FireWatchWebClient/Planner/GetPlannerRows',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json','__RequestVerificationToken':tok,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
   if(!r.ok)throw new Error('planner '+r.status);
   return (await r.json()).ResourceContainer[0].Appliances[0];
 }
@@ -67,7 +67,7 @@ const CBODY={"SelectedDisplayType":"Day","SelectedDate":null,"SelectedEndDate":n
 function cRecords(grid){const j=grid.indexOf('"Records":');if(j<0)return[];const s=grid.indexOf('[',j);let depth=0,inStr=false,esc=false,k=s;for(;k<grid.length;k++){const c=grid[k];if(inStr){if(esc)esc=false;else if(c==='\\')esc=true;else if(c==='"')inStr=false;continue}if(c==='"')inStr=true;else if(c==='[')depth++;else if(c===']'){depth--;if(depth===0)break}}return JSON.parse(grid.slice(s,k+1))}
 async function cWeek(monday,tok){
   const body=Object.assign({},CBODY,{SelectedDate:cIso(monday)+'T00:00:00.000Z'});
-  const r=await fetch('/FireWatchWebClient/Calendar/GetEmployeeCalendar',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','X-Requested-With':'XMLHttpRequest','__RequestVerificationToken':tok},body:JSON.stringify(body)});
+  const r=await fetch('/FireWatchWebClient/Calendar/GetEmployeeCalendar',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','X-Requested-With':'XMLHttpRequest','__RequestVerificationToken':tok},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
   if(r.status!==200)throw new Error('calendar '+r.status);
   const arr=JSON.parse(await r.text()),grid=arr.find(a=>a.updateTargetId==='employeeCalendarGridContainer');
   if(!grid)throw new Error('calendar grid missing');
@@ -110,7 +110,7 @@ async function contractTick(){
 
 let lastSig='', lastPush=0, busy=false;
 const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv])]);
-function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
+function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,timeout:20000,onload:r=>res(r),onerror:()=>rej(new Error('network')),ontimeout:()=>rej(new Error('timeout')),onabort:()=>rej(new Error('abort'))})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap,file,label){
   file=file||FILE;label=label||'planner';
@@ -119,7 +119,7 @@ async function push(snap,file,label){
     if(g.status!==200&&g.status!==404)throw new Error('get '+g.status+' '+(g.responseText||'').slice(0,60));
     const sha=g.status===200?JSON.parse(g.responseText).sha:undefined;
     const r=await gh('PUT','/contents/'+file,{message:label+' '+new Date(snap.t).toISOString().slice(11,16),content:b64(JSON.stringify(snap)),branch:BRANCH,sha});
-    if(r.status<300){if(file===FILE)lastPush=Date.now();return}
+    if(r.status<300){if(file===FILE){lastPush=Date.now();GM_setValue('lastPush',lastPush)}return}
     if(i===2||(r.status!==409&&r.status!==422))throw new Error('push '+r.status+' '+(r.responseText||'').slice(0,80));
     await new Promise(x=>setTimeout(x,1500));
   }
@@ -130,13 +130,25 @@ async function tick(){
     const snap=await fwPlannerSnapshot(STATION_ID), sg=sig(snap);
     window.__plannerSnap=snap;
     if(GM_getValue('ghtoken','')&&(sg!==lastSig||Date.now()-lastPush>50000)){await push(snap);lastSig=sg}
-    let cOk='';try{await contractTick();cOk=' + hours'}catch(e){cOk=' (hours: '+e.message+')'}
-    badge('Live feed OK'+cOk+' '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
+    badge('Live feed OK '+cMsg+' '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
   }catch(e){badge('Live feed: '+e.message,false)}
-  busy=false;
+  finally{busy=false}
+}
+let cBusy=false,cMsg='';
+async function cTick(){
+  if(cBusy)return;cBusy=true;
+  try{await contractTick();cMsg='+ hours'}catch(e){cMsg='(hours: '+e.message+')'}
+  finally{cBusy=false}
+}
+/* watchdog: no successful planner push for 10 min -> reload tab once per 10 min (fresh session + token) */
+if(!GM_getValue('lastPush',0))GM_setValue('lastPush',Date.now());
+function watchdog(){
+  if(!GM_getValue('ghtoken',''))return;
+  const now=Date.now();
+  if(now-GM_getValue('lastPush',now)>10*60000&&now-GM_getValue('lastReload',0)>10*60000){GM_setValue('lastReload',now);location.reload()}
 }
 let b;function badge(t,ok){if(!b){b=document.createElement('div');b.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99999;font:11px sans-serif;padding:3px 8px;border-radius:10px;color:#fff;opacity:.8';document.body.appendChild(b)}b.style.background=ok?'#1a7f4b':'#b42318';b.textContent=t}
 GM_registerMenuCommand('Set GitHub token for live feed',()=>{const t=prompt('Paste the GitHub token (contents: read and write on oncall-tracker)');if(t)GM_setValue('ghtoken',t.trim())});
 GM_registerMenuCommand('Open Live in tracker app',async()=>{const s=await fwPlannerSnapshot(STATION_ID);window.open(APP+'#p='+btoa(unescape(encodeURIComponent(JSON.stringify(s)))).replace(/\+/g,'-').replace(/\//g,'_'),'_blank')});
-setTimeout(tick,4000);setInterval(tick,60000);
+setTimeout(tick,4000);setInterval(tick,60000);setTimeout(cTick,15000);setInterval(cTick,5*60000);setInterval(watchdog,60000);
 })();
