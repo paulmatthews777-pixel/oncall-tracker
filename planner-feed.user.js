@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.3
+// @version      1.4
 // @description  Reads the Winterton station planner in FireWatch and pushes a snapshot to the tracker app's Live tab
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -49,7 +49,7 @@ async function fwPlannerSnapshot(stationId){
     for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
       const list=[cell].concat(cell.appointments||[]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
-        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/Turn Out/i.test(tip));
+        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call - (Available|Turn Out)/i.test(tip));
         if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
         if(!isOn)continue;const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;o.iv.push([s-base,e-base]);}}}});
   const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
