@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.1
+// @version      1.2
 // @description  Reads the Winterton station planner in FireWatch and pushes a snapshot to the tracker app's Live tab
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -43,7 +43,7 @@ async function fwPlannerSnapshot(stationId){
 
 let lastSig='', lastPush=0, busy=false;
 const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.on])]);
-function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path,headers:{'Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
+function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,onload:r=>res(r),onerror:rej})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap){
   for(let i=0;i<3;i++){
