@@ -341,16 +341,24 @@ function extras(w,r,audit,sub,specT,totT,now){
     return rows;};
   const mergeParts=ps=>{const o=[];ps.forEach(p=>{const l=o[o.length-1];if(l&&l.e===p.s){l.e=p.e;l.h+=p.h}else o.push({s:p.s,e:p.e,h:p.h})});return o};
   const rowH=x=>{const lab=DAYN[(x.dn+3)%7]+' '+fm(x.dn);
-    if(x.off)return '<div class="kv"><span>'+lab+'</span><b style="color:var(--good)">Book off all day · '+f1(x.tot)+' h</b></div>';
-    if(x.parts.length){const m=mergeParts(x.parts);return '<div class="kv"><span>'+lab+'</span><b style="color:var(--good)">Part day · '+f1(x.partH)+' h free<br><span style="font-weight:400;color:var(--mute);font-size:12px">'+m.map(p=>p.s+'–'+p.e).join(', ')+'</span></b></div>'}
+    const cb=t=>'<input type="checkbox" class="offc" checked data-l="'+t+'" style="margin-right:8px;accent-color:var(--accent);width:18px;height:18px;vertical-align:middle">';
+    if(x.off)return '<div class="kv"><span>'+cb(lab+' all day ('+f1(x.tot)+' h)')+lab+'</span><b style="color:var(--good)">Book off all day · '+f1(x.tot)+' h</b></div>';
+    if(x.parts.length){const m=mergeParts(x.parts);return '<div class="kv"><span>'+cb(lab+' '+m.map(p=>p.s+'-'+p.e).join(', ')+' ('+f1(x.partH)+' h)')+lab+'</span><b style="color:var(--good)">Part day · '+f1(x.partH)+' h free<br><span style="font-weight:400;color:var(--mute);font-size:12px">'+m.map(p=>p.s+'–'+p.e).join(', ')+'</span></b></div>'}
     return '<div class="kv"><span>'+lab+'</span><b style="color:var(--mute)">Keep · '+f1(x.tot)+' h</b></div>'};
+  const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
+    b.onclick=async()=>{const sel=[...$(box).querySelectorAll('.offc:checked')].map(c=>c.dataset.l);
+      const txt=title+':\n'+(sel.join('\n')||'(nothing selected)');
+      try{localStorage.setItem('oncall-offsel-'+btn,JSON.stringify({at:Date.now(),sel}))}catch(e){}
+      try{await navigator.clipboard.writeText(txt)}catch(e){}
+      b.textContent='Saved and copied – paste it to Claude';
+      try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
+      setTimeout(()=>b.textContent=label,3000)}};
   const freeH=x=>x.off?x.tot:(x.partH||0);
   const listTxt=rows=>rows.filter(x=>freeH(x)>0.005).map(x=>DAYN[(x.dn+3)%7]+' '+fm(x.dn)+(x.off?' all day':' '+mergeParts(x.parts).map(p=>p.s+'-'+p.e).join(', '))+' ('+f1(freeH(x))+' h)').join('\n');
   const sp={P1:r.all.P1-T.P1,P3:r.all.P3-T.P3,P4:r.all.P4-T.P4,S:r.all.S+r.all.ABS-specT,T:r.all.T-totT};
   const arows=planDays(sp,today+1,dayNum(audit)), afh=arows.reduce((q,x)=>q+freeH(x),0), adays=arows.filter(x=>x.off).length;
   $('afree').innerHTML=arows.length?kv('Whole days you can drop',adays+' day'+(adays===1?'':'s'))+kv('Total hours you can drop',f1(afh)+' h')+kv('Spare left after that','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)))+arows.map(rowH).join('')+'<p class="rule" style="margin-top:10px">Whole days are dropped first, in date order. Then single blocks on the other days. Every audit target (P1, P3, P4, specified, total) still holds with everything marked free removed together.</p>':'<p class="note">No future on-call booked in this audit.</p>';
-  window.__off=listTxt(arows);
-  $('copyoff').onclick=()=>{try{navigator.clipboard.writeText('Book off:\n'+window.__off);$('copyoff').textContent='Copied'}catch(e){$('copyoff').textContent='Copy failed'}setTimeout(()=>$('copyoff').textContent='Copy list to book in FireWatch',1800)};
+  wireSave('afree','copyoff','Book me off (8 week audit)','Save and send to Claude');
   // week on week: each week against its own weekly targets
   let wh='',wTot=0,curH=0,curHtml='<p class="note">Nothing booked this week.</p>';
   for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
@@ -362,7 +370,8 @@ function extras(w,r,audit,sub,specT,totT,now){
     wTot+=h;
     wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
-  $('wcur').innerHTML=curHtml;
+  $('wcur').innerHTML=curHtml+'<button class="btn primary" id="savewk" style="margin-top:12px"></button>';
+  wireSave('wcur','savewk','Book me off (this week)','Save and send to Claude');
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
