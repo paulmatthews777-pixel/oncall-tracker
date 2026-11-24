@@ -341,10 +341,58 @@ function extras(w,r,audit,sub,specT,totT,now){
     return rows;};
   const mergeParts=ps=>{const o=[];ps.forEach(p=>{const l=o[o.length-1];if(l&&l.e===p.s){l.e=p.e;l.h+=p.h}else o.push({s:p.s,e:p.e,h:p.h})});return o};
   const rowH=x=>{const lab=DAYN[(x.dn+3)%7]+' '+fm(x.dn);
-    const cb=t=>'<input type="checkbox" class="offc" checked data-l="'+t+'" style="margin-right:8px;accent-color:var(--accent);width:18px;height:18px;vertical-align:middle">';
+    const cb=t=>'';
     if(x.off)return '<div class="kv"><span>'+cb(lab+' all day ('+f1(x.tot)+' h)')+lab+'</span><b style="color:var(--good)">Book off all day · '+f1(x.tot)+' h</b></div>';
     if(x.parts.length){const m=mergeParts(x.parts);return '<div class="kv"><span>'+cb(lab+' '+m.map(p=>p.s+'-'+p.e).join(', ')+' ('+f1(x.partH)+' h)')+lab+'</span><b style="color:var(--good)">Part day · '+f1(x.partH)+' h free<br><span style="font-weight:400;color:var(--mute);font-size:12px">'+m.map(p=>p.s+'–'+p.e).join(', ')+'</span></b></div>'}
     return '<div class="kv"><span>'+lab+'</span><b style="color:var(--mute)">Keep · '+f1(x.tot)+' h</b></div>'};
+  const STRATS=['Earliest days first','Latest days first','Unspecified hours first','Biggest days first'];
+  const savers={};
+  const saver=(boxId,btnId,title,sp0,from,to)=>{
+    const box=$(boxId); if(!box)return;
+    const blocks=[];
+    for(let dn=from;dn<to;dn++){const ds=iso(dn);
+      entries.filter(e=>e.date===ds&&COUNTS.includes(e.type)&&entryHours(e)>0.005&&['P1','P3','P4','U'].includes(e.band)).sort((a,b)=>a.start.localeCompare(b.start)).forEach(e=>blocks.push({id:dn+'|'+e.start+'|'+e.end,dn,s:e.start,e:e.end,h:entryHours(e),b:e.band}))}
+    const st=savers[boxId]||(savers[boxId]={k:0,sel:null,open:new Set(),edit:false});
+    const fits=(sp,b)=>sp.T-b.h>=-0.005&&(b.b==='U'||(sp[b.b]-b.h>=-0.005&&sp.S-b.h>=-0.005));
+    const take=(sp,b)=>{sp.T-=b.h;if(b.b!=='U'){sp[b.b]-=b.h;sp.S-=b.h}};
+    const suggest=k=>{const sp={...sp0};let order=blocks.slice();
+      if(k===1)order.reverse();
+      if(k===2)order=blocks.filter(b=>b.b==='U').concat(blocks.filter(b=>b.b!=='U'));
+      if(k===3){const dt={};blocks.forEach(b=>dt[b.dn]=(dt[b.dn]||0)+b.h);order.sort((a,b)=>dt[b.dn]-dt[a.dn]||a.dn-b.dn||a.s.localeCompare(b.s))}
+      const sel=new Set();order.forEach(b=>{if(fits(sp,b)){take(sp,b);sel.add(b.id)}});return sel};
+    if(!st.sel)st.sel=suggest(st.k);
+    const draw=()=>{
+      const sp={...sp0};let free=0;blocks.forEach(b=>{if(st.sel.has(b.id)){take(sp,b);free+=b.h}});
+      const bad=['P1','P3','P4','S','T'].filter(k=>sp[k]<-0.005), nm={P1:'P1',P3:'P3',P4:'P4',S:'specified',T:'total'};
+      let h='<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px"><button class="btn" id="'+boxId+'p" style="flex:0 0 44px;padding:10px 0">‹</button><div style="flex:1;text-align:center;font-weight:600">'+STRATS[st.k]+'</div><button class="btn" id="'+boxId+'n" style="flex:0 0 44px;padding:10px 0">›</button></div>';
+      h+=kv('Taking off',f1(free)+' h')+kv('Spare left after','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)));
+      h+='<div class="kv"><span>Targets</span><b style="color:'+(bad.length?'var(--bad)':'var(--good)')+'">'+(bad.length?'Short: '+bad.map(k=>nm[k]+' by '+f1(-sp[k])+' h').join(', '):'All still hold')+'</b></div>';
+      const days=[...new Set(blocks.map(b=>b.dn))];
+      days.forEach(dn=>{const bs=blocks.filter(b=>b.dn===dn),fh=bs.filter(b=>st.sel.has(b.id)).reduce((q,b)=>q+b.h,0),all=bs.reduce((q,b)=>q+b.h,0);
+        h+='<details class="day" data-dn="'+dn+'"'+((st.edit||st.open.has(dn))?' open':'')+' style="margin-top:8px"><summary><span class="dl">'+DAYN[(dn+3)%7]+' '+fm(dn)+'<small>'+(fh>0.005?(fh>=all-0.005?'Off all day':f1(fh)+' h off'):'Working all day')+'</small></span><span class="dr" style="color:'+(fh>0.005?'var(--good)':'var(--mute)')+'">'+f1(fh)+' h<small>of '+f1(all)+'</small></span></summary><div style="padding-bottom:10px">'
+          +bs.map(b=>'<label class="shift" style="cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:10px;padding:8px 0;flex:0 0 auto;font-size:13px;color:var(--ink)"><input type="checkbox" data-id="'+b.id+'"'+(st.sel.has(b.id)?' checked':'')+' style="accent-color:var(--accent);width:20px;height:20px"><span class="tm">'+b.s+'–'+b.e+'</span><span class="ty">'+b.b+'</span><span class="hb">'+f1(b.h)+'</span></label>').join('')+'</div></details>'});
+      h+='<button class="btn" id="'+boxId+'e" style="margin-top:12px">'+(st.edit?'Done editing':'Edit hours')+'</button>';
+      box.innerHTML=h;
+      $(boxId+'p').onclick=()=>{st.k=(st.k+STRATS.length-1)%STRATS.length;st.sel=suggest(st.k);draw()};
+      $(boxId+'n').onclick=()=>{st.k=(st.k+1)%STRATS.length;st.sel=suggest(st.k);draw()};
+      $(boxId+'e').onclick=()=>{st.edit=!st.edit;draw()};
+      box.querySelectorAll('details.day').forEach(d=>d.ontoggle=()=>{const dn=+d.dataset.dn;if(d.open)st.open.add(dn);else st.open.delete(dn)});
+      box.querySelectorAll('input[type=checkbox]').forEach(c=>c.onchange=()=>{if(c.checked)st.sel.add(c.dataset.id);else st.sel.delete(c.dataset.id);draw()});
+    };
+    draw();
+    const b=$(btnId); b.textContent='Save and send to Claude';
+    b.onclick=async()=>{const lines=[];
+      [...new Set(blocks.map(x=>x.dn))].forEach(dn=>{const bs=blocks.filter(x=>x.dn===dn),ch=bs.filter(x=>st.sel.has(x.id));if(!ch.length)return;
+        const hh=ch.reduce((q,x)=>q+x.h,0);
+        if(ch.length===bs.length){lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' all day ('+f1(hh)+' h)')}
+        else{const m=[];ch.forEach(x=>{const l=m[m.length-1];if(l&&l.e===x.s)l.e=x.e;else m.push({s:x.s,e:x.e})});lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' '+m.map(x=>x.s+'-'+x.e).join(', ')+' ('+f1(hh)+' h)')}});
+      const txt=title+':\n'+(lines.join('\n')||'(nothing selected)');
+      try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
+      try{await navigator.clipboard.writeText(txt)}catch(e){}
+      b.textContent='Saved and copied – paste it to Claude';
+      try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
+      setTimeout(()=>b.textContent='Save and send to Claude',3000)};
+  };
   const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
     b.onclick=async()=>{const sel=[...$(box).querySelectorAll('.offc:checked')].map(c=>c.dataset.l);
       const txt=title+':\n'+(sel.join('\n')||'(nothing selected)');
@@ -356,22 +404,24 @@ function extras(w,r,audit,sub,specT,totT,now){
   const freeH=x=>x.off?x.tot:(x.partH||0);
   const listTxt=rows=>rows.filter(x=>freeH(x)>0.005).map(x=>DAYN[(x.dn+3)%7]+' '+fm(x.dn)+(x.off?' all day':' '+mergeParts(x.parts).map(p=>p.s+'-'+p.e).join(', '))+' ('+f1(freeH(x))+' h)').join('\n');
   const sp={P1:r.all.P1-T.P1,P3:r.all.P3-T.P3,P4:r.all.P4-T.P4,S:r.all.S+r.all.ABS-specT,T:r.all.T-totT};
+  const sp0a={...sp};
   const arows=planDays(sp,today+1,dayNum(audit)), afh=arows.reduce((q,x)=>q+freeH(x),0), adays=arows.filter(x=>x.off).length;
-  $('afree').innerHTML=arows.length?kv('Whole days you can drop',adays+' day'+(adays===1?'':'s'))+kv('Total hours you can drop',f1(afh)+' h')+kv('Spare left after that','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)))+arows.map(rowH).join('')+'<p class="rule" style="margin-top:10px">Whole days are dropped first, in date order. Then single blocks on the other days. Every audit target (P1, P3, P4, specified, total) still holds with everything marked free removed together.</p>':'<p class="note">No future on-call booked in this audit.</p>';
-  wireSave('afree','copyoff','Book me off (8 week audit)','Save and send to Claude');
+  $('afree').innerHTML='<div id="asv"></div>';
+  saver('asv','copyoff','Book me off (8 week audit)',{...sp0a},today+1,dayNum(audit));
   // week on week: each week against its own weekly targets
-  let wh='',wTot=0,curH=0,curHtml='<p class="note">Nothing booked this week.</p>';
+  let wh='',wTot=0,curH=0,curW=null,curHtml='<p class="note">Nothing booked this week.</p>';
   for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
     const x=calcRange(entries,m,m+7,now); if(x.all.T<0.005)continue;
     const wsp={P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT};
     const rows=planDays(wsp,Math.max(m,today+1),m+7), h=rows.reduce((q,y)=>q+freeH(y),0);
+    if(m===mondayNum(today)){curH=h;curW={wsp:{P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT},from:Math.max(m,today+1),to:m+7};curHtml=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+'<div id="wsv"></div><button class="btn primary" id="savewk" style="margin-top:12px"></button><p class="rule" style="margin-top:10px">Targets for the week: 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
     const body=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+kv('You can take off',f1(h)+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>');
     if(m===mondayNum(today)){curH=h;curHtml=body+'<p class="rule" style="margin-top:10px">Keeps this week at 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
     wTot+=h;
     wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
-  $('wcur').innerHTML=curHtml+'<button class="btn primary" id="savewk" style="margin-top:12px"></button>';
-  wireSave('wcur','savewk','Book me off (this week)','Save and send to Claude');
+  $('wcur').innerHTML=curHtml;
+  if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from,curW.to);
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
