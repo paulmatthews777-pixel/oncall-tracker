@@ -130,6 +130,8 @@ nav button.on svg{stroke:var(--accent)}
 .live-hero span{display:block;margin-top:6px;font-size:14px;color:var(--mute)}
 .live-hero.go{background:rgba(51,214,134,.14);border-color:rgba(51,214,134,.5)}.live-hero.go b{color:var(--good)}
 .live-hero.stop{background:rgba(255,48,48,.14);border-color:rgba(255,48,48,.5)}.live-hero.stop b{color:var(--bad)}
+.live-hero.min{background:rgba(255,214,10,.14);border-color:rgba(255,214,10,.5)}.live-hero.min b{color:#ffd60a}
+.q i.a{background:#ffd60a}.tag.a{background:rgba(255,214,10,.18);color:#ffd60a}
 .live-hero.stale{background:rgba(255,179,64,.12);border-color:rgba(255,179,64,.45)}.live-hero.stale b{color:var(--warn)}
 .strip{display:grid;grid-template-columns:repeat(24,1fr);gap:2px}
 .strip i{height:26px;border-radius:4px;background:var(--raise)}.strip i.g{background:var(--good)}.strip i.r{background:var(--bad)}.strip i.a{background:var(--warn)}.strip i.now{outline:2px solid #fff;outline-offset:1px}
@@ -193,7 +195,7 @@ nav button.on svg{stroke:var(--accent)}
 
 <section class="tab" id="t-live">
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
-  <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. A 15 minute slot is on the run only if every row is green for the whole slot.</p><div id="lhours"></div></div>
+  <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. Green: full crew (5+). Yellow: minimal crewing (4 with 2 BA, 1 OIC, 1 ERD), still on the run. Red: short or missing a required skill, off the run.</p><div id="lhours"></div></div>
   <div class="card"><h2>On now</h2><div id="lon"></div></div>
   <div class="card"><h2>Off now: next on</h2><div id="loff"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
@@ -514,6 +516,7 @@ async function fetchContract(){try{const r=await fetch(CONTRACT_URL+'?_='+Date.n
 async function fetchLive(){try{const r=await fetch(LIVE_URL+'?_='+Date.now(),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive()}
 function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
 function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
+function runState(x,h){if(!x.rows.length)return'off';const c=x.rows.map(r=>r.c[h]);if(c.some(v=>v!=='g'&&v!=='a'))return'off';return c.includes('a')?'min':'full'}
 const fmT=m=>new Date(m*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/London'});
 const fmD=m=>new Date(m*60000).toLocaleDateString('en-GB',{weekday:'short',timeZone:'Europe/London'});
 const dKey=m=>new Date(m*60000).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
@@ -523,9 +526,9 @@ function renderLive(){
   if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';return}
   const nowAbs=Math.floor(Date.now()/60000), rel=nowAbs-snap.base, h=Math.floor(rel/60);
   const ageMin=Math.round((Date.now()-snap.t)/60000), stale=ageMin>15||h<0||h>47;
-  const ok=!stale&&allGreen(snap,h), bad=snap.rows.filter(r=>r.c[h]!=='g');
-  el.className='live-hero '+(stale?'stale':(ok?'go':'stop'));
-  el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(ok?'All crewing rows green this hour':'Not green: '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
+  const st=stale?'stale':runState(snap,h), ok=st==='full'||st==='min', bad=snap.rows.filter(r=>r.c[h]!=='g'&&r.c[h]!=='a'), amb=snap.rows.filter(r=>r.c[h]==='a');
+  el.className='live-hero '+(stale?'stale':(st==='full'?'go':(st==='min'?'min':'stop')));
+  el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(st==='full'?'All crewing rows green this hour':st==='min'?'Minimal crewing (yellow): '+amb.map(r=>r.name+' '+r.n[h]).join(', '):'Short (red): '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
   if(h<0||h>47)return;
   const P=snap.people.map(p=>{const cur=p.iv.find(v=>v[0]<=rel&&rel<v[1]);const nxt=p.iv.find(v=>v[0]>rel);return Object.assign({},p,{cur,nxt})});
   const absOf=m=>snap.base+m, sub=p=>p.role+(p.q?' · '+p.q:'');
@@ -534,17 +537,17 @@ function renderLive(){
   $('loff').innerHTML=off.map(p=>'<div class="lrow"><span class="d"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>'+(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days')+'</small></div>').join('');
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
   const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');
-  const need={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
-  const slot=t=>{const w=snap.people.filter(p=>p.iv.some(v=>v[0]<=t&&t+15<=v[1]));const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};return{w,c,ok:key.every(k=>c[k]>=need[k])}};
+  const need={CT:+R.CT.min,BA:+R.BA.min,ERD:+R.ERD.min,OIC:+R.OIC.min}, plan={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
+  const slot=t=>{const w=snap.people.filter(p=>p.iv.some(v=>v[0]<=t&&t+15<=v[1]));const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
   const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
   $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
   $('lhours').innerHTML=hs.map((i,k)=>{
     const cl=key.map(n=>R[n].c[i]),cls=cl.includes('r')?'r':(cl.includes('a')?'a':'g');
     const qs=[0,1,2,3].map(j=>{const t=i*60+j*15;return Object.assign({t},slot(t))});
     const lab=k===0?'Now':fmT(snap.base+i*60);
-    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(R[n].n[i]||'0')+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.ok?'g':'')+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
+    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(R[n].n[i]||'0')+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.full?'g':(x.ok?'a':''))+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
       const miss=key.filter(n=>x.c[n]<need[n]).map(n=>'<u>'+x.c[n]+'/'+need[n]+' '+n+'</u>');
-      return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.ok?'g':'')+'">'+(x.ok?'ON THE RUN':'OFF THE RUN')+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
+      return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.full?'g':(x.ok?'a':''))+'">'+(x.full?'ON THE RUN':(x.ok?'ON THE RUN (MINIMAL)':'OFF THE RUN'))+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
 }
 $('lrefresh').onclick=fetchLive;
 
