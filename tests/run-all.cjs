@@ -8,4 +8,6 @@ const c=spawnSync(process.execPath,['tests/crew-flow.test.cjs'],{encoding:'utf8'
 console.log('crew-flow ->',c.status===0?'PASS':'FAIL');if(c.status!==0){bad++;console.log((c.stdout||'').slice(-1500),(c.stderr||'').slice(-1500))}
 const rl=spawnSync(process.execPath,['tests/role-letters.test.cjs'],{encoding:'utf8'});
 console.log('role-letters ->',rl.status===0?'PASS':'FAIL');if(rl.status!==0){bad++;console.log((rl.stdout||'').slice(-1500),(rl.stderr||'').slice(-1500))}
+const rs=spawnSync(process.execPath,['tests/relay-send.test.cjs'],{encoding:'utf8'});
+console.log('relay-send ->',rs.status===0?'PASS':'FAIL');if(rs.status!==0){bad++;console.log((rs.stdout||'').slice(-1500),(rs.stderr||'').slice(-1500))}
 console.log(bad?'RESULT: FAIL':'RESULT: ALL PASS');process.exit(bad?1:0);

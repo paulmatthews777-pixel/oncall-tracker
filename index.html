@@ -182,7 +182,11 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v31';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v32';
+const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
+function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
+async function relaySend(text){try{const k=relayKey();if(!k)return false;const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();return !!(r.ok&&j&&j.ok===true)}finally{clearTimeout(t)}}catch(e){return false}}
+(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -473,8 +477,9 @@ function extras(w,r,audit,sub,specT,totT,now){
         const txt=title+' – please book these in FireWatch now:\n'+lines.join('\n');
         try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
         let copied=false;try{await navigator.clipboard.writeText(txt);copied=true}catch(e){}
-        ov.remove();b.textContent='Sent – paste it to Claude if it did not open';
-        try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
+        const relayOk=await relaySend(txt);
+        ov.remove();b.textContent=relayOk?'Sent to Claude':'Sent – paste it to Claude if it did not open';
+        try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
         setTimeout(()=>b.textContent='Save and send to Claude',4000)}};
   };
   const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
@@ -482,8 +487,9 @@ function extras(w,r,audit,sub,specT,totT,now){
       const txt=title+':\n'+(sel.join('\n')||'(nothing selected)');
       try{localStorage.setItem('oncall-offsel-'+btn,JSON.stringify({at:Date.now(),sel}))}catch(e){}
       try{await navigator.clipboard.writeText(txt)}catch(e){}
-      b.textContent='Saved and copied – paste it to Claude';
-      try{if(navigator.share)await navigator.share({text:txt})}catch(e){}
+      const relayOk=await relaySend(txt);
+      b.textContent=relayOk?'Sent to Claude':'Saved and copied – paste it to Claude';
+      try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
       setTimeout(()=>b.textContent=label,3000)}};
   const freeH=x=>x.off?x.tot:(x.partH||0);
   const listTxt=rows=>rows.filter(x=>freeH(x)>0.005).map(x=>DAYN[(x.dn+3)%7]+' '+fm(x.dn)+(x.off?' all day':' '+mergeParts(x.parts).map(p=>p.s+'-'+p.e).join(', '))+' ('+f1(freeH(x))+' h)').join('\n');
