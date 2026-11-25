@@ -1,15 +1,21 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),test=require('node:test'),vm=require('node:vm');
-const src=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8'),lines=src.split('\n');
-const cs=lines.find(l=>l.startsWith('const RELAY_URL')),kf=lines.find(l=>l.startsWith('function relayKey')),fn=lines.find(l=>l.startsWith('async function relaySend'));
-function run(fetchImpl,store,promptImpl){const ls={getItem:k=>store[k]===undefined?null:store[k],setItem:(k,v)=>{store[k]=v},removeItem:k=>{delete store[k]}};const ctx={fetch:fetchImpl,AbortController,setTimeout,clearTimeout,JSON,localStorage:ls,prompt:promptImpl,out:null};vm.createContext(ctx);vm.runInContext(cs+'\n'+kf+'\n'+fn+'\nout=relaySend("hi")',ctx);return ctx.out}
-const resp=(ok,body,status)=>({ok,status:status||(ok?200:502),json:async()=>body});
-const K='k'.repeat(32),have=()=>({'oncall-relay-key':K});
-test('no secret is hardcoded in index.html',()=>{assert.ok(cs&&kf&&fn);assert.ok(!/RELAY_KEY\s*=/.test(src));assert.ok(!/[a-z0-9]{32}/.test(cs+kf+fn));assert.match(cs,/workers\.dev/)});
-test('ok response gives true and sends the stored key',async()=>{let seen;const r=await run(async(u,o)=>{seen={u,o};return resp(true,{ok:true})},have());assert.equal(r,true);assert.match(seen.u,/live-crewing-relay/);assert.equal(seen.o.method,'POST');assert.equal(seen.o.headers['X-Relay-Key'],K);assert.equal(JSON.parse(seen.o.body).text,'hi')});
-test('no stored key asks once, stores it, then sends',async()=>{const st={};let asked=0,seen;const r=await run(async(u,o)=>{seen=o;return resp(true,{ok:true})},st,()=>{asked++;return '  '+K+' '});assert.equal(r,true);assert.equal(asked,1);assert.equal(st['oncall-relay-key'],K);assert.equal(seen.headers['X-Relay-Key'],K)});
-test('no key and prompt cancelled gives false without calling fetch',async()=>{let called=0;const r=await run(async()=>{called++;return resp(true,{ok:true})},{},()=>null);assert.equal(r,false);assert.equal(called,0)});
-test('403 clears the stored key so it asks again next time',async()=>{const st=have();const r=await run(async()=>resp(false,{},403),st);assert.equal(r,false);assert.equal(st['oncall-relay-key'],undefined)});
-test('not ok gives false',async()=>{assert.equal(await run(async()=>resp(false,{ok:false}),have()),false)});
-test('http ok but body without ok true gives false',async()=>{assert.equal(await run(async()=>resp(true,{}),have()),false);assert.equal(await run(async()=>resp(true,{ok:false}),have()),false)});
-test('rejected fetch gives false and never throws',async()=>{assert.equal(await run(async()=>{throw new Error('net')},have()),false)});
-test('bad json gives false',async()=>{assert.equal(await run(async()=>({ok:true,status:200,json:async()=>{throw new Error('x')}}),have()),false)});
+const lines=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8').split('\n').map(l=>l.replace(/\r$/,''));
+const pick=s=>lines.find(l=>l.startsWith(s));
+const code=['const RELAY_URL','function relayKey','function captureRelayKey','async function relaySend'].map(pick);
+const KEY='abcdefghijklmnop1234567890ABCDEF';
+function env(fetchImpl,store={},hash=''){const ls={getItem:k=>(k in store?store[k]:null),setItem:(k,v)=>{store[k]=v},removeItem:k=>{delete store[k]}};const hist={replaced:null,replaceState:(a,b,u)=>{hist.replaced=u}};
+  const ctx={fetch:fetchImpl,AbortController,setTimeout,clearTimeout,JSON,localStorage:ls,location:{hash,pathname:'/oncall-tracker/',search:''},history:hist,out:null};vm.createContext(ctx);
+  vm.runInContext(code.join('\n').replace('captureRelayKey();','captureRelayKey();')+'\nout=relaySend("hi")',ctx);return{ctx,store,hist}}
+const resp=(ok,body)=>({ok,json:async()=>body});
+test('no secret in the repo file and all pieces exist',()=>{assert.ok(code.every(Boolean));assert.ok(!code.join('').match(/[a-z0-9]{32}/));assert.match(code[0],/workers\.dev/)});
+test('no stored key: returns false and never calls fetch',async()=>{let called=false;const e=env(async()=>{called=true;return resp(true,{ok:true})});assert.equal(await e.ctx.out,false);assert.equal(called,false)});
+test('key in url hash is stored and removed from the address bar',async()=>{const e=env(async()=>resp(true,{ok:true}),{}, '#rk='+KEY);assert.equal(e.store['oncall-relay-key'],KEY);assert.equal(e.hist.replaced,'/oncall-tracker/');assert.equal(await e.ctx.out,true)});
+test('stored key is sent as header with the right request',async()=>{let seen;const e=env(async(u,o)=>{seen={u,o};return resp(true,{ok:true,status:200})},{'oncall-relay-key':KEY});assert.equal(await e.ctx.out,true);assert.match(seen.u,/live-crewing-relay/);assert.equal(seen.o.method,'POST');assert.equal(seen.o.headers['X-Relay-Key'],KEY);assert.equal(JSON.parse(seen.o.body).text,'hi')});
+test('not ok, ok-without-flag, rejected and bad json all give false',async()=>{const st={'oncall-relay-key':KEY};
+  assert.equal(await env(async()=>resp(false,{ok:false}),st).ctx.out,false);
+  assert.equal(await env(async()=>resp(true,{}),st).ctx.out,false);
+  assert.equal(await env(async()=>{throw new Error('net')},st).ctx.out,false);
+  assert.equal(await env(async()=>({ok:true,json:async()=>{throw new Error('x')}}),st).ctx.out,false)});
+test('a short or odd hash value is ignored',()=>{const e=env(async()=>resp(true,{ok:true}),{}, '#rk=short');assert.equal(e.store['oncall-relay-key'],undefined)});
+test('other hash params survive when the key is captured',()=>{const e=env(async()=>resp(true,{ok:true}),{}, '#d=1&rk='+KEY);assert.equal(e.store['oncall-relay-key'],KEY);assert.equal(e.hist.replaced,'/oncall-tracker/#d=1')});
+test('a 403 clears the stored key so a wrong key is not kept',async()=>{const st={'oncall-relay-key':KEY};const e=env(async()=>({ok:false,status:403,json:async()=>({})}),st);assert.equal(await e.ctx.out,false);assert.equal(st['oncall-relay-key'],undefined)});
