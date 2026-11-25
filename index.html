@@ -163,8 +163,8 @@ nav button.on svg{stroke:var(--accent)}
 .g-bar i{display:block}.g-bar i.on{background:var(--good)}.g-bar i:nth-child(4n+1){box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
 .psc{overflow-x:auto;border-radius:8px}.pgrid{min-width:700px;font-size:11px}
 .pr{display:flex;align-items:center;border-bottom:1px solid var(--line);min-height:24px}
-.pl{position:sticky;left:0;z-index:1;background:var(--surface);width:128px;flex:none;padding:0 6px;font-size:12px;display:flex;justify-content:space-between;align-items:center;height:24px;box-sizing:border-box;overflow:hidden;white-space:nowrap}
-.pl.yl{background:#ffbf28;color:#111;border-radius:4px}.pl span{font-weight:700;font-size:11px;color:var(--mute);margin-left:4px}.pl.yl span{color:#111}
+.pl{position:sticky;left:0;z-index:1;background:var(--surface);width:150px;flex:none;padding:0 6px;font-size:12px;display:flex;gap:4px;justify-content:space-between;align-items:center;height:24px;box-sizing:border-box;overflow:hidden;white-space:nowrap}
+.pl.yl{background:#ffbf28;color:#111;border-radius:4px}.pl span{font-weight:700;font-size:11px;color:var(--mute);margin-left:4px}.pl.yl span{color:#111}.pl>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}.pl>span:last-child{flex:none;margin-left:0}
 .pm{width:28px;flex:none;text-align:center;color:var(--mute)}
 .pc{width:24px;flex:none;height:22px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;border:1px solid var(--bg);box-sizing:border-box;color:var(--mute);background:var(--raise)}
 .ph .pc{border:0;background:none;font-weight:400}.pd{width:576px;flex:none;padding-left:6px;box-sizing:border-box;text-align:left;font-weight:600;color:var(--ink);cursor:pointer;border-left:2px solid #888}.pc.pz{border-left:2px solid #888}.pc.pw{cursor:pointer;width:46px;font-weight:600;color:var(--ink)}
@@ -182,7 +182,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v35';
+<script>const APP_VERSION='v36';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -640,7 +640,7 @@ function renderLive(){
     const barLine=p.actBar?'<span class="lbar '+(actMeta.tone||'')+'">'+(p.onNow||p.status!==actMeta.label?escHtml(actMeta.label)+' ':'')+'until '+fmAt(absOf(p.actBar[4]),nowAbs)+'</span>':(p.nextBar?'<span class="lbar">Next bar: '+escHtml(nxtMeta.label)+' '+fmAt(absOf(p.nextBar[3]),nowAbs)+'–'+fmAt(absOf(p.nextBar[4]),nowAbs)+'</span>':'');
     const rightTxt=p.onNow&&p.cur?'on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):''):(p.onNow?'on now':(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days'));
     const info=sub(p);
-    return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b'+(p.onNow?' class="yl"':'')+'>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
+    return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
   }).join(''):'<p class="note">No crew in roster</p>';
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
   const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), key=['CT','BA','ERD','OIC'];
@@ -686,7 +686,7 @@ function dayHTML(date,N){N=N||1;
   const di=rng.dates.indexOf(date);
   if(di<0)return '<p class="note" style="padding:8px">'+dName(date)+' is outside the loaded range ('+dName(rng.dates[0])+' to '+dName(rng.dates[rng.dates.length-1])+')</p>';
   N=Math.max(1,Math.min(N,rng.dates.length-di));const d0=di*1440,dEnd=d0+1440*N,dsl=rng.dates.slice(di,di+N),today=dsl.includes(londonNow().date),sep=N>1;
-  let h='<div class="pgrid" style="min-width:'+(184+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
+  let h='<div class="pgrid" style="min-width:'+(206+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&dsl.every((_,k)=>r.n[di+k]));if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
@@ -700,7 +700,7 @@ function multiHTML(from,to){
   const dates=[];for(let d=from;d<=to&&dates.length<31;d=addD(d,1))dates.push(d);
   if(!dates.length)return '<p class="note" style="padding:8px">Pick a start date before the end date</p>';
   const idx=dates.map(d=>rng.dates.indexOf(d));
-  let h='<div class="pgrid" style="min-width:'+(160+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
+  let h='<div class="pgrid" style="min-width:'+(182+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g);if(!rs.length)continue;h+='<div class="pg">'+g+' (lowest each day)</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const fm=Math.min.apply(null,a),v=PKEY.includes(r.name)&&fm>=pl?Math.max(fm,planDay(i,r.name)):fm;return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
