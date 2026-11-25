@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one phone screen per tab (Week, Audit, Data). Big headline number, bars instead of tables, bottom tab bar. Single dark theme by choice. */
+/* Layout: one phone screen per tab (Week, Audit, Live, Planner). Big headline number, bars instead of tables, bottom tab bar. Single dark theme by choice. */
 :root{
   --bg:#0e1014; --surface:#171a21; --raise:#1f232c; --line:#2a2f3a;
   --ink:#f3f5f8; --mute:#9aa3b2; --faint:#646d7c;
@@ -182,7 +182,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v29';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v30';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Contract tracker</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -226,7 +226,7 @@ nav button.on svg{stroke:var(--accent)}
 <section class="tab" id="t-planner">
   <div class="card"><div class="pseg" id="pmode"><button data-m="day" class="on">Day (24hr)</button><button data-m="week">Week</button><button data-m="custom">Custom</button></div><div class="pctl" id="pctl"></div><p class="note" id="pnote" style="margin:10px 0 0"></p></div>
   <div class="card" style="padding:8px"><div class="psc" id="pbody"></div></div>
-  <div class="card"><div class="ppop" id="ppop">Tap a coloured bar for its details</div><div class="pleg" id="pleg"></div><p class="note" style="margin:10px 0 0">Crew numbers: green at or above Plan, orange at Min but below Plan, red below Min.</p></div>
+  <div class="card"><div class="ppop" id="ppop">Tap a coloured bar for its details</div><div class="pleg" id="pleg"></div><p class="note" style="margin:10px 0 0">Crew numbers: green at or above Plan, yellow at Min but below Plan, red below Min.</p></div>
   <button class="btn" id="prefresh">Refresh now</button>
 </section>
 
@@ -264,7 +264,6 @@ nav button.on svg{stroke:var(--accent)}
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
   <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
-  <button data-t="data"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Data</button>
 </nav>
 
 <script>
@@ -650,7 +649,7 @@ async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-sto
 const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 const pn=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
-const pcol=(v,mn,pl)=>v<mn?'#fd0017':(v<pl?'#fda423':'#18f018');
+const pcol=(v,mn,pl)=>v<mn?'#FD0022':(v<pl?'#FFBF28':'#46D93C');
 const pesc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ROLE_ORDER={WM:0,CM:1,ACMO:2,FF:3,FS:4};
 const isAct=b=>b[0]==='Activity'||b[0]==='DrillEmployeeActivity';
@@ -699,12 +698,12 @@ function renderPlanner(){
   if(pv.mode==='day')ctl.innerHTML='<button data-nav="-1" aria-label="Previous day">‹</button><input type="date" id="pdate" value="'+pv.date+'"><button data-nav="1" aria-label="Next day">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
   else if(pv.mode==='week')ctl.innerHTML='<button data-nav="-7" aria-label="Previous week">‹</button><input type="date" id="pfrom" value="'+pv.from+'"><button data-nav="7" aria-label="Next week">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
   else ctl.innerHTML='<input type="date" id="pfrom" value="'+pv.from+'"><input type="date" id="pto" value="'+pv.to+'">';
-  if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data'+(rngErr?' ('+rngErr+')':'')+'. Reload FireWatch on the PC once so the script (1.11) loads it.</p>';$('pnote').textContent='';$('pleg').innerHTML='';return}
+  if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data'+(rngErr?' ('+rngErr+')':'')+'. Reload FireWatch on the PC once so the script (1.14) loads it.</p>';$('pnote').textContent='';$('pleg').innerHTML='';return}
   const age=Math.round((Date.now()-rng.t)/60000);
   $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
   const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
   el.innerHTML=pv.mode==='day'?dayHTML(pv.date):multiHTML(pv.from,pv.mode==='week'?addD(pv.from,6):pv.to);
-  $('pleg').innerHTML=[['46d93c','On-call'],['FF0115','Sickness'],['F1FD06','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['00FFFF','Turn out'],['FF50EB','Attended'],['FAC08F','Drill'],['ffbf28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
+  $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
   if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
   if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=n===0?today:addD(pv.from,n);renderPlanner();return}
