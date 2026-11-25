@@ -27,6 +27,7 @@ const eachResourceRow = loadProductionFunction('planner-feed.user.js', 'fwForEac
 const plannerItems = loadProductionFunction('planner-feed.user.js', 'fwPlannerItems');
 const isOnCallItem = loadProductionFunction('planner-feed.user.js', 'fwIsOnCallItem');
 const crewInSlot = loadProductionFunction('index.html', 'fwCrewInSlot');
+const crewNumbers = loadProductionFunction('index.html', 'fwCrewNumbers');
 
 test('processes duplicate resource rows so split availability is not dropped', () => {
   const visited = [];
@@ -61,4 +62,8 @@ test('counts every crew member covering a slot, including more than five', () =>
   const people = Array.from({ length: 7 }, (_, i) => ({ name: `Crew ${i + 1}`, iv: [[180, 240]] }));
   people.push({ name: 'Partial cover', iv: [[180, 194]] });
   assert.equal(crewInSlot(people, 180).length, 7);
+});
+test('uses all current crew for CT and qualification totals', () => {
+  const people = Array.from({ length: 7 }, (_, i) => ({ iv: [[180, 240]], q: i < 4 ? 'BA' : (i < 6 ? 'ERD' : 'OIC') }));
+  assert.deepEqual({ ...crewNumbers(people, 180) }, { CT: 7, BA: 4, ERD: 2, OIC: 1 });
 });

@@ -539,6 +539,7 @@ const fmD=m=>new Date(m*60000).toLocaleDateString('en-GB',{weekday:'short',timeZ
 const dKey=m=>new Date(m*60000).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
 function fmAt(m,nowAbs){return (dKey(m)===dKey(nowAbs)?'':fmD(m)+' ')+fmT(m)}
 function fwCrewInSlot(people,t){return(people||[]).filter(p=>(p.iv||[]).some(v=>v[0]<=t&&t+15<=v[1]))}
+function fwCrewNumbers(people,t){const w=(people||[]).filter(p=>(p.iv||[]).some(v=>v[0]<=t&&t+15<=v[1])),has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');return{CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length}}
 function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function barMeta(b){
   const t=String(b&&b[0]||''),tip=String(b&&b[1]||'');
@@ -603,16 +604,17 @@ function renderLive(){
     return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
   }).join(''):'<p class="note">No crew in roster</p>';
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
-  const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');
-  const need={CT:+R.CT.min,BA:+R.BA.min,ERD:+R.ERD.min,OIC:+R.OIC.min}, plan={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
-  const slot=t=>{const w=fwCrewInSlot(snap.people,t);const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
+  const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), key=['CT','BA','ERD','OIC'];
+  const need=Object.fromEntries(key.map(k=>[k,+R[k].min])), plan=Object.fromEntries(key.map(k=>[k,+R[k].plan]));
+  const slot=t=>{const w=fwCrewInSlot(snap.people,t),c=fwCrewNumbers(snap.people,t);const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
+  const nowNumbers=fwCrewNumbers(snap.people,Math.floor(rel/15)*15);
   const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
   $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
   $('lhours').innerHTML=hs.map((i,k)=>{
     const cl=key.map(n=>R[n].c[i]),cls=cl.includes('r')?'r':(cl.includes('a')?'a':'g');
     const qs=[0,1,2,3].map(j=>{const t=i*60+j*15;return Object.assign({t},slot(t))});
     const lab=k===0?'Now':fmT(snap.base+i*60);
-    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(R[n].n[i]||'0')+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.full?'g':(x.ok?'a':''))+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
+    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(i===h?nowNumbers[n]:(R[n].n[i]||'0'))+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.full?'g':(x.ok?'a':''))+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
       const miss=key.filter(n=>x.c[n]<need[n]).map(n=>'<u>'+x.c[n]+'/'+need[n]+' '+n+'</u>');
       return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.full?'g':(x.ok?'a':''))+'">'+(x.full?'ON THE RUN':(x.ok?'ON THE RUN (MINIMAL)':'OFF THE RUN'))+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
 }
