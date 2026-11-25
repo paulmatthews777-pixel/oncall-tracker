@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.11
+// @version      1.13
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -28,6 +28,42 @@ async function fwDay(stationId,off,tok){
   const j=(await r.json()).ResourceContainer[0],A=j.Appliances[0];A.__root=j;return A;
 }
 const tipName=t=>String(t||'').split(/[\r\n]+|<br\s*\/?>/i).map(x=>x.replace(/<[^>]*>/g,'').trim()).filter(x=>x&&!/^\w{3} \d+ \w+ \d\d:\d\d - /.test(x)).join(' / ').slice(0,70);
+function fwForEachResourceRow(rows,visit){for(const r of rows||[])if(r&&r.RowData&&r.RowData.Name)visit(r)}
+function fwPlannerItems(cellData){let payload;try{payload=typeof cellData==='string'?JSON.parse(cellData):cellData}catch(e){return[]}const parents=payload&&Array.isArray(payload.plannerItem)?payload.plannerItem:[],out=[];for(const p of parents){if(!p)continue;out.push(p);if(Array.isArray(p.appointments))for(const child of p.appointments)if(child)out.push(child)}return out}
+function fwIsOnCallItem(it){const tip=String(it&&it.tooltip||'');return Boolean(it&&(it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call\s*(?:[-:\u2010-\u2015]\s*)?(?:Available|Turn Out)\b/i.test(tip))))}
+function fwBarMeta(b){
+  const t=String(b&&b[0]||''),tip=String(b&&b[1]||'');
+  if(t==='Sickness')return{label:'Sickness',away:true};
+  if(t==='Holiday')return{label:'Annual leave',away:true};
+  if(t==='OtherAbsence')return{label:'Leave',away:true};
+  if(/Detached To/i.test(tip)){const l=/Location:\s*([^/]+)/i.exec(tip);return{label:'Detached'+(l?' to '+l[1].trim():''),away:true}}
+  if(/Detach/i.test(t+' '+tip))return{label:'Detached',away:true};
+  if(/Unavailable/i.test(tip))return{label:'Unavailable',away:true};
+  if(/Course/i.test(t+' '+tip))return{label:'Course',away:true};
+  if(/Turn Out/i.test(tip))return{label:'Turn out',away:false};
+  if(/Attendance/i.test(tip))return{label:'Attended',away:false};
+  if(/Drill/i.test(t+' '+tip))return{label:'Drill',away:false};
+  if(/EFR Car/i.test(tip))return{label:'EFR Car',away:false};
+  const m=/(?:Activity:\s*)?On-Call(?:\s*-\s*|:\s*)([^/]+)/i.exec(tip);
+  if(m&&m[1].trim())return{label:m[1].trim(),away:false};
+  return{label:t.replace(/([a-z])([A-Z])/g,'$1 $2')||'Activity',away:t!=='Activity'&&t!=='DrillEmployeeActivity'};
+}
+function fwPersonState(p,rel){
+  const cur=(p.iv||[]).some(v=>v[0]<=rel&&rel<v[1]);
+  const activeBars=(p.bars||[]).filter(b=>b[3]<=rel&&rel<b[4]);
+  const away=activeBars.find(b=>fwBarMeta(b).away);
+  const act=activeBars[0];
+  const onNow=cur&&!away;
+  const status=away?fwBarMeta(away).label:(onNow?'On now':(act?fwBarMeta(act).label:'Off'));
+  return{onNow,status};
+}
+function fwAllPeople(snapOverride){
+  const s=snapOverride||window.__plannerSnap;
+  if(!s||!Array.isArray(s.people))return[];
+  const rel=Math.floor(Date.now()/60000)-s.base;
+  return s.people.map(p=>Object.assign({},p,fwPersonState(p,rel)));
+}
+window.__fwAllPeople=()=>fwAllPeople();
 let scanDone=false,scanTypes={};
 async function fwScan(stationId,tok){
   const light=c=>String(c||'').replace(/light-dark\(/,'').split(',')[0].replace('#','').trim();
@@ -58,17 +94,17 @@ async function fwPlannerSnapshot(stationId){
     rows.push({name,min:r.RowData.Min,plan:r.RowData.Plan,c,n});
   }
   const byName={},types={},seenB=new Set();
-  days.forEach(A=>{const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');const seenN=new Set();for(const r of grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[])){if(seenN.has(r.RowData.Name))continue;seenN.add(r.RowData.Name);const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
-    for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
-      const list=[cell].concat(cell.appointments||[]);
+  days.forEach(A=>{const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');fwForEachResourceRow(grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[]),r=>{const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
+    for(const h of H){const list=fwPlannerItems(d[h]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
-        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call - (Available|Turn Out)/i.test(tip));
+        const tip=String(it.tooltip||''),isOn=fwIsOnCallItem(it);
         if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
         const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
         if(it.type!=='RotaAssignment'){const tk=String(it.type)+'|'+tipName(tip)+'|'+light(it.colour);types[tk]=(types[tk]||0)+1}
         if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),tipName(tip),light(it.colour),s-base,e-base])}continue}
-        o.iv.push([s-base,e-base]);}}}});
-  const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
+        o.iv.push([s-base,e-base]);}}});});
+  const relNow=Math.round(Date.now()/60000)-base;
+  const people=Object.values(byName).filter(p=>p.name.trim().toLowerCase()!=='rachael cook').map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;const st=fwPersonState(p,relNow);p.onNow=st.onNow;p.status=st.status;return p});
   if(!scanDone){scanDone=true;fwScan(stationId,tok)}
   return {v:2,t:Date.now(),base,types,scan:scanTypes,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
 }
@@ -100,7 +136,7 @@ async function fwRange(stationId,tok,offFrom,offTo){
           const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
           if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),fullTip(tip),light(it.colour),s-base,e-base])}continue}
           o.iv.push([s-base,e-base])}}}});
-  const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
+  const people=Object.values(byName).filter(p=>p.name.trim().toLowerCase()!=='rachael cook').map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
   return {v:3,t:Date.now(),base,dates,station:'Winterton',rows:Object.values(rowMap),people};
 }
 let lastRange=0,rBusy=false,rMsg='';
@@ -164,7 +200,7 @@ async function contractTick(){
 }
 
 let lastSig='', lastPush=0, busy=false;
-const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv,p.bars])]);
+const sig=s=>JSON.stringify([s.date,s.rows.map(r=>[r.name,r.c,r.n]),s.people.map(p=>[p.name,p.iv,p.bars,p.onNow,p.status])]);
 function gh(method,path,data){return new Promise((res,rej)=>{GM_xmlhttpRequest({method,url:'https://api.github.com/repos/'+REPO+path+(method==='GET'?'&_='+Date.now():''),nocache:true,anonymous:true,headers:{'Cache-Control':'no-cache','Authorization':'Bearer '+GM_getValue('ghtoken',''),'Accept':'application/vnd.github+json','Content-Type':'application/json'},data:data?JSON.stringify(data):undefined,timeout:20000,onload:r=>res(r),onerror:()=>rej(new Error('network')),ontimeout:()=>rej(new Error('timeout')),onabort:()=>rej(new Error('abort'))})})}
 function b64(s){return btoa(unescape(encodeURIComponent(s)))}
 async function push(snap,file,label){

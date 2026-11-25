@@ -139,6 +139,10 @@ nav button.on svg{stroke:var(--accent)}
 .lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.lrow:first-child{border-top:0}
 .lrow .d{width:10px;height:10px;border-radius:50%;flex:none;background:var(--faint)}.lrow .d.g{background:var(--good)}.lrow .d.r{background:var(--bad)}.lrow .d.a{background:var(--warn)}
 .lrow small{color:var(--mute);margin-left:auto;text-align:right;font-size:12px}
+.lrow .lmeta{min-width:0;flex:1}.lrow .lname{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lpill{font:600 10px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--raise);color:var(--mute);white-space:nowrap}
+.lpill.g{background:rgba(51,214,134,.16);color:var(--good)}.lpill.a{background:rgba(255,179,64,.18);color:var(--warn)}.lpill.r{background:rgba(255,48,48,.18);color:var(--bad)}
+.lbar{display:block;color:var(--mute);font-size:11px;margin-top:2px}.lbar.a{color:var(--warn)}.lbar.r{color:var(--bad)}.lbar.g{color:var(--good)}
 .hr{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
 .hr>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-left:5px solid var(--good)}
 .hr>summary::-webkit-details-marker{display:none}
@@ -215,8 +219,7 @@ nav button.on svg{stroke:var(--accent)}
 <section class="tab" id="t-live">
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
   <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. Green: full crew (5+). Yellow: minimal crewing (4 with 2 BA, 1 OIC, 1 ERD), still on the run. Red: short or missing a required skill, off the run.</p><div id="lhours"></div></div>
-  <div class="card"><h2>On now</h2><div id="lon"></div></div>
-  <div class="card"><h2>Off now: next on</h2><div id="loff"></div></div>
+  <div class="card"><h2 id="lcrew">Crew roster</h2><div id="lon"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
@@ -542,9 +545,10 @@ function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{con
 const RAW='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/';
 const LIVE_URL=RAW+'planner.json';
 let snap=null, snapErr='';
+const excludeRachael=s=>{if(s&&Array.isArray(s.people))s.people=s.people.filter(p=>String(p.name||'').trim().toLowerCase()!=='rachael cook');return s};
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
-function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2)snap=x}catch(e){}}
-function setSnap(x){if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t||snap.t>Date.now()+120000)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
+function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2){snap=excludeRachael(x);localStorage.setItem('oncall-live',JSON.stringify(snap))}}catch(e){}}
+function setSnap(x){x=excludeRachael(x);if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t||snap.t>Date.now()+120000)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
 const CONTRACT_URL=RAW+'contract.json';
 const nc=u=>u+'?_='+Date.now();
 let lastC=0;
@@ -557,31 +561,83 @@ const fmT=m=>new Date(m*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute
 const fmD=m=>new Date(m*60000).toLocaleDateString('en-GB',{weekday:'short',timeZone:'Europe/London'});
 const dKey=m=>new Date(m*60000).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
 function fmAt(m,nowAbs){return (dKey(m)===dKey(nowAbs)?'':fmD(m)+' ')+fmT(m)}
+function fwCrewInSlot(people,t){return(people||[]).filter(p=>(p.iv||[]).some(v=>v[0]<=t&&t+15<=v[1]))}
+function fwCrewNumbers(people,t){const w=(people||[]).filter(p=>(p.iv||[]).some(v=>v[0]<=t&&t+15<=v[1])),has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');return{CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length}}
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function barMeta(b){
+  const t=String(b&&b[0]||''),tip=String(b&&b[1]||'');
+  if(t==='Sickness')return{label:'Sickness',tone:'r',away:true};
+  if(t==='Holiday')return{label:'Annual leave',tone:'a',away:true};
+  if(t==='OtherAbsence')return{label:'Leave',tone:'a',away:true};
+  if(/Detached To/i.test(tip)){const l=/Location:\s*([^/]+)/i.exec(tip);return{label:'Detached'+(l?' to '+l[1].trim():''),tone:'r',away:true}}
+  if(/Detach/i.test(t+' '+tip))return{label:'Detached',tone:'r',away:true};
+  if(/Unavailable/i.test(tip))return{label:'Unavailable',tone:'a',away:true};
+  if(/Course/i.test(t+' '+tip))return{label:'Course',tone:'a',away:true};
+  if(/Turn Out/i.test(tip))return{label:'Turn out',tone:'g',away:false};
+  if(/Attendance/i.test(tip))return{label:'Attended',tone:'a',away:false};
+  if(/Drill/i.test(t+' '+tip))return{label:'Drill',tone:'a',away:false};
+  if(/EFR Car/i.test(tip))return{label:'EFR Car',tone:'a',away:false};
+  const m=/(?:Activity:\s*)?On-Call(?:\s*-\s*|:\s*)([^/]+)/i.exec(tip);
+  if(m&&m[1].trim())return{label:m[1].trim(),tone:'a',away:false};
+  return{label:t.replace(/([a-z])([A-Z])/g,'$1 $2')||'Activity',tone:'a',away:t!=='Activity'&&t!=='DrillEmployeeActivity'};
+}
+window.__fwAllPeople=function(){
+  if(!snap||snap.v!==2||!Array.isArray(snap.people))return[];
+  const rel=Math.floor(Date.now()/60000)-snap.base;
+  return snap.people.map(p=>{
+    const iv=p.iv||[], bars=(p.bars||[]).slice().sort((a,b)=>a[3]-b[3]);
+    const cur=iv.find(v=>v[0]<=rel&&rel<v[1])||null;
+    const nxt=iv.find(v=>v[0]>rel)||null;
+    const activeBars=bars.filter(b=>b[3]<=rel&&rel<b[4]);
+    const awayBar=activeBars.find(b=>barMeta(b).away)||null;
+    const actBar=awayBar||activeBars[0]||null;
+    const nextBar=bars.find(b=>b[3]>rel)||null;
+    const onNow=cur?!awayBar:(typeof p.onNow==='boolean'&&!actBar?p.onNow:false);
+    const actMeta=actBar?barMeta(actBar):null;
+    const status=awayBar?actMeta.label:(onNow?'On now':(actMeta?actMeta.label:(p.status&&p.status!=='On now'?p.status:'Off')));
+    const tone=awayBar?actMeta.tone:(onNow?'g':(actMeta?actMeta.tone:(status!=='Off'?'a':'')));
+    return Object.assign({},p,{cur,nxt,bars,actBar,nextBar,onNow,status,tone});
+  });
+};
 function renderLive(){
   const el=$('lhero');
-  if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';return}
+  if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';$('lcrew').textContent='Crew roster';$('lon').innerHTML='';return}
   const nowAbs=Math.floor(Date.now()/60000), rel=nowAbs-snap.base, h=Math.floor(rel/60);
   const ageMin=Math.round((Date.now()-snap.t)/60000), stale=ageMin>15||h<0||h>47;
   const st=stale?'stale':runState(snap,h), ok=st==='full'||st==='min', bad=snap.rows.filter(r=>r.c[h]!=='g'&&r.c[h]!=='a'), amb=snap.rows.filter(r=>r.c[h]==='a');
   el.className='live-hero '+(stale?'stale':(st==='full'?'go':(st==='min'?'min':'stop')));
   el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(st==='full'?'All crewing rows green this hour':st==='min'?'Minimal crewing (yellow): '+amb.map(r=>r.name+' '+r.n[h]).join(', '):'Short (red): '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
   if(h<0||h>47)return;
-  const P=snap.people.map(p=>{const cur=p.iv.find(v=>v[0]<=rel&&rel<v[1]);const nxt=p.iv.find(v=>v[0]>rel);return Object.assign({},p,{cur,nxt})});
-  const absOf=m=>snap.base+m, sub=p=>p.role+(p.q?' · '+p.q:'');
-  const on=P.filter(p=>p.cur).sort((a,b)=>a.cur[1]-b.cur[1]), off=P.filter(p=>!p.cur).sort((a,b)=>(a.nxt?a.nxt[0]:1e9)-(b.nxt?b.nxt[0]:1e9));
-  $('lon').innerHTML=on.length?on.map(p=>{const next=p.iv.find(v=>v[0]>p.cur[1]);return '<div class="lrow"><span class="d g"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):'')+'</small></div>'}).join(''):'<p class="note">Nobody on</p>';
-  $('loff').innerHTML=off.map(p=>'<div class="lrow"><span class="d"></span><span><b>'+p.name+'</b><br><small style="margin:0;text-align:left">'+sub(p)+'</small></span><small>'+(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days')+'</small></div>').join('');
+  const P=window.__fwAllPeople();
+  const absOf=m=>snap.base+m, sub=p=>[p.role,p.q].filter(Boolean).join(' · ');
+  const rank=p=>p.onNow?0:(p.status!=='Off'?1:2);
+  const roster=P.slice().sort((a,b)=>{
+    const ra=rank(a),rb=rank(b);if(ra!==rb)return ra-rb;
+    if(ra===0)return (a.cur?a.cur[1]:1e9)-(b.cur?b.cur[1]:1e9)||a.name.localeCompare(b.name);
+    return (a.nxt?a.nxt[0]:1e9)-(b.nxt?b.nxt[0]:1e9)||a.name.localeCompare(b.name);
+  });
+  const onCount=P.filter(p=>p.onNow).length;
+  $('lcrew').textContent='Crew roster · '+onCount+' on now · '+P.length+' total';
+  $('lon').innerHTML=roster.length?roster.map(p=>{
+    const next=p.cur?(p.iv||[]).find(v=>v[0]>p.cur[1]):p.nxt;
+    const actMeta=p.actBar?barMeta(p.actBar):null, nxtMeta=p.nextBar?barMeta(p.nextBar):null;
+    const barLine=p.actBar?'<span class="lbar '+(actMeta.tone||'')+'">'+(p.onNow||p.status!==actMeta.label?escHtml(actMeta.label)+' ':'')+'until '+fmAt(absOf(p.actBar[4]),nowAbs)+'</span>':(p.nextBar?'<span class="lbar">Next bar: '+escHtml(nxtMeta.label)+' '+fmAt(absOf(p.nextBar[3]),nowAbs)+'–'+fmAt(absOf(p.nextBar[4]),nowAbs)+'</span>':'');
+    const rightTxt=p.onNow&&p.cur?'on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):''):(p.onNow?'on now':(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days'));
+    const info=sub(p);
+    return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
+  }).join(''):'<p class="note">No crew in roster</p>';
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
-  const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');
-  const need={CT:+R.CT.min,BA:+R.BA.min,ERD:+R.ERD.min,OIC:+R.OIC.min}, plan={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
-  const slot=t=>{const w=snap.people.filter(p=>p.iv.some(v=>v[0]<=t&&t+15<=v[1]));const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
+  const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), key=['CT','BA','ERD','OIC'];
+  const need=Object.fromEntries(key.map(k=>[k,+R[k].min])), plan=Object.fromEntries(key.map(k=>[k,+R[k].plan]));
+  const slot=t=>{const w=fwCrewInSlot(snap.people,t),c=fwCrewNumbers(snap.people,t);const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
+  const nowNumbers=fwCrewNumbers(snap.people,Math.floor(rel/15)*15);
   const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
   $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
   $('lhours').innerHTML=hs.map((i,k)=>{
     const cl=key.map(n=>R[n].c[i]),cls=cl.includes('r')?'r':(cl.includes('a')?'a':'g');
     const qs=[0,1,2,3].map(j=>{const t=i*60+j*15;return Object.assign({t},slot(t))});
     const lab=k===0?'Now':fmT(snap.base+i*60);
-    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(R[n].n[i]||'0')+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.full?'g':(x.ok?'a':''))+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
+    return '<details class="hr '+cls+'" data-h="'+i+'"'+(open.has(String(i))?' open':'')+'><summary><span class="tm">'+lab+'</span><span class="cs">'+key.map(n=>'<span class="c"><span class="d '+(R[n].c[i]==='x'?'':R[n].c[i])+'"></span>'+(i===h?nowNumbers[n]:(R[n].n[i]||'0'))+' '+n+'</span>').join('')+'</span><span class="q">'+qs.map(x=>'<i class="'+(x.full?'g':(x.ok?'a':''))+'"></i>').join('')+'</span></summary><div class="qs">'+qs.map(x=>{
       const miss=key.filter(n=>x.c[n]<need[n]).map(n=>'<u>'+x.c[n]+'/'+need[n]+' '+n+'</u>');
       return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.full?'g':(x.ok?'a':''))+'">'+(x.full?'ON THE RUN':(x.ok?'ON THE RUN (MINIMAL)':'OFF THE RUN'))+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
 }
@@ -589,8 +645,8 @@ $('lrefresh').onclick=fetchLive;
 /* ===== Planner tab: Day / Week / Custom from range.json ===== */
 const RANGE_URL=RAW+'range.json';
 let rng=null,rngErr='',pv={mode:'day',date:'',from:'',to:''};const pops=[];
-function loadRng(){try{const x=JSON.parse(localStorage.getItem('oncall-range')||'null');if(x&&x.v===3)rng=x}catch(e){}}
-async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=await r.json();if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderPlanner()}
+function loadRng(){try{const x=JSON.parse(localStorage.getItem('oncall-range')||'null');if(x&&x.v===3){rng=excludeRachael(x);localStorage.setItem('oncall-range',JSON.stringify(rng))}}catch(e){}}
+async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=excludeRachael(await r.json());if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderPlanner()}
 const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 const pn=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
