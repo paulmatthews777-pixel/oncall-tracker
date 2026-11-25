@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one phone screen per tab (Week, Audit, Data). Big headline number, bars instead of tables, bottom tab bar. Single dark theme by choice. */
+/* Layout: one phone screen per tab (Week, Audit, Live, Planner). Big headline number, bars instead of tables, bottom tab bar. Single dark theme by choice. */
 :root{
   --bg:#0e1014; --surface:#171a21; --raise:#1f232c; --line:#2a2f3a;
   --ink:#f3f5f8; --mute:#9aa3b2; --faint:#646d7c;
@@ -161,6 +161,20 @@ nav button.on svg{stroke:var(--accent)}
 .g-row{margin-bottom:8px}.g-n{font-size:12px;color:var(--mute);display:flex;justify-content:space-between}.g-n b{color:var(--ink);font-weight:600}
 .g-bar{display:grid;grid-template-columns:repeat(96,1fr);height:14px;border-radius:3px;overflow:hidden;background:var(--raise)}
 .g-bar i{display:block}.g-bar i.on{background:var(--good)}.g-bar i:nth-child(4n+1){box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
+.psc{overflow-x:auto;border-radius:8px}.pgrid{min-width:700px;font-size:11px}
+.pr{display:flex;align-items:center;border-bottom:1px solid var(--line);min-height:24px}
+.pl{position:sticky;left:0;z-index:1;background:var(--surface);width:128px;flex:none;padding:0 6px;font-size:12px;display:flex;justify-content:space-between;align-items:center;height:24px;box-sizing:border-box;overflow:hidden;white-space:nowrap}
+.pl.yl{background:#ffbf28;color:#111;border-radius:4px}.pl span{font-weight:700;font-size:11px;color:var(--mute);margin-left:4px}.pl.yl span{color:#111}
+.pm{width:28px;flex:none;text-align:center;color:var(--mute)}
+.pc{width:24px;flex:none;height:22px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;border:1px solid var(--bg);box-sizing:border-box;color:var(--mute);background:var(--raise)}
+.ph .pc{border:0;background:none;font-weight:400}.pc.pw{cursor:pointer;width:46px;font-weight:600;color:var(--ink)}
+.pg{background:#8f1d1d;color:#fff;padding:3px 8px;font-weight:600;font-size:12px}
+.pt{position:relative;flex:none;width:576px;height:22px;background:var(--raise)}
+.pb{position:absolute;top:0;height:22px;display:flex;align-items:center;padding-left:3px;overflow:hidden;white-space:nowrap;font-size:10px;box-sizing:border-box;border-right:1px solid rgba(0,0,0,.25)}.pb.tap{cursor:pointer}
+.pseg{display:flex;gap:6px;margin-bottom:10px}.pseg button,.pctl button{flex:1;background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 6px;font:600 13px var(--body);cursor:pointer;min-height:40px}.pseg button.on{border-color:var(--accent);color:#fff}
+.pctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pctl input{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px;flex:1;min-width:120px}.pctl button{flex:0 0 40px;padding:0}
+.ppop{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;white-space:pre-line;color:var(--ink)}
+.pleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px}.pleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 </style>
 </head>
 <body>
@@ -168,7 +182,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v28';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v30';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Contract tracker</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -209,6 +223,13 @@ nav button.on svg{stroke:var(--accent)}
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
+<section class="tab" id="t-planner">
+  <div class="card"><div class="pseg" id="pmode"><button data-m="day" class="on">Day (24hr)</button><button data-m="week">Week</button><button data-m="custom">Custom</button></div><div class="pctl" id="pctl"></div><p class="note" id="pnote" style="margin:10px 0 0"></p></div>
+  <div class="card" style="padding:8px"><div class="psc" id="pbody"></div></div>
+  <div class="card"><div class="ppop" id="ppop">Tap a coloured bar for its details</div><div class="pleg" id="pleg"></div><p class="note" style="margin:10px 0 0">Crew numbers: green at or above Plan, yellow at Min but below Plan, red below Min.</p></div>
+  <button class="btn" id="prefresh">Refresh now</button>
+</section>
+
 <div style="display:none"><div class="card"><div class="hero" id="ohero"></div></div></div>
 
 <section class="tab" id="t-data">
@@ -242,7 +263,7 @@ nav button.on svg{stroke:var(--accent)}
   <button class="on" data-t="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Week</button>
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
   <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
-  <button data-t="data"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Data</button>
+  <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
 </nav>
 
 <script>
@@ -620,10 +641,81 @@ function renderLive(){
       return '<div class="qr"><div class="qh"><b>'+fmT(snap.base+x.t)+'</b><span class="tag '+(x.full?'g':(x.ok?'a':''))+'">'+(x.full?'ON THE RUN':(x.ok?'ON THE RUN (MINIMAL)':'OFF THE RUN'))+'</span><span class="cn">'+(x.ok?x.c.CT+' CT':miss.join(' · '))+'</span></div><div class="qw">'+(x.w.length?x.w.map(p=>p.name).join(', '):'Nobody on')+'</div></div>'}).join('')+'</div></details>'}).join('');
 }
 $('lrefresh').onclick=fetchLive;
+/* ===== Planner tab: Day / Week / Custom from range.json ===== */
+const RANGE_URL=RAW+'range.json';
+let rng=null,rngErr='',pv={mode:'day',date:'',from:'',to:''};const pops=[];
+function loadRng(){try{const x=JSON.parse(localStorage.getItem('oncall-range')||'null');if(x&&x.v===3){rng=excludeRachael(x);localStorage.setItem('oncall-range',JSON.stringify(rng))}}catch(e){}}
+async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=excludeRachael(await r.json());if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderPlanner()}
+const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+const pn=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
+const pcol=(v,mn,pl)=>v<mn?'#FD0022':(v<pl?'#FFBF28':'#46D93C');
+const pesc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ROLE_ORDER={WM:0,CM:1,ACMO:2,FF:3,FS:4};
+const isAct=b=>b[0]==='Activity'||b[0]==='DrillEmployeeActivity';
+function barLabel(b){const t=b[0],tip=b[1];if(t==='Sickness')return 'Sickness';if(t==='Holiday')return 'Annual leave';if(t==='OtherAbsence')return 'Leave';
+  if(/Detached To/i.test(tip)){const l=/Location: (.+)/.exec(tip);return 'Detached to'+(l?' '+l[1]:'')}
+  if(/Detach/i.test(t+tip))return 'Detached';if(/Unavailable/i.test(tip))return 'Unavailable';if(/Turn Out/i.test(tip))return 'Turn out';if(/Attendance/i.test(tip))return 'Attended';if(/Drill/i.test(t+tip))return 'Drill';const ln=tip.split('\n').find(l=>/^(Activity: )?On-Call/i.test(l));if(ln)return ln.replace(/^(Activity: )?On-Call( - |: )?/i,'')||'On-call';return t.replace(/([a-z])([A-Z])/g,'$1 $2')}
+const barShort=b=>{const l=barLabel(b);return l==='Sickness'?'Sick':l==='Annual leave'?'Hol':l.startsWith('Detached')?'Det':l.slice(0,5)};
+function txtOn(hex){const n=parseInt(hex,16);if(isNaN(n))return '#111';const r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000<140?'#fff':'#111'}
+function onNow(name){const nowM=Math.floor(Date.now()/60000);let src=null;if(snap&&snap.v===2&&Date.now()-snap.t<=15*60000)src=snap;else if(rng&&Date.now()-rng.t<=45*60000)src=rng;if(!src)return false;const p=src.people.find(x=>x.name===name);const rel=nowM-src.base;if(!p||!p.iv.some(v=>v[0]<=rel&&rel<v[1]))return false;const away=(q,base)=>(q&&q.bars||[]).some(b=>!isAct(b)&&b[3]<=nowM-base&&nowM-base<b[4]);return !(away(p,src.base)||(rng&&away(rng.people.find(x=>x.name===name),rng.base)))}
+function sortedPeople(){return rng.people.slice().sort((a,b)=>(ROLE_ORDER[a.role]===undefined?9:ROLE_ORDER[a.role])-(ROLE_ORDER[b.role]===undefined?9:ROLE_ORDER[b.role])||a.name.localeCompare(b.name))}
+function popFor(p,b){return pops.push(p.name+'\n'+b[1])-1}
+function dayHTML(date){
+  const di=rng.dates.indexOf(date);
+  if(di<0)return '<p class="note" style="padding:8px">'+dName(date)+' is outside the loaded range ('+dName(rng.dates[0])+' to '+dName(rng.dates[rng.dates.length-1])+')</p>';
+  const d0=di*1440,today=date===londonNow().date;
+  let h='<div class="pgrid"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+[...Array(24).keys()].map(i=>'<div class="pc">'+String(i).padStart(2,'0')+'</div>').join('')+'</div>';
+  for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&r.n[di]);if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
+    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+r.n[di].map(x=>{if(x==='')return '<div class="pc">-</div>';const v=pn(x);return '<div class="pc" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+pesc(x)+'</div>'}).join('')+'</div>'}}
+  h+='<div class="pg">Resource</div>';
+  for(const p of sortedPeople()){
+    let bars='';
+    for(const v of p.iv){const s=Math.max(v[0],d0),e=Math.min(v[1],d0+1440);if(e<=s)continue;bars+='<div class="pb" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#46d93c;color:#111">'+((e-s)>=180?pesc(p.q):'')+'</div>'}
+    for(const b of p.bars){const s=Math.max(b[3],d0),e=Math.min(b[4],d0+1440);if(e<=s)continue;bars+='<div class="pb tap" data-p="'+popFor(p,b)+'" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#'+b[2]+';color:'+txtOn(b[2])+'">'+pesc(barLabel(b))+'</div>'}
+    h+='<div class="pr"><div class="pl'+(today&&onNow(p.name)?' yl':'')+'"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div><div class="pt">'+bars+'</div></div>'}
+  return h+'</div>'}
+function multiHTML(from,to){
+  const dates=[];for(let d=from;d<=to&&dates.length<31;d=addD(d,1))dates.push(d);
+  if(!dates.length)return '<p class="note" style="padding:8px">Pick a start date before the end date</p>';
+  const idx=dates.map(d=>rng.dates.indexOf(d));
+  let h='<div class="pgrid" style="min-width:'+(160+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
+  for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g);if(!rs.length)continue;h+='<div class="pg">'+g+' (lowest each day)</div>';
+    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const v=Math.min.apply(null,a);return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
+  h+='<div class="pg">Resource</div>';
+  for(const p of sortedPeople()){h+='<div class="pr"><div class="pl"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div>'+idx.map(i=>{
+      if(i<0)return '<div class="pc" style="width:46px">-</div>';const d0=i*1440,d1=d0+1440;let best=null,bo=0;
+      for(const b of p.bars){if(isAct(b))continue;const o=Math.min(b[4],d1)-Math.max(b[3],d0);if(o>bo){bo=o;best=b}}
+      if(best&&bo>=360)return '<div class="pc tap" data-p="'+popFor(p,best)+'" style="width:46px;cursor:pointer;background:#'+best[2]+';color:'+txtOn(best[2])+'">'+pesc(barShort(best))+'</div>';
+      let on=0;for(const v of p.iv)on+=Math.max(0,Math.min(v[1],d1)-Math.max(v[0],d0));
+      return on>0?'<div class="pc" style="width:46px;background:#46d93c;color:#111">'+Math.round(on/60)+'h</div>':'<div class="pc" style="width:46px"></div>'}).join('')+'</div>'}
+  return h+'</div>'}
+function renderPlanner(){
+  const el=$('pbody');if(!el)return;pops.length=0;
+  const today=londonNow().date;if(!pv.date)pv.date=today;if(!pv.from)pv.from=today;if(!pv.to)pv.to=addD(today,6);
+  [...document.querySelectorAll('#pmode button')].forEach(b=>b.classList.toggle('on',b.dataset.m===pv.mode));
+  const ctl=$('pctl');
+  if(pv.mode==='day')ctl.innerHTML='<button data-nav="-1" aria-label="Previous day">‹</button><input type="date" id="pdate" value="'+pv.date+'"><button data-nav="1" aria-label="Next day">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
+  else if(pv.mode==='week')ctl.innerHTML='<button data-nav="-7" aria-label="Previous week">‹</button><input type="date" id="pfrom" value="'+pv.from+'"><button data-nav="7" aria-label="Next week">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
+  else ctl.innerHTML='<input type="date" id="pfrom" value="'+pv.from+'"><input type="date" id="pto" value="'+pv.to+'">';
+  if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data'+(rngErr?' ('+rngErr+')':'')+'. Reload FireWatch on the PC once so the script (1.15) loads it.</p>';$('pnote').textContent='';$('pleg').innerHTML='';return}
+  const age=Math.round((Date.now()-rng.t)/60000);
+  $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
+  const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
+  el.innerHTML=pv.mode==='day'?dayHTML(pv.date):multiHTML(pv.from,pv.mode==='week'?addD(pv.from,6):pv.to);
+  $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
+document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
+  if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
+  if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=n===0?today:addD(pv.from,n);renderPlanner();return}
+  if(t.dataset.d){pv.mode='day';pv.date=t.dataset.d;renderPlanner();window.scrollTo(0,0);return}
+  if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
+document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=t.value||pv.from;if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
+$('prefresh').onclick=fetchRange;
+
 
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); loadSnap(); const gotP=fromPHash(); render(); renderLive(); if(gotP)show('live'); fetchLive(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract()}},60000);setInterval(updChip,20000);
+load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
