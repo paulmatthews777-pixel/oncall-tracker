@@ -215,11 +215,34 @@ async function push(snap,file,label){
     await new Promise(x=>setTimeout(x,1500));
   }
 }
+let prevSnap=null;try{prevSnap=JSON.parse(GM_getValue('prevSnap','null'))}catch(e){}
+function fmtR(a,b){const f=m=>new Date(m*60000).toLocaleString('en-GB',{timeZone:'Europe/London',weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});return f(a)+' to '+f(b)}
+function diffSnaps(a,b){
+  if(!a||!b||a.base!==b.base||!Array.isArray(a.people)||!Array.isArray(b.people))return[];
+  if(b.people.length<a.people.length*0.5)return[];
+  const out=[],now=Date.now(),pa={};for(const p of a.people)pa[p.name]=p;
+  for(const p of b.people){const o=pa[p.name];if(!o)continue;
+    const ik=v=>(b.base+v[0])+'-'+(b.base+v[1]),oi=new Set((o.iv||[]).map(ik)),ni=new Set((p.iv||[]).map(ik));
+    for(const v of p.iv||[])if(!oi.has(ik(v)))out.push({t:now,who:p.name,kind:'on',text:fmtR(b.base+v[0],b.base+v[1])});
+    for(const v of o.iv||[])if(!ni.has(ik(v)))out.push({t:now,who:p.name,kind:'off',text:fmtR(b.base+v[0],b.base+v[1])});
+    const bk=x=>[x[0],x[1],x[3],x[4]].join('|'),ob=new Set((o.bars||[]).map(bk)),nb=new Set((p.bars||[]).map(bk));
+    const ev=(x,kind)=>{const m=fwBarMeta(x),by=/(?:updated|booked|added)[^\n]*?\bby\s+([^/\r\n<]+)/i.exec(String(x[1]||''));out.push({t:now,who:p.name,kind,label:m.label,text:fmtR(b.base+x[3],b.base+x[4]),by:by?by[1].trim():null})};
+    for(const x of p.bars||[])if(!ob.has(bk(x)))ev(x,'event');
+    for(const x of o.bars||[])if(!nb.has(bk(x)))ev(x,'event-removed');
+  }
+  return out;
+}
+async function logChanges(snap){
+  const d=diffSnaps(prevSnap,snap);prevSnap=snap;try{GM_setValue('prevSnap',JSON.stringify(snap))}catch(e){}
+  if(!d.length||!GM_getValue('ghtoken',''))return;
+  const L=d.concat(JSON.parse(GM_getValue('chg','[]'))).slice(0,500);GM_setValue('chg',JSON.stringify(L));
+  await push({v:1,t:Date.now(),items:L},'changes.json','changes');
+}
 async function tick(){
   if(busy)return;busy=true;
   try{
     const snap=await fwPlannerSnapshot(STATION_ID), sg=sig(snap);
-    window.__plannerSnap=snap;
+    window.__plannerSnap=snap;try{await logChanges(snap)}catch(e){}
     if(GM_getValue('ghtoken','')&&(sg!==lastSig||Date.now()-lastPush>50000)){await push(snap);lastSig=sg}
     badge('Live feed OK '+cMsg+rMsg+' '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),true);
   }catch(e){badge('Live feed: '+e.message,false)}

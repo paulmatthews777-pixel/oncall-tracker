@@ -183,7 +183,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v37';
+<script>const APP_VERSION='v38';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -233,6 +233,12 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 <div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
 <div id="abody"></div>
 </section>
+<section class="tab" id="t-pi">
+<div class="card"><div class="pseg" id="pimode"><button data-pi="all" class="on">All</button><button data-pi="on">Booked on</button><button data-pi="off">Booked off</button><button data-pi="event">Events</button></div>
+<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="pisearch" placeholder="Search a name" aria-label="Search a name" style="flex:1;min-width:0"><input type="date" id="pidate" aria-label="Date" style="width:140px"></div>
+<p class="note" id="pinote" style="margin:10px 0 0"></p></div>
+<div id="pibody"></div>
+</section>
 <section class="tab" id="t-planner">
   <div class="card"><div class="pseg" id="pmode"><button data-m="day" class="on">Day (24hr)</button><button data-m="week">Week</button><button data-m="custom">Custom</button></div><div class="pctl" id="pctl"></div><p class="note" id="pnote" style="margin:10px 0 0"></p></div>
   <div class="card" style="padding:8px"><div class="psc" id="pbody"></div></div>
@@ -275,6 +281,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
 <button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Activity</button>
+<button data-t="pi"><svg viewBox="0 0 24 24"><path d="M4 12h16M7 12l1.5-6h7L17 12"/><circle cx="8.5" cy="16.5" r="2.5"/><circle cx="15.5" cy="16.5" r="2.5"/></svg>PI</button>
 </nav>
 
 <script>
@@ -739,6 +746,23 @@ el.innerHTML='<div class="card"><h2>By type</h2><div style="display:flex;gap:14p
 +'<div class="card"><h2>Who booked</h2>'+ag.by.map(x=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;gap:8px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(x.by)+'</span><b>'+x.n+'</b></div>').join('')+'</div>'
 +'<div class="card"><h2>All entries</h2>'+es.map(e=>'<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+e.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' \u00b7 '+pesc(e.type)+'</span><small style="color:var(--mute)">'+f(e.updatedAt)+'</small></summary><div style="font-size:12px;color:var(--mute);padding:6px 0 0 18px;line-height:1.5">'+pesc(e.range)+'<br>Booked or last changed by '+pesc(e.by)+' at '+f(e.updatedAt)+'</div></details>').join('')+'</div>'}
 document.addEventListener('click',e=>{const b=e.target.closest('#amode [data-am]');if(!b)return;ac.mode=b.dataset.am;renderActivity()});
+/* ===== PI tab: planner change log (from changes.json) ===== */
+const CHG_URL=RAW+'changes.json';let chg=null;const pif={k:'all',q:'',d:''};
+try{chg=JSON.parse(localStorage.getItem('oncall-chg')||'null')}catch(e){}
+async function fetchChanges(){try{const r=await fetch(nc(CHG_URL),{cache:'no-store'});if(r.ok){chg=await r.json();try{localStorage.setItem('oncall-chg',JSON.stringify(chg))}catch(e){}}}catch(e){}renderPI()}
+function renderPI(){const el=$('pibody');if(!el)return;
+[...document.querySelectorAll('#pimode button')].forEach(b=>b.classList.toggle('on',b.dataset.pi===pif.k));
+if(!chg||!Array.isArray(chg.items)){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes logged yet. The FireWatch feed script logs them once it has seen two reads.</p></div>';$('pinote').textContent='';return}
+const lf=(ms,o)=>new Intl.DateTimeFormat('en-GB',Object.assign({timeZone:'Europe/London'},o)).format(new Date(ms)),dk=ms=>lf(ms,{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-'),tm=ms=>lf(ms,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+const all=chg.items,today=dk(Date.now()),wk=Date.now()-7*864e5,q=pif.q.trim().toLowerCase();
+const es=all.filter(e=>(pif.k==='all'||(pif.k==='event'?/^event/.test(e.kind):e.kind===pif.k))&&(!q||String(e.who||'').toLowerCase().includes(q))&&(!pif.d||dk(e.t)===pif.d));
+const age=Math.round((Date.now()-chg.t)/60000);
+$('pinote').textContent=all.filter(e=>dk(e.t)===today).length+' today \u00b7 '+all.filter(e=>e.t>=wk).length+' this week \u00b7 updated '+(age<1?'just now':age+' min ago');
+const L={on:['booked on','#46D93C'],off:['booked off','#FD0022'],event:['added','#F9BF92'],'event-removed':['removed','#94CDDB']};
+if(!es.length){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes match</p></div>';return}
+el.innerHTML='<div class="card">'+es.slice(0,200).map(e=>{const l=L[e.kind]||['changed','#9aa3b2'];return '<div style="border-top:1px solid var(--line);padding:8px 0"><div style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+l[1]+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' '+l[0]+(e.label?' \u00b7 '+pesc(e.label):'')+'</span><small style="color:var(--mute)">'+tm(e.t)+'</small></div><div style="font-size:12px;color:var(--mute);padding:4px 0 0 18px;line-height:1.5">'+pesc(e.text||'')+'<br>Booked by '+pesc(e.by||e.who)+' \u00b7 Authorised by: not available</div></div>'}).join('')+'</div>'}
+document.addEventListener('click',e=>{const b=e.target.closest('#pimode [data-pi]');if(!b)return;pif.k=b.dataset.pi;renderPI()});
+document.addEventListener('input',e=>{if(e.target.id==='pisearch'){pif.q=e.target.value;renderPI()}if(e.target.id==='pidate'){pif.d=e.target.value;renderPI()}});
 function renderPlanner(){
   const el=$('pbody');if(!el)return;pops.length=0;
   const today=londonNow().date;if(!pv.date)pv.date=today;if(!pv.from)pv.from=today;if(!pv.to)pv.to=addD(today,6);if(pv.mode==='week')pv.from=plannerWeekStart(pv.from);
@@ -764,7 +788,7 @@ $('prefresh').onclick=fetchRange;
 
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); renderActivity(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
+load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); renderActivity(); renderPI(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); fetchChanges(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();fetchChanges();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
