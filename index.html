@@ -183,7 +183,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v40';
+<script>const APP_VERSION='v41';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -206,6 +206,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 </section>
 
 <section class="tab" id="t-audit">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn primary" id="csvbtn" aria-label="Download audit as CSV" style="display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>Download CSV</button></div>
   <div class="card"><div class="hero" id="ahero"></div></div>
   <div class="card"><h2>Save hours: 8 week audit (to still pass)</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
   <div class="card"><h2>Specified bands</h2><div id="abands"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
@@ -818,6 +819,65 @@ load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); ren
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+<style>
+#csvsheet{display:none;position:fixed;inset:0;z-index:1000}
+#csvsheet.on{display:block}
+#csvsheet .scrim{position:absolute;inset:0;background:rgba(0,0,0,.62);border:0;width:100%;height:100%}
+#csvsheet .pane{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:22px 22px 0 0;padding:14px 18px 24px;border-top:1px solid var(--line);max-height:90vh;overflow:auto}
+#csvsheet .chips{display:flex;gap:8px}
+#csvsheet .chip{flex:1;min-height:44px;border-radius:10px;font:600 13px var(--body);background:var(--bg);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+#csvsheet .chip[aria-pressed="true"]{background:#3a1214;border:2px solid var(--accent)}
+#csvsheet .opt{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);width:100%;color:var(--ink);font:600 14px var(--body);text-align:left;margin-top:8px;cursor:pointer}
+#csvsheet .box{width:22px;height:22px;border-radius:6px;border:2px solid #4a525f;flex-shrink:0}
+#csvsheet .opt[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+#csvsheet label{display:block;font-size:12px;color:var(--mute);margin-top:12px}
+#csvtoast{display:none;position:fixed;left:16px;right:16px;bottom:24px;z-index:1100;background:#1f7a4a;color:#fff;border-radius:12px;padding:14px 16px;font:600 14px var(--body)}
+</style>
+<div id="csvsheet" role="dialog" aria-modal="true" aria-label="Save or share audit CSV">
+  <button class="scrim" id="csvclose" aria-label="Close"></button>
+  <div class="pane">
+    <h2 style="margin:0">Save / Share audit CSV</h2>
+    <p class="note" id="csvname" style="margin:4px 0 0"></p>
+    <p class="note" style="margin:2px 0 0">Pick Drive, then HFRS contract oncall, then Audit exports. Opens in Google Sheets.</p>
+    <label>Period</label>
+    <div class="chips"><button class="chip" data-k="8w" aria-pressed="true">Last 8 weeks</button><button class="chip" data-k="wk" aria-pressed="false">This week</button><button class="chip" data-k="custom" aria-pressed="false">Custom</button></div>
+    <div id="csvcustom" style="display:none;gap:8px;margin-top:8px"><label style="flex:1;margin:0">From<input type="date" id="csvfrom"></label><label style="flex:1;margin:0">To<input type="date" id="csvto"></label></div>
+    <label>Include</label>
+    <div class="opt" style="cursor:default"><span class="box" style="background:#2f9e5c;border-color:#2f9e5c"></span><span>Weekly audit by band + where the hours went<br><small style="color:var(--mute);font-weight:400">Always included</small></span></div>
+    <button class="opt" id="csvdaily" aria-pressed="false"><span class="box"></span><span>Daily totals<br><small style="color:var(--mute);font-weight:400">Extra row per day</small></span></button>
+    <p class="note" id="csverr" style="color:var(--bad);display:none"></p>
+    <button class="btn primary" id="csvgo" style="width:100%;margin-top:16px;min-height:52px;font-size:16px">Save / Share</button>
+  </div>
+</div>
+<div id="csvtoast" role="status"></div>
+<script src="csv-audit.js"></script>
+<script>
+(function(){
+var st={kind:'8w',daily:false};
+function todayNum(){var n=new Date();return dayNum(n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()))}
+function fname(){return 'LiveCrewing_Audit_'+iso(todayNum())+'.csv'}
+function toast(t){var e=$('csvtoast');e.textContent=t;e.style.display='block';setTimeout(function(){e.style.display='none'},2800)}
+function openS(){$('csvname').textContent=fname();var a=dayNum($('auditDate').value||defaultAudit());$('csvfrom').value=iso(a-WINDOW_DAYS);$('csvto').value=iso(a-1);$('csverr').style.display='none';$('csvsheet').classList.add('on')}
+function closeS(){$('csvsheet').classList.remove('on')}
+function range(){
+  if(st.kind==='8w'){var a=dayNum($('auditDate').value||defaultAudit());return{from:a-WINDOW_DAYS,to:a}}
+  if(st.kind==='wk'){var m=mondayNum(todayNum());return{from:m,to:m+7}}
+  var f=$('csvfrom').value,t=$('csvto').value;if(!f||!t)return null;var a2=dayNum(f),b2=dayNum(t)+1;return b2>a2?{from:a2,to:b2}:null
+}
+$('csvbtn').onclick=openS;$('csvclose').onclick=closeS;
+document.querySelectorAll('#csvsheet .chip').forEach(function(b){b.onclick=function(){st.kind=b.dataset.k;document.querySelectorAll('#csvsheet .chip').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});$('csvcustom').style.display=st.kind==='custom'?'flex':'none'}});
+$('csvdaily').onclick=function(){st.daily=!st.daily;this.setAttribute('aria-pressed',String(st.daily))};
+$('csvgo').onclick=function(){
+  var r=range();if(!r){var e=$('csverr');e.textContent='Pick a valid From and To date.';e.style.display='block';return}
+  var csv=AuditCSV.buildAuditCSV({entries:entries,from:r.from,to:r.to,now:Date.now(),exportedAt:new Date(),kind:st.kind,daily:st.daily,lib:{calcRange:calcRange,entryHours:entryHours,dayNum:dayNum},K:{COUNTS:COUNTS,NEVER:NEVER,WEEKLY:WEEKLY,CONTRACT:CONTRACT,WEEKS:WEEKS}});
+  var name=fname(),file=new File([csv],name,{type:'text/csv'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:name}).then(function(){closeS();toast('CSV ready')}).catch(function(e){if(!e||e.name!=='AbortError'){dl()}});
+  }else dl();
+  function dl(){var u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);closeS();toast('CSV downloaded')}
+};
+})();
 </script>
 </body>
 </html>
