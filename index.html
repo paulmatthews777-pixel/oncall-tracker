@@ -183,7 +183,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
 <script>const APP_VERSION='v30';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
-<div class="top"><div class="brand"><i></i>Contract tracker</div><span class="chip warn" id="src">No data yet</span></div>
+<div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
 <section class="tab on" id="t-week">
@@ -647,6 +647,7 @@ let rng=null,rngErr='',pv={mode:'day',date:'',from:'',to:''};const pops=[];
 function loadRng(){try{const x=JSON.parse(localStorage.getItem('oncall-range')||'null');if(x&&x.v===3){rng=excludeRachael(x);localStorage.setItem('oncall-range',JSON.stringify(rng))}}catch(e){}}
 async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=excludeRachael(await r.json());if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderPlanner()}
 const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+function plannerWeekStart(iso){const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10)}
 const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 const pn=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
 const pcol=(v,mn,pl)=>v<mn?'#FD0022':(v<pl?'#FFBF28':'#46D93C');
@@ -692,7 +693,7 @@ function multiHTML(from,to){
   return h+'</div>'}
 function renderPlanner(){
   const el=$('pbody');if(!el)return;pops.length=0;
-  const today=londonNow().date;if(!pv.date)pv.date=today;if(!pv.from)pv.from=today;if(!pv.to)pv.to=addD(today,6);
+  const today=londonNow().date;if(!pv.date)pv.date=today;if(!pv.from)pv.from=today;if(!pv.to)pv.to=addD(today,6);if(pv.mode==='week')pv.from=plannerWeekStart(pv.from);
   [...document.querySelectorAll('#pmode button')].forEach(b=>b.classList.toggle('on',b.dataset.m===pv.mode));
   const ctl=$('pctl');
   if(pv.mode==='day')ctl.innerHTML='<button data-nav="-1" aria-label="Previous day">‹</button><input type="date" id="pdate" value="'+pv.date+'"><button data-nav="1" aria-label="Next day">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
@@ -706,10 +707,10 @@ function renderPlanner(){
   $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
   if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
-  if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=n===0?today:addD(pv.from,n);renderPlanner();return}
+  if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=plannerWeekStart(n===0?today:addD(pv.from,n));renderPlanner();return}
   if(t.dataset.d){pv.mode='day';pv.date=t.dataset.d;renderPlanner();window.scrollTo(0,0);return}
   if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
-document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=t.value||pv.from;if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
+document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=pv.mode==='week'?plannerWeekStart(t.value||pv.from):(t.value||pv.from);if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
 $('prefresh').onclick=fetchRange;
 
 

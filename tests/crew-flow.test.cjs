@@ -28,6 +28,7 @@ const plannerItems = loadProductionFunction('planner-feed.user.js', 'fwPlannerIt
 const isOnCallItem = loadProductionFunction('planner-feed.user.js', 'fwIsOnCallItem');
 const crewInSlot = loadProductionFunction('index.html', 'fwCrewInSlot');
 const crewNumbers = loadProductionFunction('index.html', 'fwCrewNumbers');
+const plannerWeekStart = loadProductionFunction('index.html', 'plannerWeekStart');
 
 test('processes duplicate resource rows so split availability is not dropped', () => {
   const visited = [];
@@ -66,4 +67,11 @@ test('counts every crew member covering a slot, including more than five', () =>
 test('uses all current crew for CT and qualification totals', () => {
   const people = Array.from({ length: 7 }, (_, i) => ({ iv: [[180, 240]], q: i < 4 ? 'BA' : (i < 6 ? 'ERD' : 'OIC') }));
   assert.deepEqual({ ...crewNumbers(people, 180) }, { CT: 7, BA: 4, ERD: 2, OIC: 1 });
+});
+
+test('planner week mode always starts on Monday across week and year boundaries', () => {
+  assert.equal(plannerWeekStart('2026-11-25'), '2026-11-23'); // Wednesday
+  assert.equal(plannerWeekStart('2026-11-29'), '2026-11-23'); // Sunday
+  assert.equal(plannerWeekStart('2027-01-01'), '2026-12-28'); // New Year Friday
+  assert.equal(plannerWeekStart('2026-11-23'), '2026-11-23'); // Monday
 });

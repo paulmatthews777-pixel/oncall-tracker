@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.15
+// @version      1.16
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
