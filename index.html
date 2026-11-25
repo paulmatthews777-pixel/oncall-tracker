@@ -139,7 +139,7 @@ nav button.on svg{stroke:var(--accent)}
 .lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}.lrow:first-child{border-top:0}
 .lrow .d{width:10px;height:10px;border-radius:50%;flex:none;background:var(--faint)}.lrow .d.g{background:var(--good)}.lrow .d.r{background:var(--bad)}.lrow .d.a{background:var(--warn)}
 .lrow small{color:var(--mute);margin-left:auto;text-align:right;font-size:12px}
-.lrow .lmeta{min-width:0;flex:1}.lrow .lname{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lrow .lmeta{min-width:0;flex:1}.lrow .lname{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.lrow .lname b.yl{background:#ffbf28;color:#111;border-radius:4px;padding:1px 6px}
 .lpill{font:600 10px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--raise);color:var(--mute);white-space:nowrap}
 .lpill.g{background:rgba(51,214,134,.16);color:var(--good)}.lpill.a{background:rgba(255,179,64,.18);color:var(--warn)}.lpill.r{background:rgba(255,48,48,.18);color:var(--bad)}
 .lbar{display:block;color:var(--mute);font-size:11px;margin-top:2px}.lbar.a{color:var(--warn)}.lbar.r{color:var(--bad)}.lbar.g{color:var(--good)}
@@ -182,7 +182,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v30';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+<script>const APP_VERSION='v31';(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
@@ -598,6 +598,16 @@ window.__fwAllPeople=function(){
     return Object.assign({},p,{cur,nxt,bars,actBar,nextBar,onNow,status,tone});
   });
 };
+function roleLetters(role){
+  const s=String(role||'').trim();
+  if(!s)return '';
+  const map={'watch manager':'WM','crew manager':'CM','firefighter':'FF','fire fighter':'FF','firefighter support':'FS','fire support':'FS'};
+  const hit=map[s.toLowerCase()];
+  if(hit)return hit;
+  const caps=s.match(/[A-Z]/g);
+  if(caps&&caps.length)return caps.join('');
+  return s.split(/[\s-]+/).filter(Boolean).map(w=>w[0].toUpperCase()).join('');
+}
 function renderLive(){
   const el=$('lhero');
   if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';$('lcrew').textContent='Crew roster';$('lon').innerHTML='';return}
@@ -608,7 +618,7 @@ function renderLive(){
   el.innerHTML='<b>'+(stale?'OUT OF DATE':(ok?'ON THE RUN':'OFF THE RUN'))+'</b><span>'+(stale?'Last updated '+ageMin+' min ago. Do not rely on this':(st==='full'?'All crewing rows green this hour':st==='min'?'Minimal crewing (yellow): '+amb.map(r=>r.name+' '+r.n[h]).join(', '):'Short (red): '+bad.map(r=>r.name+' '+r.n[h]+'/'+r.min).join(', ')))+' · updated '+(ageMin<1?'just now':ageMin+' min ago')+'</span>';
   if(h<0||h>47)return;
   const P=window.__fwAllPeople();
-  const absOf=m=>snap.base+m, sub=p=>[p.role,p.q].filter(Boolean).join(' · ');
+  const absOf=m=>snap.base+m, sub=p=>[roleLetters(p.role),p.q].filter(Boolean).join(' · ');
   const rank=p=>p.onNow?0:(p.status!=='Off'?1:2);
   const roster=P.slice().sort((a,b)=>{
     const ra=rank(a),rb=rank(b);if(ra!==rb)return ra-rb;
@@ -623,7 +633,7 @@ function renderLive(){
     const barLine=p.actBar?'<span class="lbar '+(actMeta.tone||'')+'">'+(p.onNow||p.status!==actMeta.label?escHtml(actMeta.label)+' ':'')+'until '+fmAt(absOf(p.actBar[4]),nowAbs)+'</span>':(p.nextBar?'<span class="lbar">Next bar: '+escHtml(nxtMeta.label)+' '+fmAt(absOf(p.nextBar[3]),nowAbs)+'–'+fmAt(absOf(p.nextBar[4]),nowAbs)+'</span>':'');
     const rightTxt=p.onNow&&p.cur?'on until <b>'+fmAt(absOf(p.cur[1]),nowAbs)+'</b>'+(next?'<br>next on '+fmAt(absOf(next[0]),nowAbs)+'–'+fmAt(absOf(next[1]),nowAbs):''):(p.onNow?'on now':(p.nxt?'next on <b>'+fmAt(absOf(p.nxt[0]),nowAbs)+'</b><br>until '+fmAt(absOf(p.nxt[1]),nowAbs):'no shift in 3 days'));
     const info=sub(p);
-    return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
+    return '<div class="lrow"><span class="d'+(p.tone?' '+p.tone:'')+'"></span><span class="lmeta"><span class="lname"><b'+(p.onNow?' class="yl"':'')+'>'+escHtml(p.name)+'</b><span class="lpill'+(p.tone?' '+p.tone:'')+'">'+escHtml(p.status)+'</span></span>'+(info?'<small style="margin:0;text-align:left;display:block">'+escHtml(info)+'</small>':'')+barLine+'</span><small>'+rightTxt+'</small></div>';
   }).join(''):'<p class="note">No crew in roster</p>';
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
   const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), key=['CT','BA','ERD','OIC'];
