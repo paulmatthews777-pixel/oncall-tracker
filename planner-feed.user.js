@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.11
+// @version      1.12
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -95,7 +95,7 @@ async function fwPlannerSnapshot(stationId){
     for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
       const list=[cell].concat(cell.appointments||[]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
-        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call - (Available|Turn Out)/i.test(tip));
+        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call\s*(?:[-:\u2010-\u2015]\s*)?(?:Available|Turn Out)\b/i.test(tip));
         if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
         const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
         if(it.type!=='RotaAssignment'){const tk=String(it.type)+'|'+tipName(tip)+'|'+light(it.colour);types[tk]=(types[tk]||0)+1}
