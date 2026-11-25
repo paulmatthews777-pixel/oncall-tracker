@@ -698,7 +698,7 @@ function renderPlanner(){
   if(pv.mode==='day')ctl.innerHTML='<button data-nav="-1" aria-label="Previous day">‹</button><input type="date" id="pdate" value="'+pv.date+'"><button data-nav="1" aria-label="Next day">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
   else if(pv.mode==='week')ctl.innerHTML='<button data-nav="-7" aria-label="Previous week">‹</button><input type="date" id="pfrom" value="'+pv.from+'"><button data-nav="7" aria-label="Next week">›</button><button data-nav="0" style="flex:0 0 64px">Today</button>';
   else ctl.innerHTML='<input type="date" id="pfrom" value="'+pv.from+'"><input type="date" id="pto" value="'+pv.to+'">';
-  if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data'+(rngErr?' ('+rngErr+')':'')+'. Reload FireWatch on the PC once so the script (1.14) loads it.</p>';$('pnote').textContent='';$('pleg').innerHTML='';return}
+  if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data'+(rngErr?' ('+rngErr+')':'')+'. Reload FireWatch on the PC once so the script (1.15) loads it.</p>';$('pnote').textContent='';$('pleg').innerHTML='';return}
   const age=Math.round((Date.now()-rng.t)/60000);
   $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
   const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
