@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.12
+// @version      1.13
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -28,6 +28,9 @@ async function fwDay(stationId,off,tok){
   const j=(await r.json()).ResourceContainer[0],A=j.Appliances[0];A.__root=j;return A;
 }
 const tipName=t=>String(t||'').split(/[\r\n]+|<br\s*\/?>/i).map(x=>x.replace(/<[^>]*>/g,'').trim()).filter(x=>x&&!/^\w{3} \d+ \w+ \d\d:\d\d - /.test(x)).join(' / ').slice(0,70);
+function fwForEachResourceRow(rows,visit){for(const r of rows||[])if(r&&r.RowData&&r.RowData.Name)visit(r)}
+function fwPlannerItems(cellData){let payload;try{payload=typeof cellData==='string'?JSON.parse(cellData):cellData}catch(e){return[]}const parents=payload&&Array.isArray(payload.plannerItem)?payload.plannerItem:[],out=[];for(const p of parents){if(!p)continue;out.push(p);if(Array.isArray(p.appointments))for(const child of p.appointments)if(child)out.push(child)}return out}
+function fwIsOnCallItem(it){const tip=String(it&&it.tooltip||'');return Boolean(it&&(it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call\s*(?:[-:\u2010-\u2015]\s*)?(?:Available|Turn Out)\b/i.test(tip))))}
 function fwBarMeta(b){
   const t=String(b&&b[0]||''),tip=String(b&&b[1]||'');
   if(t==='Sickness')return{label:'Sickness',away:true};
@@ -91,16 +94,15 @@ async function fwPlannerSnapshot(stationId){
     rows.push({name,min:r.RowData.Min,plan:r.RowData.Plan,c,n});
   }
   const byName={},types={},seenB=new Set();
-  days.forEach(A=>{const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');const seenN=new Set();for(const r of grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[])){if(seenN.has(r.RowData.Name))continue;seenN.add(r.RowData.Name);const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
-    for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
-      const list=[cell].concat(cell.appointments||[]);
+  days.forEach(A=>{const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');fwForEachResourceRow(grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[]),r=>{const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
+    for(const h of H){const list=fwPlannerItems(d[h]);
       for(const it of list){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
-        const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call\s*(?:[-:\u2010-\u2015]\s*)?(?:Available|Turn Out)\b/i.test(tip));
+        const tip=String(it.tooltip||''),isOn=fwIsOnCallItem(it);
         if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
         const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
         if(it.type!=='RotaAssignment'){const tk=String(it.type)+'|'+tipName(tip)+'|'+light(it.colour);types[tk]=(types[tk]||0)+1}
         if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),tipName(tip),light(it.colour),s-base,e-base])}continue}
-        o.iv.push([s-base,e-base]);}}}});
+        o.iv.push([s-base,e-base]);}}});});
   const relNow=Math.round(Date.now()/60000)-base;
   const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;const st=fwPersonState(p,relNow);p.onNow=st.onNow;p.status=st.status;return p});
   if(!scanDone){scanDone=true;fwScan(stationId,tok)}

@@ -538,6 +538,7 @@ const fmT=m=>new Date(m*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute
 const fmD=m=>new Date(m*60000).toLocaleDateString('en-GB',{weekday:'short',timeZone:'Europe/London'});
 const dKey=m=>new Date(m*60000).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
 function fmAt(m,nowAbs){return (dKey(m)===dKey(nowAbs)?'':fmD(m)+' ')+fmT(m)}
+function fwCrewInSlot(people,t){return(people||[]).filter(p=>(p.iv||[]).some(v=>v[0]<=t&&t+15<=v[1]))}
 function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function barMeta(b){
   const t=String(b&&b[0]||''),tip=String(b&&b[1]||'');
@@ -604,7 +605,7 @@ function renderLive(){
   const open=new Set([...document.querySelectorAll('#lhours details[open]')].map(d=>d.dataset.h));
   const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), has=(p,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(p.q||'');
   const need={CT:+R.CT.min,BA:+R.BA.min,ERD:+R.ERD.min,OIC:+R.OIC.min}, plan={CT:+R.CT.plan,BA:+R.BA.plan,ERD:+R.ERD.plan,OIC:+R.OIC.plan}, key=['CT','BA','ERD','OIC'];
-  const slot=t=>{const w=snap.people.filter(p=>p.iv.some(v=>v[0]<=t&&t+15<=v[1]));const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
+  const slot=t=>{const w=fwCrewInSlot(snap.people,t);const c={CT:w.length,BA:w.filter(p=>has(p,'BA')).length,ERD:w.filter(p=>has(p,'ERD')).length,OIC:w.filter(p=>has(p,'OIC')).length};const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
   const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
   $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
   $('lhours').innerHTML=hs.map((i,k)=>{
