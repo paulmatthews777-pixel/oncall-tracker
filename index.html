@@ -167,7 +167,7 @@ nav button.on svg{stroke:var(--accent)}
 .pl.yl{background:#ffbf28;color:#111;border-radius:4px}.pl span{font-weight:700;font-size:11px;color:var(--mute);margin-left:4px}.pl.yl span{color:#111}
 .pm{width:28px;flex:none;text-align:center;color:var(--mute)}
 .pc{width:24px;flex:none;height:22px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;border:1px solid var(--bg);box-sizing:border-box;color:var(--mute);background:var(--raise)}
-.ph .pc{border:0;background:none;font-weight:400}.pc.pw{cursor:pointer;width:46px;font-weight:600;color:var(--ink)}
+.ph .pc{border:0;background:none;font-weight:400}.pd{width:576px;flex:none;padding-left:6px;box-sizing:border-box;text-align:left;font-weight:600;color:var(--ink);cursor:pointer;border-left:2px solid #888}.pc.pz{border-left:2px solid #888}.pc.pw{cursor:pointer;width:46px;font-weight:600;color:var(--ink)}
 .pg{background:#8f1d1d;color:#fff;padding:3px 8px;font-weight:600;font-size:12px}
 .pt{position:relative;flex:none;width:576px;height:22px;background:var(--raise)}
 .pb{position:absolute;top:0;height:22px;display:flex;align-items:center;padding-left:3px;overflow:hidden;white-space:nowrap;font-size:10px;box-sizing:border-box;border-right:1px solid rgba(0,0,0,.25)}.pb.tap{cursor:pointer}
@@ -182,7 +182,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v34';
+<script>const APP_VERSION='v35';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -646,7 +646,7 @@ function renderLive(){
   const R=Object.fromEntries(snap.rows.map(r=>[r.name,r])), key=['CT','BA','ERD','OIC'];
   const need=Object.fromEntries(key.map(k=>[k,+R[k].min])), plan=Object.fromEntries(key.map(k=>[k,+R[k].plan]));
   const slot=t=>{const w=fwCrewInSlot(snap.people,t),c=fwCrewNumbers(snap.people,t);const ok=key.every(k=>c[k]>=need[k]);return{w,c,ok,full:ok&&key.every(k=>c[k]>=plan[k])}};
-  const nowNumbers=fwCrewNumbers(snap.people,Math.floor(rel/15)*15);const hourNums=i=>{if(!(snap.people||[]).length)return Object.fromEntries(key.map(k=>[k,R[k].n[i]||'0']));if(i===h)return nowNumbers;const qs=[0,1,2,3].map(q=>fwCrewNumbers(snap.people,i*60+q*15));return Object.fromEntries(key.map(k=>[k,Math.min(...qs.map(c=>c[k]))]))};
+  const nowNumbers=fwCrewNumbers(snap.people,Math.floor(rel/15)*15);const hourNums=i=>{if(!(snap.people||[]).length)return Object.fromEntries(key.map(k=>[k,R[k].n[i]||'0']));const qs=i===h?[nowNumbers]:[0,1,2,3].map(q=>fwCrewNumbers(snap.people,i*60+q*15));return Object.fromEntries(key.map(k=>{const f=+R[k].n[i];return[k,(f>=0&&f<plan[k])?f:Math.max(f||0,Math.min(...qs.map(c=>c[k])))]}))};
   const hs=[...Array(24).keys()].map(i=>h+i).filter(i=>i<48);
   $('lsh').textContent='Station status · '+fmT(snap.base+hs[0]*60)+' to '+fmT(snap.base+(hs[hs.length-1]+1)*60);
   $('lhours').innerHTML=hs.map((i,k)=>{
@@ -679,19 +679,22 @@ function txtOn(hex){const n=parseInt(hex,16);if(isNaN(n))return '#111';const r=n
 function onNow(name){const nowM=Math.floor(Date.now()/60000);let src=null;if(snap&&snap.v===2&&Date.now()-snap.t<=15*60000)src=snap;else if(rng&&Date.now()-rng.t<=45*60000)src=rng;if(!src)return false;const p=src.people.find(x=>x.name===name);const rel=nowM-src.base;if(!p||!p.iv.some(v=>v[0]<=rel&&rel<v[1]))return false;const away=(q,base)=>(q&&q.bars||[]).some(b=>!isAct(b)&&b[3]<=nowM-base&&nowM-base<b[4]);return !(away(p,src.base)||(rng&&away(rng.people.find(x=>x.name===name),rng.base)))}
 function sortedPeople(){return rng.people.slice().sort((a,b)=>(ROLE_ORDER[a.role]===undefined?9:ROLE_ORDER[a.role])-(ROLE_ORDER[b.role]===undefined?9:ROLE_ORDER[b.role])||a.name.localeCompare(b.name))}
 function popFor(p,b){return pops.push(p.name+'\n'+b[1])-1}
-function dayHTML(date){
+const PKEY=['CT','BA','ERD','OIC'];
+function planHour(di,hr,name){const t0=di*1440+hr*60;let m=1e9;for(let q=0;q<4;q++){const c=fwCrewNumbers(rng.people,t0+q*15)[name];if(c<m)m=c}return m}
+function planDay(di,name){let m=1e9;for(let hr=0;hr<24;hr++){const c=planHour(di,hr,name);if(c<m)m=c}return m}
+function dayHTML(date,N){N=N||1;
   const di=rng.dates.indexOf(date);
   if(di<0)return '<p class="note" style="padding:8px">'+dName(date)+' is outside the loaded range ('+dName(rng.dates[0])+' to '+dName(rng.dates[rng.dates.length-1])+')</p>';
-  const d0=di*1440,today=date===londonNow().date;
-  let h='<div class="pgrid"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+[...Array(24).keys()].map(i=>'<div class="pc">'+String(i).padStart(2,'0')+'</div>').join('')+'</div>';
-  for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&r.n[di]);if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
-    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+r.n[di].map(x=>{if(x==='')return '<div class="pc">-</div>';const v=pn(x);return '<div class="pc" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+pesc(x)+'</div>'}).join('')+'</div>'}}
+  N=Math.max(1,Math.min(N,rng.dates.length-di));const d0=di*1440,dEnd=d0+1440*N,dsl=rng.dates.slice(di,di+N),today=dsl.includes(londonNow().date),sep=N>1;
+  let h='<div class="pgrid" style="min-width:'+(184+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
+  for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&dsl.every((_,k)=>r.n[di+k]));if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
+    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
   for(const p of sortedPeople()){
     let bars='';
-    for(const v of p.iv){const s=Math.max(v[0],d0),e=Math.min(v[1],d0+1440);if(e<=s)continue;bars+='<div class="pb" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#46d93c;color:#111">'+((e-s)>=180?pesc(p.q):'')+'</div>'}
-    for(const b of p.bars){const s=Math.max(b[3],d0),e=Math.min(b[4],d0+1440);if(e<=s)continue;bars+='<div class="pb tap" data-p="'+popFor(p,b)+'" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#'+b[2]+';color:'+txtOn(b[2])+'">'+pesc(barLabel(b))+'</div>'}
-    h+='<div class="pr"><div class="pl'+(today&&onNow(p.name)?' yl':'')+'"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div><div class="pt">'+bars+'</div></div>'}
+    for(const v of p.iv){const s=Math.max(v[0],d0),e=Math.min(v[1],dEnd);if(e<=s)continue;bars+='<div class="pb" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#46d93c;color:#111">'+((e-s)>=180?pesc(p.q):'')+'</div>'}
+    for(const b of p.bars){const s=Math.max(b[3],d0),e=Math.min(b[4],dEnd);if(e<=s)continue;bars+='<div class="pb tap" data-p="'+popFor(p,b)+'" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#'+b[2]+';color:'+txtOn(b[2])+'">'+pesc(barLabel(b))+'</div>'}
+    h+='<div class="pr"><div class="pl'+(today&&onNow(p.name)?' yl':'')+'"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div><div class="pt" style="width:'+(576*N)+'px'+(sep?';background-image:linear-gradient(90deg,#888 2px,transparent 2px);background-size:576px 100%;background-repeat:repeat-x':'')+'">'+bars+'</div></div>'}
   return h+'</div>'}
 function multiHTML(from,to){
   const dates=[];for(let d=from;d<=to&&dates.length<31;d=addD(d,1))dates.push(d);
@@ -699,7 +702,7 @@ function multiHTML(from,to){
   const idx=dates.map(d=>rng.dates.indexOf(d));
   let h='<div class="pgrid" style="min-width:'+(160+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g);if(!rs.length)continue;h+='<div class="pg">'+g+' (lowest each day)</div>';
-    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const v=Math.min.apply(null,a);return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
+    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const fm=Math.min.apply(null,a),v=PKEY.includes(r.name)&&fm>=pl?Math.max(fm,planDay(i,r.name)):fm;return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
   for(const p of sortedPeople()){h+='<div class="pr"><div class="pl"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div>'+idx.map(i=>{
       if(i<0)return '<div class="pc" style="width:46px">-</div>';const d0=i*1440,d1=d0+1440;let best=null,bo=0;
@@ -720,7 +723,7 @@ function renderPlanner(){
   const age=Math.round((Date.now()-rng.t)/60000);
   $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
   const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
-  el.innerHTML=pv.mode==='day'?dayHTML(pv.date):multiHTML(pv.from,pv.mode==='week'?addD(pv.from,6):pv.to);
+  el.innerHTML=pv.mode==='day'?dayHTML(pv.date):pv.mode==='week'?dayHTML(pv.from,7):multiHTML(pv.from,pv.to);
   $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
   if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
