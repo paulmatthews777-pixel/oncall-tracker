@@ -175,6 +175,7 @@ nav button.on svg{stroke:var(--accent)}
 .pctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pctl input{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px;flex:1;min-width:120px}.pctl button{flex:0 0 40px;padding:0}
 .ppop{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;white-space:pre-line;color:var(--ink)}
 .pleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px}.pleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+#abody summary::-webkit-details-marker{display:none}
 </style>
 </head>
 <body>
@@ -182,7 +183,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v36';
+<script>const APP_VERSION='v37';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -228,6 +229,10 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
+<section class="tab" id="t-activity">
+<div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
+<div id="abody"></div>
+</section>
 <section class="tab" id="t-planner">
   <div class="card"><div class="pseg" id="pmode"><button data-m="day" class="on">Day (24hr)</button><button data-m="week">Week</button><button data-m="custom">Custom</button></div><div class="pctl" id="pctl"></div><p class="note" id="pnote" style="margin:10px 0 0"></p></div>
   <div class="card" style="padding:8px"><div class="psc" id="pbody"></div></div>
@@ -269,6 +274,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
   <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
+<button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Activity</button>
 </nav>
 
 <script>
@@ -662,7 +668,7 @@ $('lrefresh').onclick=fetchLive;
 const RANGE_URL=RAW+'range.json';
 let rng=null,rngErr='',pv={mode:'day',date:'',from:'',to:''};const pops=[];
 function loadRng(){try{const x=JSON.parse(localStorage.getItem('oncall-range')||'null');if(x&&x.v===3){rng=excludeRachael(x);localStorage.setItem('oncall-range',JSON.stringify(rng))}}catch(e){}}
-async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=excludeRachael(await r.json());if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderPlanner()}
+async function fetchRange(){try{const r=await fetch(nc(RANGE_URL),{cache:'no-store'});if(r.ok){const j=excludeRachael(await r.json());if(j&&j.v===3&&j.rows&&(!rng||j.t>=rng.t)){rng=j;try{localStorage.setItem('oncall-range',JSON.stringify(j))}catch(e){}}rngErr=''}else rngErr='feed '+r.status}catch(e){rngErr='offline'}renderActivity();renderPlanner()}
 const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 function plannerWeekStart(iso){const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10)}
 const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
@@ -711,6 +717,28 @@ function multiHTML(from,to){
       let on=0;for(const v of p.iv)on+=Math.max(0,Math.min(v[1],d1)-Math.max(v[0],d0));
       return on>0?'<div class="pc" style="width:46px;background:#46d93c;color:#111">'+Math.round(on/60)+'h</div>':'<div class="pc" style="width:46px"></div>'}).join('')+'</div>'}
   return h+'</div>'}
+
+/* ===== Activity tab: who booked what, from the planner bars ===== */
+function parseActivity(r){const out=[];if(!r||!Array.isArray(r.people))return out;const M={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11},seen=new Set();
+for(const p of r.people){for(const b of (p.bars||[])){try{const L=String((b&&b[1])||'').split('\n').map(x=>x.trim());const u=L.find(x=>/^Updated:/.test(x));if(!u)continue;const m=/^Updated:\s*(\d{1,2}) (\w{3}) (\d{4}) (\d{1,2}):(\d{2})\s*By:\s*(.+)$/.exec(u);if(!m||M[m[2]]===undefined)continue;
+const emp=((L.find(x=>/^Employee:/.test(x))||'').replace(/^Employee:\s*/,'')||p.name||'').trim();const type=(L.find((x,i)=>i>0&&x&&!/^(Employee:|Updated:)/.test(x))||'Activity').replace(/\s*:.*$/,'').trim()||'Activity';const upd=Date.UTC(+m[3],M[m[2]],+m[1],+m[4],+m[5]);
+const key=emp+'|'+L[0]+'|'+type+'|'+upd;if(seen.has(key))continue;seen.add(key);out.push({who:emp,type:type,range:L[0],by:m[6].trim(),updatedAt:upd,colour:String(b[2]||'888888'),mins:(+b[4]||0)-(+b[3]||0)})}catch(e){}}}
+return out.sort((a,b)=>b.updatedAt-a.updatedAt)}
+function actPeriod(date,mode){const q=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date||'');if(!q)return null;const y=+q[1],mo=+q[2]-1,d=+q[3],t=Date.UTC(y,mo,d);if(mode==='month')return{from:Date.UTC(y,mo,1),to:Date.UTC(y,mo+1,1)};const dow=(new Date(t).getUTCDay()+6)%7,from=t-dow*864e5;return{from:from,to:from+7*864e5}}
+function actAgg(entries){const t={},by={};for(const e of entries){if(!t[e.type])t[e.type]={n:0,c:e.colour};t[e.type].n++;by[e.by]=(by[e.by]||0)+1}const total=entries.length;
+return{total:total,types:Object.keys(t).map(k=>({type:k,n:t[k].n,colour:t[k].c,pct:total?t[k].n/total*100:0})).sort((a,b)=>b.n-a.n),by:Object.keys(by).map(k=>({by:k,n:by[k]})).sort((a,b)=>b.n-a.n)}}
+function actPie(types){const tot=types.reduce((s,t)=>s+t.n,0);if(!tot)return '';if(types.length===1)return '<svg viewBox="0 0 140 140" role="img" aria-label="Activity by type"><circle cx="70" cy="70" r="60" fill="#'+types[0].colour+'"/><circle cx="70" cy="70" r="30" fill="var(--surface)"/></svg>';let a=-Math.PI/2;const P=(x,y)=>(70+60*x).toFixed(2)+' '+(70+60*y).toFixed(2);
+return '<svg viewBox="0 0 140 140" role="img" aria-label="Activity by type">'+types.map(t=>{const f=t.n/tot*Math.PI*2,a2=a+f,d='M70 70L'+P(Math.cos(a),Math.sin(a))+'A60 60 0 '+(f>Math.PI?1:0)+' 1 '+P(Math.cos(a2),Math.sin(a2))+'Z';a=a2;return '<path d="'+d+'" fill="#'+t.colour+'" stroke="var(--surface)" stroke-width="1.5"/>'}).join('')+'<circle cx="70" cy="70" r="30" fill="var(--surface)"/></svg>'}
+let ac={mode:'week'};
+function renderActivity(){const el=$('abody');if(!el)return;[...document.querySelectorAll('#amode button')].forEach(b=>b.classList.toggle('on',b.dataset.am===ac.mode));
+if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data yet</p>';$('anote').textContent='';return}
+const per=actPeriod(londonNow().date,ac.mode),all=parseActivity(rng),es=all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to),ag=actAgg(es),age=Math.round((Date.now()-rng.t)/60000),f=ms=>{const d=new Date(ms),p=n=>String(n).padStart(2,'0');return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())};
+$('anote').textContent=(ac.mode==='week'?'Booked or changed this week':'Booked or changed this month')+' \u00b7 '+ag.total+' entries \u00b7 updated '+(age<1?'just now':age+' min ago');
+if(!ag.total){el.innerHTML='<div class="card"><p class="note" style="margin:0">No bookings or changes in this period</p></div>';return}
+el.innerHTML='<div class="card"><h2>By type</h2><div style="display:flex;gap:14px;align-items:center"><div style="width:140px;flex:none">'+actPie(ag.types)+'</div><div style="flex:1;min-width:0">'+ag.types.map(t=>'<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+t.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(t.type)+'</span><b>'+t.n+'</b><span style="color:var(--mute);width:42px;text-align:right">'+Math.round(t.pct)+'%</span></div>').join('')+'</div></div></div>'
++'<div class="card"><h2>Who booked</h2>'+ag.by.map(x=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;gap:8px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(x.by)+'</span><b>'+x.n+'</b></div>').join('')+'</div>'
++'<div class="card"><h2>All entries</h2>'+es.map(e=>'<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+e.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' \u00b7 '+pesc(e.type)+'</span><small style="color:var(--mute)">'+f(e.updatedAt)+'</small></summary><div style="font-size:12px;color:var(--mute);padding:6px 0 0 18px;line-height:1.5">'+pesc(e.range)+'<br>Booked or last changed by '+pesc(e.by)+' at '+f(e.updatedAt)+'</div></details>').join('')+'</div>'}
+document.addEventListener('click',e=>{const b=e.target.closest('#amode [data-am]');if(!b)return;ac.mode=b.dataset.am;renderActivity()});
 function renderPlanner(){
   const el=$('pbody');if(!el)return;pops.length=0;
   const today=londonNow().date;if(!pv.date)pv.date=today;if(!pv.from)pv.from=today;if(!pv.to)pv.to=addD(today,6);if(pv.mode==='week')pv.from=plannerWeekStart(pv.from);
@@ -736,7 +764,7 @@ $('prefresh').onclick=fetchRange;
 
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
+load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); renderActivity(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
