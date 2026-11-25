@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.13
+// @version      1.14
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -104,7 +104,7 @@ async function fwPlannerSnapshot(stationId){
         if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),tipName(tip),light(it.colour),s-base,e-base])}continue}
         o.iv.push([s-base,e-base]);}}});});
   const relNow=Math.round(Date.now()/60000)-base;
-  const people=Object.values(byName).map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;const st=fwPersonState(p,relNow);p.onNow=st.onNow;p.status=st.status;return p});
+  const people=Object.values(byName).filter(p=>p.name.trim().toLowerCase()!=='rachael cook').map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;const st=fwPersonState(p,relNow);p.onNow=st.onNow;p.status=st.status;return p});
   if(!scanDone){scanDone=true;fwScan(stationId,tok)}
   return {v:2,t:Date.now(),base,types,scan:scanTypes,date:t0.getFullYear()+'-'+pad(t0.getMonth()+1)+'-'+pad(t0.getDate()),station:'Winterton',rows,people};
 }

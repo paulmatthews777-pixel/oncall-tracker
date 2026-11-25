@@ -523,9 +523,10 @@ function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{con
 const RAW='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracker/live/';
 const LIVE_URL=RAW+'planner.json';
 let snap=null, snapErr='';
+const excludeRachael=s=>{if(s&&Array.isArray(s.people))s.people=s.people.filter(p=>String(p.name||'').trim().toLowerCase()!=='rachael cook');return s};
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
-function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2)snap=x}catch(e){}}
-function setSnap(x){if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t||snap.t>Date.now()+120000)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
+function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2){snap=excludeRachael(x);localStorage.setItem('oncall-live',JSON.stringify(snap))}}catch(e){}}
+function setSnap(x){x=excludeRachael(x);if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t||snap.t>Date.now()+120000)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
 const CONTRACT_URL=RAW+'contract.json';
 const nc=u=>u+'?_='+Date.now();
 let lastC=0;
