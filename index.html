@@ -161,7 +161,9 @@ nav button.on svg{stroke:var(--accent)}
 .g-row{margin-bottom:8px}.g-n{font-size:12px;color:var(--mute);display:flex;justify-content:space-between}.g-n b{color:var(--ink);font-weight:600}
 .g-bar{display:grid;grid-template-columns:repeat(96,1fr);height:14px;border-radius:3px;overflow:hidden;background:var(--raise)}
 .g-bar i{display:block}.g-bar i.on{background:var(--good)}.g-bar i:nth-child(4n+1){box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
-.psc{overflow-x:auto;border-radius:8px}.pgrid{min-width:700px;font-size:11px}
+.psc{overflow-x:auto;border-radius:8px}.pgrid{min-width:700px;font-size:11px;position:relative}
+.pnow{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#e24b4a;z-index:3;pointer-events:none}.pnow b{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#e24b4a;color:#fff;font:600 10px var(--body);padding:0 4px;border-radius:3px}
+@media (orientation:landscape) and (max-height:520px){body.pland{padding-bottom:0}body.pland .top,body.pland nav{display:none}body.pland main{max-width:none;padding:6px 10px;gap:8px}body.pland #t-planner .card{padding:6px}body.pland #t-planner #ppop,body.pland #t-planner #pleg,body.pland #t-planner #prefresh{display:none}}
 .pr{display:flex;align-items:center;border-bottom:1px solid var(--line);min-height:24px}
 .pl{position:sticky;left:0;z-index:1;background:var(--surface);width:150px;flex:none;padding:0 6px;font-size:12px;display:flex;gap:4px;justify-content:space-between;align-items:center;height:24px;box-sizing:border-box;overflow:hidden;white-space:nowrap}
 .pl.yl{background:#ffbf28;color:#111;border-radius:4px}.pl span{font-weight:700;font-size:11px;color:var(--mute);margin-left:4px}.pl.yl span{color:#111}.pl>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}.pl>span:last-child{flex:none;margin-left:0}
@@ -171,11 +173,19 @@ nav button.on svg{stroke:var(--accent)}
 .pg{background:#8f1d1d;color:#fff;padding:3px 8px;font-weight:600;font-size:12px}
 .pt{position:relative;flex:none;width:576px;height:22px;background:var(--raise)}
 .pb{position:absolute;top:0;height:22px;display:flex;align-items:center;padding-left:3px;overflow:hidden;white-space:nowrap;font-size:10px;box-sizing:border-box;border-right:1px solid rgba(0,0,0,.25)}.pb.tap{cursor:pointer}
+.row-q{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.row-q small{display:block;color:var(--mute);font-size:12px;font-weight:400}
+.sw{flex:none;width:52px;height:30px;border-radius:15px;border:0;background:#4a525f;position:relative;cursor:pointer;padding:0}.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}.sw.on{background:#e24b4a}.sw.on i{left:25px}
+.bkr{border-left:4px solid var(--line);background:var(--raise);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:13px}.bkr b{font-weight:700}.bkr small{display:block;color:var(--mute);font-size:12px}
+.fab{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:#8a0820;color:#fff;font:400 34px/54px var(--body);text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:pointer;z-index:7;padding:0}
+#afrm .pane2{position:absolute;left:0;right:0;bottom:0;background:#262626;border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;max-width:560px;margin:0 auto}#afrm .hd{background:#c60c30;padding:12px 16px;font-weight:600;border-radius:20px 20px 0 0}
+#afrm .fl{display:block;border-bottom:1px solid #ddd;padding:8px 16px 6px}#afrm .fl small{display:block;color:#aaa;font-size:11px}#afrm .fl select,#afrm .fl input{width:100%;background:transparent;border:0;color:var(--ink);font:16px var(--body);padding:4px 0;min-height:30px}#afrm .fl select option{color:#111}
+#afrm .sub{display:block;width:calc(100% - 32px);margin:14px 16px 20px;padding:13px;border:0;border-radius:6px;font:600 15px var(--body);background:#999;color:#222}#afrm .sub.ok{background:#c60c30;color:#fff;cursor:pointer}
 .pseg{display:flex;gap:6px;margin-bottom:10px}.pseg button,.pctl button{flex:1;background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 6px;font:600 13px var(--body);cursor:pointer;min-height:40px}.pseg button.on{border-color:var(--accent);color:#fff}
 .pctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pctl input{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px;flex:1;min-width:120px}.pctl button{flex:0 0 40px;padding:0}
 .ppop{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;white-space:pre-line;color:var(--ink)}
 .pleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px}.pleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 #abody summary::-webkit-details-marker{display:none}
+@keyframes dsg{from{stroke-dasharray:0 440}}.dseg{cursor:pointer;animation:dsg .7s ease-out both;transition:stroke-width .15s}#akind,#awho,#adate{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px}@media (prefers-reduced-motion:reduce){.dseg{animation:none}}
 </style>
 </head>
 <body>
@@ -183,7 +193,7 @@ nav button.on svg{stroke:var(--accent)}
 <div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
 <div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
 </div>
-<script>const APP_VERSION='v41';
+<script>const APP_VERSION='v45';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -195,6 +205,9 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 <section class="tab on" id="t-week">
   <div class="wk"><button class="btn sq" id="pw" aria-label="Previous week">‹</button><div class="t" id="wtitle"></div><button class="btn sq" id="nw" aria-label="Next week">›</button></div>
   <div class="card"><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
+  <div class="card" id="hcard"></div>
+  <div class="card" id="wtdcard"></div>
+  <div class="card" id="paycard"></div>
   <div class="card"><h2>Save hours: this week (to still hit 85)</h2><div id="wcur"></div></div>
   <div class="card"><h2>Specified bands</h2><div id="wbands"></div></div>
   <div class="stats" id="wstats"></div>
@@ -206,7 +219,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 </section>
 
 <section class="tab" id="t-audit">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn primary" id="csvbtn" aria-label="Download audit as CSV" style="display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>Download CSV</button></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn primary" id="csvbtn" aria-label="Download audit as coloured spreadsheet" style="display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>Download spreadsheet</button></div>
   <div class="card"><div class="hero" id="ahero"></div></div>
   <div class="card"><h2>Save hours: 8 week audit (to still pass)</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
   <div class="card"><h2>Specified bands</h2><div id="abands"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
@@ -225,18 +238,24 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 
 <section class="tab" id="t-live">
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
+  <div class="card" id="lbook"><h2>Book on / off</h2>
+    <div class="row-q" id="lquick"></div>
+    <div class="pseg" id="lbmode" style="margin-top:12px"><button data-bm="on" class="on">Book on</button><button data-bm="off">Book off</button></div>
+    <div id="lbody"></div></div>
   <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. Green: full crew (5+). Yellow: minimal crewing (4 with 2 BA, 1 OIC, 1 ERD), still on the run. Red: short or missing a required skill, off the run.</p><div id="lhours"></div></div>
   <div class="card"><h2 id="lcrew">Crew roster</h2><div id="lon"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
 
 <section class="tab" id="t-activity">
-<div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="asearch" placeholder="Search name or event" aria-label="Search name or event" style="flex:1;min-width:0"><input type="date" id="adate" aria-label="Date recorded" style="width:140px"></div><div class="pseg" id="akinds" style="margin-top:10px;flex-wrap:wrap"></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
+<button class="fab" id="aplus" aria-label="Add activity">+</button>
+<div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="adate" aria-label="Date recorded" style="flex:1;min-width:0"></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
 <div id="abody"></div>
 </section>
 <section class="tab" id="t-pi">
 <div class="card"><div class="pseg" id="pimode"><button data-pi="all" class="on">All</button><button data-pi="on">Booked on</button><button data-pi="off">Booked off</button><button data-pi="event">Events</button></div>
 <div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="pisearch" placeholder="Search a name" aria-label="Search a name" style="flex:1;min-width:0"><input type="date" id="pidate" aria-label="Date" style="width:140px"></div>
+<label style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;cursor:pointer"><input type="checkbox" id="picrit" checked style="accent-color:var(--accent);width:20px;height:20px">Critical only (run-affecting)</label>
 <p class="note" id="pinote" style="margin:10px 0 0"></p></div>
 <div id="pibody"></div>
 </section>
@@ -389,6 +408,7 @@ function kv(k,v){return '<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>'}
 const DAYN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const TYN={avail:'Available',turnout:'Turn out',drill:'Drill',rota:'Rota',leave:'Annual leave',absence:'Absence',detach:'Detachment',unavail:'Unavailable',course:'Course'};
 function extras(w,r,audit,sub,specT,totT,now){
+  try{renderHoliday();renderWtd();renderPay()}catch(e){}
   // ---- week: day by day
   const today=Math.floor(now/86400000);
   let dh='';
@@ -442,12 +462,11 @@ function extras(w,r,audit,sub,specT,totT,now){
     return '<div class="kv"><span>'+lab+'</span><b style="color:var(--mute)">Keep · '+f1(x.tot)+' h</b></div>'};
   const STRATS=['Earliest days first','Latest days first','Unspecified hours first','Biggest days first'];
   const savers={};
-  const saver=(boxId,btnId,title,sp0,from,to)=>{
+  const saver=(boxId,btnId,title,sp0,from,to,inclToday)=>{
     const box=$(boxId); if(!box)return;
     const tmin=s=>(+s.slice(0,2))*60+(+s.slice(3,5)), hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
-    const blocks=[];
-    for(let dn=from;dn<to;dn++){const ds=iso(dn);
-      entries.filter(e=>e.date===ds&&COUNTS.includes(e.type)&&entryHours(e)>0.005&&['P1','P3','P4','U'].includes(e.band)).sort((a,b)=>a.start.localeCompare(b.start)).forEach(e=>{const sm=tmin(e.start),len=(((tmin(e.end)-sm)%1440)+1440)%1440||1440;blocks.push({id:dn+'|'+e.start+'|'+e.end,dn,s:e.start,e:e.end,h:entryHours(e),b:e.band,sm,len,n:Math.max(1,Math.round(len/15))})})}
+    const NL=inclToday?londonHM():null,tdn=NL?dayNum(NL.date):null,nm=NL?Math.ceil(NL.min/15)*15:0;
+    const blocks=saverBlocks(from,to,NL);
     const st=savers[boxId]||(savers[boxId]={k:0,sel:null,open:new Set(),edit:false});
     const full=b=>{const s=new Set();for(let i=0;i<b.n;i++)s.add(i);return s};
     const hrs=(b,set)=>set.size/b.n*b.h;
@@ -461,20 +480,20 @@ function extras(w,r,audit,sub,specT,totT,now){
     if(!(st.sel instanceof Map))st.sel=suggest(st.k);
     const inWin=(c,w1,w2)=>w1<=w2?(c>=w1&&c<w2):(c>=w1||c<w2);
     const applyWin=(dn,w1,w2)=>{blocks.filter(b=>b.dn===dn).forEach(b=>{const s=new Set();for(let i=0;i<b.n;i++)if(inWin((b.sm+i*15)%1440,w1,w2))s.add(i);if(s.size)st.sel.set(b.id,s);else st.sel.delete(b.id)})};
-    const applyDay=(dn,m)=>{if(m==='all'){blocks.filter(b=>b.dn===dn).forEach(b=>st.sel.set(b.id,full(b)))}else if(m==='x'){blocks.filter(b=>b.dn===dn).forEach(b=>st.sel.delete(b.id))}else if(m==='m')applyWin(dn,360,720);else if(m==='a')applyWin(dn,720,1080);else if(m==='n')applyWin(dn,1080,360)};
+    const applyDay=(dn,m)=>{if(m==='all'){blocks.filter(b=>b.dn===dn).forEach(b=>st.sel.set(b.id,full(b)))}else if(m==='x'){blocks.filter(b=>b.dn===dn).forEach(b=>st.sel.delete(b.id))}else if(m==='m')applyWin(dn,360,720);else if(m==='a')applyWin(dn,720,1080);else if(m==='n')applyWin(dn,1080,360);else if(m==='h1')applyWin(dn,nm,(nm+60)%1440);else if(m==='h4')applyWin(dn,nm,(nm+240)%1440)};
     const ranges=bs=>{const out=[];bs.forEach(b=>{const set=st.sel.get(b.id);if(!set)return;const ix=[...set].sort((x,y)=>x-y);let a=null,p=null;const push=()=>{if(a!==null){const s=b.sm+a*15,e=b.sm+(p+1)*15,l=out[out.length-1];if(l&&l.e%1440===s%1440&&l.endAbs===s)l.e=e,l.endAbs=e;else out.push({s,e,endAbs:e})}};
       ix.forEach(i=>{if(a===null){a=i;p=i}else if(i===p+1)p=i;else{push();a=i;p=i}});push()});return out};
     const draw=()=>{
       const sp={...sp0};let free=0;blocks.forEach(b=>{const set=st.sel.get(b.id);if(set){const hp=hrs(b,set);take(sp,b,hp);free+=hp}});
-      const bad=['P1','P3','P4','S','T'].filter(k=>sp[k]<-0.005), nm={P1:'P1',P3:'P3',P4:'P4',S:'specified',T:'total'};
+      const bad=['P1','P3','P4','S','T'].filter(k=>sp[k]<-0.005), lbl={P1:'P1',P3:'P3',P4:'P4',S:'specified',T:'total'};
       let h='<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px"><button class="btn" id="'+boxId+'p" style="flex:0 0 44px;padding:10px 0">‹</button><div style="flex:1;text-align:center;font-weight:600">'+STRATS[st.k]+'</div><button class="btn" id="'+boxId+'n" style="flex:0 0 44px;padding:10px 0">›</button></div>';
       h+=kv('Taking off',f1(free)+' h')+kv('Spare left after','P1 '+f1(Math.max(0,sp.P1))+' · P3 '+f1(Math.max(0,sp.P3))+' · P4 '+f1(Math.max(0,sp.P4))+' · total '+f1(Math.max(0,sp.T)));
-      h+='<div class="kv"><span>Targets</span><b style="color:'+(bad.length?'var(--bad)':'var(--good)')+'">'+(bad.length?'Short: '+bad.map(k=>nm[k]+' by '+f1(-sp[k])+' h').join(', '):'All still hold')+'</b></div>';
+      h+='<div class="kv"><span>Targets</span><b style="color:'+(bad.length?'var(--bad)':'var(--good)')+'">'+(bad.length?'Short: '+bad.map(k=>lbl[k]+' by '+f1(-sp[k])+' h').join(', '):'All still hold')+'</b></div>';
       const days=[...new Set(blocks.map(b=>b.dn))];
       days.forEach(dn=>{const bs=blocks.filter(b=>b.dn===dn),fh=bs.reduce((q,b)=>q+(st.sel.has(b.id)?hrs(b,st.sel.get(b.id)):0),0),all=bs.reduce((q,b)=>q+b.h,0),rg=ranges(bs),f0=rg.length?hm(rg[0].s):bs[0].s,t0=rg.length?hm(rg[rg.length-1].e):bs[bs.length-1].e;
         const chip=(c,l)=>'<button class="btn" data-ch="'+c+'" data-dn="'+dn+'" style="width:auto;flex:none;padding:6px 12px;font-size:13px">'+l+'</button>';
-        h+='<details class="day" data-dn="'+dn+'"'+((st.edit||st.open.has(dn))?' open':'')+' style="margin-top:8px"><summary><span class="dl">'+DAYN[(dn+3)%7]+' '+fm(dn)+'<small>'+(fh>0.005?(fh>=all-0.005?'Off all day':f1(fh)+' h off'):'Working all day')+'</small></span><span class="dr" style="color:'+(fh>0.005?'var(--good)':'var(--mute)')+'">'+f1(fh)+' h<small>of '+f1(all)+'</small></span></summary><div style="padding-bottom:10px">'
-          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px">'+chip('all','All day')+chip('m','Morning')+chip('a','Afternoon')+chip('n','Night')+chip('x','None')+'</div>'
+        h+='<details class="day" data-dn="'+dn+'"'+((st.edit||st.open.has(dn))?' open':'')+' style="margin-top:8px"><summary><span class="dl">'+DAYN[(dn+3)%7]+' '+fm(dn)+(NL&&dn===tdn?' · Today from '+hm(nm):'')+'<small>'+(fh>0.005?(fh>=all-0.005?'Off all day':f1(fh)+' h off'):'Working all day')+'</small></span><span class="dr" style="color:'+(fh>0.005?'var(--good)':'var(--mute)')+'">'+f1(fh)+' h<small>of '+f1(all)+'</small></span></summary><div style="padding-bottom:10px">'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px">'+(NL&&dn===tdn?chip('all','Rest of today')+chip('h1','Next 1 hour')+chip('h4','Next 4 hours')+chip('x','None'):chip('all','All day')+chip('m','Morning')+chip('a','Afternoon')+chip('n','Night')+chip('x','None'))+'</div>'
           +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><input type="time" data-tf="'+dn+'" value="'+f0+'" style="flex:1"><span style="color:var(--mute)">to</span><input type="time" data-tt="'+dn+'" value="'+t0+'" style="flex:1"></div>'
           +bs.map(b=>{const set=st.sel.get(b.id),isFull=set&&set.size===b.n;return '<label class="shift" style="cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:10px;padding:8px 0;flex:0 0 auto;font-size:13px;color:var(--ink)"><input type="checkbox" data-id="'+b.id+'"'+(isFull?' checked':'')+' style="accent-color:var(--accent);width:20px;height:20px"><span class="tm">'+b.s+'–'+b.e+'</span><span class="ty">'+b.b+'</span><span class="hb">'+(set&&!isFull?f1(hrs(b,set))+' of '+f1(b.h):f1(b.h))+'</span></label>'}).join('')+'</div></details>'});
       h+='<button class="btn" id="'+boxId+'e" style="margin-top:12px">'+(st.edit?'Done editing':'Edit hours')+'</button>';
@@ -490,9 +509,9 @@ function extras(w,r,audit,sub,specT,totT,now){
     };
     draw();
     const b=$(btnId); b.textContent='Save and send to Claude';
-    b.onclick=()=>{const lines=[];let tot=0;
+    b.onclick=()=>{const lines=[],book=[];let tot=0;
       [...new Set(blocks.map(x=>x.dn))].forEach(dn=>{const bs=blocks.filter(x=>x.dn===dn),ch=bs.filter(x=>st.sel.has(x.id));if(!ch.length)return;
-        const hh=ch.reduce((q,x)=>q+hrs(x,st.sel.get(x.id)),0);tot+=hh;
+        const hh=ch.reduce((q,x)=>q+hrs(x,st.sel.get(x.id)),0);tot+=hh;bookRanges(ranges(bs),dn).forEach(x=>book.push(x));
         if(ch.length===bs.length&&ch.every(x=>st.sel.get(x.id).size===x.n)){lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' all day ('+f1(hh)+' h)')}
         else{lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' '+ranges(bs).map(x=>hm(x.s)+'-'+hm(x.e)).join(', ')+' ('+f1(hh)+' h)')}});
       const old=document.getElementById('cfm');if(old)old.remove();
@@ -503,7 +522,7 @@ function extras(w,r,audit,sub,specT,totT,now){
       document.body.appendChild(ov);
       $('cfmNo').onclick=()=>ov.remove();
       const y=$('cfmYes');if(y)y.onclick=async()=>{
-        const txt=title+' – please book these in FireWatch now:\n'+lines.join('\n');
+        const txt=title+' – please book these in FireWatch now:\n'+lines.join('\n')+(book.length?'\n#BOOK '+JSON.stringify(book):'');
         try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
         let copied=false;try{await navigator.clipboard.writeText(txt);copied=true}catch(e){}
         const relayOk=await relaySend(txt);
@@ -532,7 +551,8 @@ function extras(w,r,audit,sub,specT,totT,now){
   for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
     const x=calcRange(entries,m,m+7,now); if(x.all.T<0.005)continue;
     const wsp={P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT};
-    const rows=planDays(wsp,Math.max(m,today+1),m+7), h=rows.reduce((q,y)=>q+freeH(y),0);
+    const rows=planDays(wsp,Math.max(m,today+1),m+7);let h=rows.reduce((q,y)=>q+freeH(y),0);
+    if(m===mondayNum(today)){const NL=londonHM(),td=dayNum(NL.date);if(td===today)h+=todayFree(wsp,saverBlocks(td,td+1,NL))}
     if(m===mondayNum(today)){curH=h;curW={wsp:{P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT},from:Math.max(m,today+1),to:m+7};curHtml=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+'<div id="wsv"></div><button class="btn primary" id="savewk" style="margin-top:12px"></button><p class="rule" style="margin-top:10px">Targets for the week: 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
     const body=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+kv('You can take off',f1(h)+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>');
     if(m===mondayNum(today)){curH=h;curHtml=body+'<p class="rule" style="margin-top:10px">Keeps this week at 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
@@ -540,7 +560,7 @@ function extras(w,r,audit,sub,specT,totT,now){
     wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
   $('wcur').innerHTML=curHtml;
-  if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from,curW.to);
+  if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from-1,curW.to,true);
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
@@ -580,6 +600,51 @@ const RAW='https://raw.githubusercontent.com/paulmatthews777-pixel/oncall-tracke
 const LIVE_URL=RAW+'planner.json';
 let snap=null, snapErr='';
 const excludeRachael=s=>{if(s&&Array.isArray(s.people))s.people=s.people.filter(p=>String(p.name||'').trim().toLowerCase()!=='rachael cook');return s};
+
+/* ===== Typed-in FireWatch figures (Holiday, Working time, Payments). No built-in numbers: "Not set yet" until Paul enters them ===== */
+const STALE_DAYS=7;
+function numIn(v){if(v===null||v===undefined)return NaN;const n=parseFloat(String(v).trim().replace(',','.'));return isFinite(n)?n:NaN}
+function daysOld(asOf,today){return dayNum(today)-dayNum(asOf)}
+function stored(key,ok){try{const x=JSON.parse(localStorage.getItem(key)||'null');if(x&&ok(x))return x}catch(e){}return null}
+function saveStored(key,x){try{localStorage.setItem(key,JSON.stringify(x))}catch(e){}}
+const editBtn=(id,t)=>'<button class="btn" id="'+id+'" style="margin-top:10px;font-size:13px;padding:8px 12px;width:auto">'+t+'</button>';
+const ageNote=(asOf,src)=>{const d=daysOld(asOf,londonHM().date);return 'As of '+fm(dayNum(asOf))+' from '+src+(d>STALE_DAYS?' · <b style="color:var(--warn)">'+d+' days old, update it</b>':'')};
+
+/* Holiday ring: hours left of the year's entitlement (FireWatch Holiday Entitlements, Time Unit Hours) */
+function holData(){return stored('oncall-holiday',x=>x.total>0&&x.left>=0&&x.left<=x.total&&!!x.asOf&&!!x.year)}
+function holHTML(h){if(!h)return '<h2>Holiday</h2><p class="note" style="margin:0">Not set yet. Enter your hours from FireWatch Holiday Entitlements.</p>'+editBtn('holedit','Enter holiday hours');
+  const frac=Math.max(0,Math.min(1,h.left/h.total)),R=52,C=2*Math.PI*R,taken=Math.max(0,h.total-h.left);
+  return '<h2>Holiday</h2><div class="hero"><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="'+R+'" fill="none" stroke="var(--raise)" stroke-width="13"/><circle cx="66" cy="66" r="'+R+'" fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/></svg><div class="num"><b>'+f1(h.left)+'</b><span>hours left</span></div></div><div class="verdict"><p><strong>'+f1(taken)+' h</strong> used of <strong>'+f1(h.total)+' h</strong></p><p>Holiday year '+h.year+'</p><p style="font-size:12px">'+ageNote(h.asOf,'FireWatch Holiday Entitlements')+'</p>'+editBtn('holedit','Update hours left')+'</div></div>'}
+function renderHoliday(){const el=$('hcard');if(!el)return;el.innerHTML=holHTML(holData());$('holedit').onclick=()=>{const h=holData(),td=londonHM().date;let total=h?h.total:NaN;
+  if(!h){total=numIn(prompt('Total holiday hours for the year (FireWatch Entitlement)',''));if(!(total>0&&total<=2000)){if(!isNaN(total))alert('Enter a number above 0');return}}
+  const left=numIn(prompt('Hours left (FireWatch Holiday Entitlements, Remaining)',h?String(h.left):''));if(isNaN(left))return;if(left<0||left>total){alert('Enter a number from 0 to '+total);return}
+  saveStored('oncall-holiday',{total,left,asOf:td,year:+td.slice(0,4)});renderHoliday()}}
+
+/* Pay from contract rates (payslip 31 Oct 2026, HFRS Monthly) */
+const PAY={asOf:'2026-10-31',rate:14.3947,fwRate:14.40,lines:[['turnout','Incident / turnout'],['drill','Drills'],['leave','Holiday pay']]};
+const r2=v=>Math.round(v*100)/100;
+function payCalc(entries,ym){const out={lines:[],hours:0,pay:0,fw:0};for(const l of PAY.lines){let h=0;for(const e of entries)if(e.type===l[0]&&String(e.date).slice(0,7)===ym)h+=entryHours(e);const p=r2(h*PAY.rate);out.lines.push({k:l[0],name:l[1],h:h,pay:p});out.hours+=h;out.pay+=p;out.fw+=r2(h*PAY.fwRate)}out.pay=r2(out.pay);out.fw=r2(out.fw);return out}
+function fwPayData(){return stored('oncall-fwpay',x=>/^\d{4}-\d{2}$/.test(x.month||'')&&isFinite(x.hours)&&isFinite(x.pay)&&!!x.asOf)}
+function renderPay(){const el=$('paycard');if(!el)return;const ym=iso(weekStart).slice(0,7),c=payCalc(entries,ym),fw=fwPayData(),mn=new Date(ym+'-01T12:00:00Z').toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'}),gbp=v=>'£'+v.toFixed(2);
+  let h='<h2>Pay · '+mn+'</h2>'+c.lines.map(l=>kv(l.name+' · '+f1(l.h)+' h',gbp(l.pay))).join('')+kv('Total at payslip rate','<span style="color:var(--good)">'+gbp(c.pay)+'</span>')+kv('FireWatch rounds to £'+PAY.fwRate.toFixed(2)+'/h',gbp(c.fw));
+  h+='<p class="note" style="margin:8px 0 0">Rate £'+PAY.rate.toFixed(4)+'/h, from the '+fm(dayNum(PAY.asOf))+' payslip (HFRS Monthly). Not priced: Community safety, On-duty hours, disturbance fees (no count in the feed).</p>';
+  if(fw&&fw.month===ym)h+='<div class="kv" style="margin-top:10px"><span>FireWatch Payments</span><b>'+f1(fw.hours)+' h · '+gbp(fw.pay)+'</b></div><p class="note" style="margin:6px 0 0">'+ageNote(fw.asOf,'FireWatch Payments')+'. FireWatch includes lines this app does not price, so it should be equal or higher. Gap: '+gbp(fw.pay-c.fw)+'.</p>';
+  else h+='<p class="note" style="margin:8px 0 0">FireWatch Payments for '+mn+': not entered yet.</p>';
+  h+=editBtn('fwpayedit','Enter FireWatch Payments figures');el.innerHTML=h;
+  $('fwpayedit').onclick=()=>{const m=prompt('Month (YYYY-MM) shown on FireWatch Payments',ym);if(!m||!/^\d{4}-\d{2}$/.test(m.trim()))return;const hh=numIn(prompt('Total hours on FireWatch Payments',fw&&fw.month===m.trim()?String(fw.hours):''));if(isNaN(hh))return;const pp=numIn(prompt('Total pay on FireWatch Payments (GBP)',fw&&fw.month===m.trim()?String(fw.pay):''));if(isNaN(pp))return;
+    saveStored('oncall-fwpay',{month:m.trim(),hours:hh,pay:pp,asOf:londonHM().date});renderPay()}}
+
+/* Working Time guard (48 h average, FireWatch Working Time gauge) */
+function wtdState(v,lim){return v>=lim?'bad':(v>=lim*0.9?'warn':'ok')}
+function wtdData(){return stored('oncall-wtd',x=>isFinite(x.v)&&x.v>=0&&x.limit>0&&!!x.asOf)}
+function wtdMsg(w,today){if(!w)return {col:'var(--mute)',text:'Not set yet. Enter the gauge from FireWatch Working Time.'};
+  const st=wtdState(w.v,w.limit),old=daysOld(w.asOf,today)>STALE_DAYS,spare=f1(Math.max(0,w.limit-w.v));
+  if(st==='bad')return {col:'var(--bad)',text:'At or over the limit. Do not book extra hours.'};
+  if(old)return {col:'var(--warn)',text:'This reading is out of date, so it can’t tell you if you are safe. Update it before booking extra hours.'};
+  return st==='warn'?{col:'var(--warn)',text:'Within 10% of the limit: '+spare+' h spare. Think before booking extra hours.'}:{col:'var(--good)',text:'Well inside the limit: '+spare+' h spare.'}}
+function renderWtd(){const el=$('wtdcard');if(!el)return;const w=wtdData(),m=wtdMsg(w,londonHM().date);
+  el.innerHTML='<h2>Working time (48 h average)</h2>'+(w?'<div class="kv"><span>FireWatch gauge</span><b style="color:'+m.col+'">'+f1(w.v)+' / '+w.limit+' h</b></div><div class="track" style="margin:8px 0"><span style="width:'+Math.min(100,w.v/w.limit*100).toFixed(1)+'%;background:'+m.col+'"></span></div>':'')+'<p class="note" style="margin:0">'+m.text+(w?' '+ageNote(w.asOf,'FireWatch Working Time')+'.':'')+'</p>'+editBtn('wtdedit',w?'Update gauge':'Enter gauge');
+  $('wtdedit').onclick=()=>{const v=numIn(prompt('Working Time gauge value (hours)',w?String(w.v):''));if(isNaN(v))return;if(v<0||v>200){alert('Enter a number from 0 to 200');return}saveStored('oncall-wtd',{v,limit:w?w.limit:48,asOf:londonHM().date});renderWtd()}}
 function londonNow(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),hour:+g('hour')}}
 function loadSnap(){try{const x=JSON.parse(localStorage.getItem('oncall-live')||'null');if(x&&x.v===2){snap=excludeRachael(x);localStorage.setItem('oncall-live',JSON.stringify(snap))}}catch(e){}}
 function setSnap(x){x=excludeRachael(x);if(x&&x.v===2&&x.rows&&(!snap||x.t>=snap.t||snap.t>Date.now()+120000)){snap=x;try{localStorage.setItem('oncall-live',JSON.stringify(x))}catch(e){}}}
@@ -643,7 +708,53 @@ function roleLetters(role){
   if(caps&&caps.length)return caps.join('');
   return s.split(/[\s-]+/).filter(Boolean).map(w=>w[0].toUpperCase()).join('');
 }
+/* ===== Live tab: book on / off suggestions and 1-hour quick toggle (placeholder) ===== */
+const ME_NAME='Paul Matthews';const bk={mode:'on',quick:null};
+function bookSuggest(sn,nowAbs,me,isAway){
+  const out={on:[],off:[],danger:[]};if(!sn||!sn.rows||!me)return out;
+  const rank={off:0,min:1,full:2},has=(q,k)=>new RegExp('(^|[ ,])'+k+'(,|$| )').test(q||''),SK=['BA','ERD','OIC'];
+  const state=c=>{let s='full';for(const r of sn.rows){const n=c[r.name];if(n<Number(r.min))return'off';if(n<Number(r.plan))s='min'}return s};
+  const rel=nowAbs-sn.base,h0=Math.floor(rel/60),h1=Math.min(h0+24,48);
+  const items=[];
+  for(let h=h0;h<h1;h++){if(h<0)continue;const a=h*60,b=a+60;
+    const base={};sn.rows.forEach(r=>base[r.name]=Number(r.n[h]));if(sn.rows.some(r=>!Number.isFinite(base[r.name])))continue;
+    let ov=0;(me.iv||[]).forEach(v=>{ov+=Math.max(0,Math.min(v[1],b)-Math.max(v[0],a))});
+    const away=(me.bars||[]).some(x=>x[3]<b&&x[4]>a&&isAway(x));
+    const before=state(base);
+    if(ov>=60&&!away){const c={...base};if('CT' in c)c.CT-=1;SK.forEach(k=>{if(k in c&&has(me.q,k))c[k]-=1});const after=state(c);
+      items.push({h,kind:'off',key:after==='full'?'safe':(after==='off'?'danger':'caution'),before,after});}
+    else if(ov===0&&!away){const c={...base};if('CT' in c)c.CT+=1;SK.forEach(k=>{if(k in c&&has(me.q,k))c[k]+=1});const after=state(c);
+      if(rank[after]>rank[before])items.push({h,kind:'on',key:before+'>'+after,before,after,ct:[base.CT,c.CT]});}}
+  const grp=(kind,keys)=>{const o=[];items.filter(x=>x.kind===kind&&keys.includes(x.key)).forEach(x=>{const l=o[o.length-1];if(l&&l.to===x.h&&l.key===x.key){l.to=x.h+1}else o.push({key:x.key,from:x.h,to:x.h+1,before:x.before,after:x.after,ct:x.ct})});return o};
+  const tm=(x)=>{x.fromAbs=Math.max(sn.base+x.from*60,Math.ceil(nowAbs/15)*15);x.toAbs=sn.base+x.to*60;return x};
+  out.on=grp('on',['off>min','off>full','min>full']).map(tm).filter(x=>x.toAbs>x.fromAbs).sort((p,q)=>(rank[q.after]-rank[p.after])||(p.from-q.from));
+  out.off=grp('off',['safe']).map(tm).filter(x=>x.toAbs>x.fromAbs).sort((p,q)=>(q.to-q.from)-(p.to-p.from)||p.from-q.from);
+  out.danger=grp('off',['danger']).map(tm).filter(x=>x.toAbs>x.fromAbs);
+  return out}
+function renderBook(){const box=$('lbody');if(!box)return;
+  [...document.querySelectorAll('#lbmode button')].forEach(b=>b.classList.toggle('on',b.dataset.bm===bk.mode));
+  const q=$('lquick'),nowAbs=Math.floor(Date.now()/60000),qa=bk.quick;
+  const hm=m=>String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0')+':'+String(((m%60)+60)%60).padStart(2,'0');
+  const lt=m=>fmT(m);
+  if(q)q.innerHTML='<div><b>Quick book off</b><small>1 hour from the moment you press</small></div><button class="sw'+(qa?' on':'')+'" id="lqsw" role="switch" aria-checked="'+(!!qa)+'" aria-label="Book off for 1 hour"><i></i></button>'+(qa?'<div style="flex-basis:100%;background:#412402;color:#fac775;border-radius:8px;padding:8px 10px;font-size:13px">Off '+lt(qa)+' to '+lt(qa+60)+'. Placeholder only, nothing is sent yet.</div>':'');
+  if(q)q.style.flexWrap='wrap';
+  if(!snap||snap.v!==2||Date.now()-snap.t>15*60000){box.innerHTML='<p class="note" style="margin:10px 0 0">Out of date or no planner data, so no suggestions.</p>';return}
+  const P=window.__fwAllPeople(),me=P.find(p=>p.name===ME_NAME);
+  if(!me){box.innerHTML='<p class="note" style="margin:10px 0 0">'+ME_NAME+' not found on the Winterton planner.</p>';return}
+  const s=bookSuggest(snap,nowAbs,me,b=>barMeta(b).away),col={full:'#4fae5a',min:'#f2c230',off:'#e24b4a'},nm={full:'green',min:'yellow',off:'red'};
+  const row=(x,c,t1,t2)=>'<div class="bkr" style="border-left-color:'+c+'"><b>'+lt(x.fromAbs)+'-'+lt(x.toAbs)+'</b> '+t1+'<small>'+t2+'</small></div>';
+  let h='';
+  if(bk.mode==='on'){
+    h=s.on.slice(0,5).map(x=>row(x,col[x.after],x.after==='full'?'Best':'Good','Station goes from '+nm[x.before]+' to '+nm[x.after]+' with you on (crew '+x.ct[0]+' to '+x.ct[1]+', BA +1)')).join('')||'<p class="note" style="margin:10px 0 0">Nothing to fix in the next 24 hours, or you are already on.</p>'}
+  else{
+    h=s.off.slice(0,5).map(x=>row(x,col.full,'Safe','Station stays green without you ('+(x.to-x.from)+' h)')).join('')||'<p class="note" style="margin:10px 0 0">No window in the next 24 hours where the station stays green without you.</p>';
+    h+=s.danger.slice(0,3).map(x=>row(x,col.off,'Warning','Booking off drops the station to red')).join('')}
+  box.innerHTML=h;
+  const f=$('lstamp');if(f)f.remove()}
+document.addEventListener('click',e=>{const m=e.target.closest('#lbmode [data-bm]');if(m){bk.mode=m.dataset.bm;renderBook();return}
+  if(e.target.closest('#lqsw')){bk.quick=bk.quick?null:Math.floor(Date.now()/60000);renderBook()}});
 function renderLive(){
+  try{renderBook()}catch(e){}
   const el=$('lhero');
   if(!snap||snap.v!==2){el.className='live-hero stale';el.innerHTML='<b>'+(snap?'Update planner script':'No planner data')+'</b><span>'+(snapErr?'Feed '+snapErr+'. ':'')+'Open FireWatch on the PC to load the Winterton planner</span>';$('lcrew').textContent='Crew roster';$('lon').innerHTML='';return}
   const nowAbs=Math.floor(Date.now()/60000), rel=nowAbs-snap.base, h=Math.floor(rel/60);
@@ -714,7 +825,7 @@ function dayHTML(date,N){N=N||1;
   const di=rng.dates.indexOf(date);
   if(di<0)return '<p class="note" style="padding:8px">'+dName(date)+' is outside the loaded range ('+dName(rng.dates[0])+' to '+dName(rng.dates[rng.dates.length-1])+')</p>';
   N=Math.max(1,Math.min(N,rng.dates.length-di));const d0=di*1440,dEnd=d0+1440*N,dsl=rng.dates.slice(di,di+N),today=dsl.includes(londonNow().date),sep=N>1;
-  let h='<div class="pgrid" style="min-width:'+(206+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
+  let h='<div class="pgrid" data-nd="'+dsl.join(',')+'" data-cw="576" style="min-width:'+(206+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&dsl.every((_,k)=>r.n[di+k]));if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
@@ -728,7 +839,7 @@ function multiHTML(from,to){
   const dates=[];for(let d=from;d<=to&&dates.length<31;d=addD(d,1))dates.push(d);
   if(!dates.length)return '<p class="note" style="padding:8px">Pick a start date before the end date</p>';
   const idx=dates.map(d=>rng.dates.indexOf(d));
-  let h='<div class="pgrid" style="min-width:'+(182+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
+  let h='<div class="pgrid" data-nd="'+dates.join(',')+'" data-cw="46" style="min-width:'+(182+dates.length*46)+'px"><div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dates.map(d=>'<div class="pc pw" data-d="'+d+'">'+dName(d).replace(/,? /,' ').slice(0,6)+'</div>').join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g);if(!rs.length)continue;h+='<div class="pg">'+g+' (lowest each day)</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const fm=Math.min.apply(null,a),v=PKEY.includes(r.name)&&fm>=pl?Math.max(fm,planDay(i,r.name)):fm;return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
@@ -740,6 +851,33 @@ function multiHTML(from,to){
       return on>0?'<div class="pc" style="width:46px;background:#46d93c;color:#111">'+Math.round(on/60)+'h</div>':'<div class="pc" style="width:46px"></div>'}).join('')+'</div>'}
   return h+'</div>'}
 
+/* ===== Add activity (+): FireWatch-style form. Saves a draft only; nothing is sent until the booking process supports activities ===== */
+const ACT_TYPES=['On-Call turnout','On-Call attendance','Drill','Training','On-call EFR','Detachment'];
+function actDraftValid(f){if(!f||!f.type||!f.sd||!f.st||!f.ed||!f.et)return false;return (f.ed+'T'+f.et)>(f.sd+'T'+f.st)}
+function actDraftSave(f){let a=[];try{a=JSON.parse(localStorage.getItem('oncall-act-drafts')||'[]')}catch(e){}a.push(Object.assign({savedAt:Date.now()},f));try{localStorage.setItem('oncall-act-drafts',JSON.stringify(a))}catch(e){}return a.length}
+function openActForm(){const old=document.getElementById('afrm');if(old)old.remove();
+  const L=londonHM(),hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  const ov=document.createElement('div');ov.id='afrm';ov.style.cssText='position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.62)';
+  ov.innerHTML='<div class="pane2"><div class="hd">Activity</div>'
+   +'<label class="fl"><small>Activity Type</small><select id="af-type"><option value="">Select an Activity Type</option>'+ACT_TYPES.map(x=>'<option>'+x+'</option>').join('')+'</select></label>'
+   +'<label class="fl"><small>Station</small><input id="af-st" value="Winterton" readonly></label>'
+   +'<label class="fl"><small>Contract Type</small><input value="Retained" readonly></label>'
+   +'<label class="fl"><small>Role</small><input value="Firefighter" readonly></label>'
+   +'<label class="fl"><small>Team</small><select id="af-team"><option value="">Select a Team</option></select></label>'
+   +'<label class="fl"><small>Start Date</small><input type="date" id="af-sd" value="'+L.date+'"></label>'
+   +'<label class="fl"><small>Start Time</small><input type="time" id="af-stm" value="'+hm(L.min)+'"></label>'
+   +'<label class="fl"><small>End Date</small><input type="date" id="af-ed" value="'+L.date+'"></label>'
+   +'<label class="fl"><small>End Time</small><input type="time" id="af-etm" value="'+hm(Math.min(L.min+60,1439))+'"></label>'
+   +'<label class="fl"><small>Comment</small><input id="af-cm" placeholder="Enter a comment"></label>'
+   +'<p class="note" id="af-note" style="margin:10px 16px 0"></p><button class="sub" id="af-go" disabled>Submit</button></div>';
+  document.body.appendChild(ov);
+  const get=()=>({type:$('af-type').value,station:'Winterton',contract:'Retained',role:'Firefighter',team:$('af-team').value,sd:$('af-sd').value,st:$('af-stm').value,ed:$('af-ed').value,et:$('af-etm').value,comment:$('af-cm').value});
+  const upd=()=>{const ok=actDraftValid(get());$('af-go').classList.toggle('ok',ok);$('af-go').disabled=!ok};
+  ov.querySelectorAll('select,input').forEach(x=>{x.oninput=upd;x.onchange=upd});
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  $('af-go').onclick=()=>{const f=get();if(!actDraftValid(f))return;const n=actDraftSave(f);$('af-note').textContent='Draft saved ('+n+' stored). Nothing is sent to FireWatch yet.';$('af-go').disabled=true;$('af-go').classList.remove('ok');setTimeout(()=>ov.remove(),1800)};
+  upd()}
+document.addEventListener('click',e=>{if(e.target.closest('#aplus'))openActForm()});
 /* ===== Activity tab: who booked what, from the planner bars ===== */
 function parseActivity(r){const out=[];if(!r||!Array.isArray(r.people))return out;const M={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11},seen=new Set();
 for(const p of r.people){for(const b of (p.bars||[])){try{const L=String((b&&b[1])||'').split('\n').map(x=>x.trim());const u=L.find(x=>/^Updated:/.test(x));if(!u)continue;const m=/^Updated:\s*(\d{1,2}) (\w{3}) (\d{4}) (\d{1,2}):(\d{2})\s*By:\s*(.+)$/.exec(u);if(!m||M[m[2]]===undefined)continue;
@@ -749,32 +887,33 @@ return out.sort((a,b)=>b.updatedAt-a.updatedAt)}
 function actPeriod(date,mode){const q=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date||'');if(!q)return null;const y=+q[1],mo=+q[2]-1,d=+q[3],t=Date.UTC(y,mo,d);if(mode==='month')return{from:Date.UTC(y,mo,1),to:Date.UTC(y,mo+1,1)};const dow=(new Date(t).getUTCDay()+6)%7,from=t-dow*864e5;return{from:from,to:from+7*864e5}}
 function actAgg(entries){const t={},by={};for(const e of entries){if(!t[e.type])t[e.type]={n:0,c:e.colour};t[e.type].n++;by[e.by]=(by[e.by]||0)+1}const total=entries.length;
 return{total:total,types:Object.keys(t).map(k=>({type:k,n:t[k].n,colour:t[k].c,pct:total?t[k].n/total*100:0})).sort((a,b)=>b.n-a.n),by:Object.keys(by).map(k=>({by:k,n:by[k]})).sort((a,b)=>b.n-a.n)}}
-function actPie(types){const tot=types.reduce((s,t)=>s+t.n,0);if(!tot)return '';const cx=150,cy=66,rx=104,ry=54,h=18,P=(t,y)=>(cx+rx*Math.cos(t)).toFixed(1)+' '+(y+ry*Math.sin(t)).toFixed(1);
-if(types.length===1){const c='#'+types[0].colour;return '<svg viewBox="0 0 300 160" role="img" aria-label="Activity by type"><path d="M'+(cx-rx)+' '+cy+'v'+h+'a'+rx+' '+ry+' 0 0 0 '+(2*rx)+' 0v-'+h+'Z" fill="'+c+'" opacity=".55"/><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+c+'" stroke="var(--surface)" stroke-width="1.5"/></svg>'}
-let a=-Math.PI/2,top='',side='';
-types.forEach(t=>{const f=t.n/tot*Math.PI*2,b=a+f,big=f>Math.PI?1:0,c='#'+t.colour;
-top+='<path d="M'+cx+' '+cy+'L'+P(a,cy)+'A'+rx+' '+ry+' 0 '+big+' 1 '+P(b,cy)+'Z" fill="'+c+'" stroke="var(--surface)" stroke-width="1.5"/>';
-side+='<path d="M'+P(a,cy)+'A'+rx+' '+ry+' 0 '+big+' 1 '+P(b,cy)+'L'+P(b,cy+h)+'A'+rx+' '+ry+' 0 '+big+' 0 '+P(a,cy+h)+'Z" fill="'+c+'" opacity=".55"/>';a=b});
-return '<svg viewBox="0 0 300 160" role="img" aria-label="Activity by type"><g>'+side+'</g><g>'+top+'</g></svg>'}
+function actDonut(types,sel){const tot=types.reduce((q,t)=>q+t.n,0);if(!tot)return '';const R=70,C=2*Math.PI*R;let off=0,segs='';
+types.forEach((t,i)=>{const len=t.n/tot*C,gap=types.length>1?Math.min(2,len/4):0,on=sel===t.type,dl=Math.max(0,len-gap);segs+='<circle class="dseg'+(on?' sel':'')+'" data-at="'+i+'" cx="100" cy="100" r="'+R+'" fill="none" stroke="#'+t.colour+'" stroke-width="'+(on?34:28)+'" stroke-dasharray="'+dl.toFixed(2)+' '+(C-dl).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" style="animation-delay:'+(i*80)+'ms"/>';off+=len});
+return '<svg viewBox="0 0 200 200" role="img" aria-label="Activity by type" style="max-width:260px;width:100%;display:block;margin:0 auto"><g transform="rotate(-90 100 100)">'+segs+'</g><text x="100" y="98" text-anchor="middle" pointer-events="none" style="font:700 30px var(--display);fill:var(--ink)">'+tot+'</text><text x="100" y="118" text-anchor="middle" pointer-events="none" style="font:12px var(--body);fill:var(--mute)">entries</text></svg>'}
+function actResp(colour){const c=String(colour||'').toUpperCase();return c==='28FFFE'?'Turned out':(c==='FD50E9'?'Attended':'')}
 function actGroups(es){const m=new Map();for(const e of es){const k=e.type+'|'+e.range+'|'+e.updatedAt+'|'+e.by;let g=m.get(k);if(!g){g={type:e.type,range:e.range,by:e.by,updatedAt:e.updatedAt,colour:e.colour,people:[]};m.set(k,g)}if(!g.people.includes(e.who))g.people.push(e.who)}return [...m.values()]}
-let ac={mode:'week',q:'',k:'all',d:''};
+let ac={mode:'week',w:'all',k:'all',d:'',sel:''},acTypes=[],acAnim=true;const INC_COL=['28FFFE','FD50E9'];
+function actFilter(all,per,f){const dk=ms=>new Date(ms).toISOString().slice(0,10);return all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to&&(f.k==='all'||(f.k==='__inc'?INC_COL.includes(String(e.colour).toUpperCase()):e.type===f.k))&&(f.w==='all'||e.who===f.w)&&(!f.d||dk(e.updatedAt)===f.d))}
 function renderActivity(){const el=$('abody');if(!el)return;[...document.querySelectorAll('#amode button')].forEach(b=>b.classList.toggle('on',b.dataset.am===ac.mode));
 if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data yet</p>';$('anote').textContent='';return}
-const per=actPeriod(londonNow().date,ac.mode),all=parseActivity(rng),inP=all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to),q=ac.q.trim().toLowerCase(),dk=ms=>new Date(ms).toISOString().slice(0,10);
-const kinds=[...new Set(inP.map(e=>e.type))];if(ac.k!=='all'&&!kinds.includes(ac.k))ac.k='all';
-const es=inP.filter(e=>(ac.k==='all'||e.type===ac.k)&&(!q||e.who.toLowerCase().includes(q)||e.type.toLowerCase().includes(q)||e.by.toLowerCase().includes(q))&&(!ac.d||dk(e.updatedAt)===ac.d));
-const ag=actAgg(es),age=Math.round((Date.now()-rng.t)/60000),f=ms=>{const d=new Date(ms),p=n=>String(n).padStart(2,'0');return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())};
-const kb=$('akinds');if(kb)kb.innerHTML=['all'].concat(kinds).map(k=>'<button data-ak="'+pesc(k)+'" class="'+(ac.k===k?'on':'')+'">'+(k==='all'?'All':pesc(k))+'</button>').join('');
+const per=actPeriod(londonNow().date,ac.mode),all=parseActivity(rng),inP=all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to);
+const kinds=[...new Set(inP.map(e=>e.type))].sort(),whos=[...new Set(inP.map(e=>e.who))].sort();if(ac.k!=='all'&&ac.k!=='__inc'&&!kinds.includes(ac.k))ac.k='all';if(ac.w!=='all'&&!whos.includes(ac.w))ac.w='all';
+const es=actFilter(all,per,ac),ag=actAgg(es),age=Math.round((Date.now()-rng.t)/60000),f=ms=>{const d=new Date(ms),p=n=>String(n).padStart(2,'0');return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())};
+acTypes=ag.types;if(ac.sel&&!ag.types.some(t=>t.type===ac.sel))ac.sel='';
+const opt=(o,cur)=>'<option value="'+pesc(o[0])+'"'+(cur===o[0]?' selected':'')+'>'+pesc(o[1])+'</option>';
+const ks=$('akind'),ws=$('awho');if(ks)ks.innerHTML=[['all','All types'],['__inc','Incident / turnout']].concat(kinds.map(k=>[k,k])).map(o=>opt(o,ac.k)).join('');if(ws)ws.innerHTML=[['all','All crew']].concat(whos.map(w=>[w,w])).map(o=>opt(o,ac.w)).join('');
 $('anote').textContent=(ac.mode==='week'?'Recorded this week':'Recorded this month')+' · '+ag.total+' entries · updated '+(age<1?'just now':age+' min ago');
 if(!ag.total){el.innerHTML='<div class="card"><p class="note" style="margin:0">No events match</p></div>';return}
-const grp=actGroups(es),verb=t=>/turn/i.test(t)?'Turned out':(/attend|drill/i.test(t)?'Attended':'Recorded for');
-el.innerHTML='<div class="card"><h2>By type</h2><div style="max-width:320px;margin:0 auto">'+actPie(ag.types)+'</div><div style="margin-top:6px">'+ag.types.map(t=>'<div style="display:flex;align-items:center;gap:8px;font-size:14px;padding:5px 0"><i style="width:11px;height:11px;border-radius:3px;flex:none;background:#'+t.colour+'"></i><span style="flex:1;min-width:0">'+pesc(t.type)+'</span><b>'+t.n+'</b><span style="color:var(--mute);width:42px;text-align:right">'+Math.round(t.pct)+'%</span></div>').join('')+'</div></div>'
-+'<div class="card"><h2>All events</h2>'+grp.map(g=>'<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+g.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(g.people.length===1?pesc(g.people[0])+' · ':'')+pesc(g.type)+(g.people.length>1?' · '+g.people.length+' people':'')+'</span><small style="color:var(--mute)">'+f(g.updatedAt)+'</small></summary><div style="font-size:12px;color:var(--mute);padding:6px 0 0 18px;line-height:1.6">'+pesc(g.range)+'<br>Event recorder: '+pesc(g.by)+' at '+f(g.updatedAt)+'<br>'+verb(g.type)+': '+g.people.map(pesc).join(', ')+'</div></details>').join('')+'</div>'}
-document.addEventListener('click',e=>{const k=e.target.closest('#akinds [data-ak]');if(k){ac.k=k.dataset.ak;renderActivity();return}});
-document.addEventListener('input',e=>{if(e.target.id==='asearch'){ac.q=e.target.value;renderActivity()}if(e.target.id==='adate'){ac.d=e.target.value;renderActivity()}});
-document.addEventListener('click',e=>{const b=e.target.closest('#amode [data-am]');if(!b)return;ac.mode=b.dataset.am;renderActivity()});
+const grp=actGroups(es),verb=g=>actResp(g.colour)||(/turn/i.test(g.type)?'Turned out':(/attend|drill/i.test(g.type)?'Attended':'Recorded for'));
+const selT=ag.types.find(t=>t.type===ac.sel),selEs=selT?es.filter(e=>e.type===selT.type):[],cnt=r=>selEs.filter(e=>actResp(e.colour)===r).length;
+el.innerHTML='<div class="card"><h2>By type</h2>'+actDonut(ag.types,ac.sel).replace(/class="dseg/g,acAnim?'class="dseg':'style="animation:none" class="dseg')+'<div style="margin-top:8px;font-size:13px;color:var(--mute);min-height:20px">'+(selT?'<b style="color:var(--ink)">'+pesc(selT.type)+'</b>: '+selT.n+' ('+Math.round(selT.pct)+'%)'+(cnt('Turned out')?' · Turned out '+cnt('Turned out'):'')+(cnt('Attended')?' · Attended '+cnt('Attended'):'')+'<br>'+[...new Set(selEs.map(e=>e.who))].map(pesc).join(', '):'Tap a slice or a type for detail')+'</div><div style="margin-top:6px">'+ag.types.map((t,i)=>'<div data-at="'+i+'" style="display:flex;align-items:center;gap:8px;font-size:14px;padding:5px 0;cursor:pointer'+(t.type===ac.sel?';color:var(--ink);font-weight:600':'')+'"><i style="width:11px;height:11px;border-radius:3px;flex:none;background:#'+t.colour+'"></i><span style="flex:1;min-width:0">'+pesc(t.type)+'</span><b>'+t.n+'</b><span style="color:var(--mute);width:42px;text-align:right">'+Math.round(t.pct)+'%</span></div>').join('')+'</div></div>'
++'<div class="card"><h2>All events</h2>'+grp.map(g=>'<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+g.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(g.people.length===1?pesc(g.people[0])+' · ':'')+pesc(g.type)+(g.people.length>1?' · '+g.people.length+' people':'')+'</span><small style="color:var(--mute)">'+f(g.updatedAt)+'</small></summary><div style="font-size:12px;color:var(--mute);padding:6px 0 0 18px;line-height:1.6">'+pesc(g.range)+'<br>Event recorder: '+pesc(g.by)+' at '+f(g.updatedAt)+'<br>'+verb(g)+': '+g.people.map(pesc).join(', ')+'</div></details>').join('')+'</div>';acAnim=true}
+document.addEventListener('click',e=>{const t=e.target.closest('#abody [data-at]');if(!t)return;const ty=acTypes[+t.dataset.at];if(ty){ac.sel=ac.sel===ty.type?'':ty.type;acAnim=false;renderActivity()}});
+document.addEventListener('change',e=>{if(e.target.id==='akind'){ac.k=e.target.value;ac.sel='';renderActivity()}if(e.target.id==='awho'){ac.w=e.target.value;ac.sel='';renderActivity()}if(e.target.id==='adate'){ac.d=e.target.value;renderActivity()}});
+document.addEventListener('click',e=>{const b=e.target.closest('#amode [data-am]');if(!b)return;ac.mode=b.dataset.am;ac.sel='';renderActivity()});
 /* ===== PI tab: planner change log (from changes.json) ===== */
-const CHG_URL=RAW+'changes.json';let chg=null;const pif={k:'all',q:'',d:''};
+const CHG_URL=RAW+'changes.json';let chg=null;const pif={k:'all',q:'',d:'',crit:true};
+function piCritical(e){if(e.kind==='on'||e.kind==='off')return true;return /sick|leave|holiday|absence|detach|unavail/i.test(String(e.label||''))}
 try{chg=JSON.parse(localStorage.getItem('oncall-chg')||'null')}catch(e){}
 async function fetchChanges(){try{const r=await fetch(nc(CHG_URL),{cache:'no-store'});if(r.ok){chg=await r.json();try{localStorage.setItem('oncall-chg',JSON.stringify(chg))}catch(e){}}}catch(e){}renderPI()}
 function renderPI(){const el=$('pibody');if(!el)return;
@@ -782,13 +921,14 @@ function renderPI(){const el=$('pibody');if(!el)return;
 if(!chg||!Array.isArray(chg.items)){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes logged yet. The FireWatch feed script logs them once it has seen two reads.</p></div>';$('pinote').textContent='';return}
 const lf=(ms,o)=>new Intl.DateTimeFormat('en-GB',Object.assign({timeZone:'Europe/London'},o)).format(new Date(ms)),dk=ms=>lf(ms,{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-'),tm=ms=>lf(ms,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const all=chg.items,today=dk(Date.now()),wk=Date.now()-7*864e5,q=pif.q.trim().toLowerCase();
-const es=all.filter(e=>(pif.k==='all'||(pif.k==='event'?/^event/.test(e.kind):e.kind===pif.k))&&(!q||String(e.who||'').toLowerCase().includes(q))&&(!pif.d||dk(e.t)===pif.d));
+const es0=all.filter(e=>(pif.k==='all'||(pif.k==='event'?/^event/.test(e.kind):e.kind===pif.k))&&(!q||String(e.who||'').toLowerCase().includes(q))&&(!pif.d||dk(e.t)===pif.d)),es=pif.crit?es0.filter(piCritical):es0,hid=es0.length-es.length;
 const age=Math.round((Date.now()-chg.t)/60000);
-$('pinote').textContent=all.filter(e=>dk(e.t)===today).length+' today \u00b7 '+all.filter(e=>e.t>=wk).length+' this week \u00b7 updated '+(age<1?'just now':age+' min ago');
+$('pinote').textContent=all.filter(e=>dk(e.t)===today).length+' today \u00b7 '+all.filter(e=>e.t>=wk).length+' this week \u00b7 updated '+(age<1?'just now':age+' min ago')+(hid?' \u00b7 '+hid+' minor hidden':'');
 const L={on:['booked on','#46D93C'],off:['booked off','#FD0022'],event:['added','#F9BF92'],'event-removed':['removed','#94CDDB']};
 if(!es.length){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes match</p></div>';return}
-el.innerHTML='<div class="card">'+es.slice(0,200).map(e=>{const l=L[e.kind]||['changed','#9aa3b2'];return '<div style="border-top:1px solid var(--line);padding:8px 0"><div style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+l[1]+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' '+l[0]+(e.label?' \u00b7 '+pesc(e.label):'')+'</span><small style="color:var(--mute)">'+tm(e.t)+'</small></div><div style="font-size:12px;color:var(--mute);padding:4px 0 0 18px;line-height:1.5">'+pesc(e.text||'')+'<br>Booked by '+pesc(e.by||e.who)+' \u00b7 Authorised by: not available</div></div>'}).join('')+'</div>'}
+el.innerHTML='<div class="card">'+es.slice(0,200).map(e=>{const l=L[e.kind]||['changed','#9aa3b2'];return '<div style="border-top:1px solid var(--line);padding:8px 0"><div style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+l[1]+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' '+l[0]+(e.label?' \u00b7 '+pesc(e.label):'')+'</span><small style="color:var(--mute)">'+tm(e.t)+'</small></div><div style="font-size:12px;color:var(--mute);padding:4px 0 0 18px;line-height:1.5">'+(e.text?'Shift: '+pesc(e.text)+'<br>':'')+'Seen by the feed at '+tm(e.t)+' \u00b7 by '+pesc(e.by||e.who)+' \u00b7 Authorised by: not available</div></div>'}).join('')+'</div>'}
 document.addEventListener('click',e=>{const b=e.target.closest('#pimode [data-pi]');if(!b)return;pif.k=b.dataset.pi;renderPI()});
+document.addEventListener('change',e=>{if(e.target.id==='picrit'){pif.crit=e.target.checked;renderPI()}});
 document.addEventListener('input',e=>{if(e.target.id==='pisearch'){pif.q=e.target.value;renderPI()}if(e.target.id==='pidate'){pif.d=e.target.value;renderPI()}});
 function renderPlanner(){
   const el=$('pbody');if(!el)return;pops.length=0;
@@ -803,6 +943,7 @@ function renderPlanner(){
   $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
   const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
   el.innerHTML=pv.mode==='day'?dayHTML(pv.date):pv.mode==='week'?dayHTML(pv.from,7):multiHTML(pv.from,pv.to);
+  placeNow();if(document.body.classList.contains('pland')&&pk!==pv.lkey){pv.lkey=pk;scrollNow()}
   $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
   if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
@@ -811,11 +952,35 @@ document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data
   if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=pv.mode==='week'?plannerWeekStart(t.value||pv.from):(t.value||pv.from);if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
 $('prefresh').onclick=fetchRange;
+/* ===== #BOOK machine line for the PC auto-booker: UK local ISO ranges, minutes are from the start of day dn ===== */
+function bookRanges(rs,dn){const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+  return rs.map(x=>({from:iso(dn+Math.floor(x.s/1440))+'T'+hm(x.s),to:iso(dn+Math.floor(x.e/1440))+'T'+hm(x.e)}))}
+/* ===== Save hours blocks (today is clipped to start from now) ===== */
+function saverBlocks(from,to,NL){const tmin=s=>(+s.slice(0,2))*60+(+s.slice(3,5)),hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+  const blocks=[],tdn=NL?dayNum(NL.date):null,nm=NL?Math.ceil(NL.min/15)*15:0;
+  const bpush=(dn,e,sm,len,orig)=>blocks.push({id:dn+'|'+hm(sm)+'|'+e.end,dn,s:hm(sm),e:e.end,h:entryHours(e)*len/orig,b:e.band,sm,len,n:Math.max(1,Math.round(len/15))});
+  for(let dn=(NL?Math.min(from,tdn-1):from);dn<to;dn++){const ds=iso(dn);
+    entries.filter(e=>e.date===ds&&COUNTS.includes(e.type)&&entryHours(e)>0.005&&['P1','P3','P4','U'].includes(e.band)).sort((a,b)=>a.start.localeCompare(b.start)).forEach(e=>{const sm=tmin(e.start),len=(((tmin(e.end)-sm)%1440)+1440)%1440||1440;
+      if(NL&&dn<tdn){if(dn!==tdn-1||sm+len<=1440)return;const endM=sm+len-1440;if(endM<=nm||nm>=1440)return;bpush(tdn,e,nm,endM-nm,len);return}
+      if(NL&&dn===tdn){const s2=Math.max(sm,nm);if(s2>=1440||sm+len<=s2)return;bpush(dn,e,s2,sm+len-s2,len);return}
+      bpush(dn,e,sm,len,len)})}
+  return blocks}
+/* ===== This week hero: rest-of-today hours that still fit, so it matches the Book me off list ===== */
+function todayFree(sp,blocks){let h=0;blocks.forEach(b=>{const spec=b.b!=='U';if(sp.T-b.h>=-0.005&&(!spec||(sp[b.b]-b.h>=-0.005&&sp.S-b.h>=-0.005))){sp.T-=b.h;if(spec){sp[b.b]-=b.h;sp.S-=b.h}h+=b.h}});return h}
+/* ===== Planner: now line and landscape ===== */
+function londonHM(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),g=t=>p.find(x=>x.type===t).value;return{date:g('year')+'-'+g('month')+'-'+g('day'),min:(+g('hour'))*60+(+g('minute'))}}
+function nowX(dates,cw,now){const k=dates.indexOf(now.date);return k<0?null:206+k*cw+now.min/1440*(cw===576?576:cw)}
+function placeNow(){const g=document.querySelector('#pbody .pgrid');if(!g)return;const o=g.querySelector('.pnow');if(o)o.remove();const n=londonHM(),x=nowX((g.dataset.nd||'').split(','),+g.dataset.cw||576,n);if(x===null)return;const d=document.createElement('div');d.className='pnow';d.style.left=x+'px';d.innerHTML='<b>'+String(Math.floor(n.min/60)).padStart(2,'0')+':'+String(n.min%60).padStart(2,'0')+'</b>';g.appendChild(d)}
+function landscapeUpdate(){const on=document.getElementById('t-planner').classList.contains('on')&&window.matchMedia('(orientation:landscape) and (max-height:520px)').matches;const was=document.body.classList.contains('pland');document.body.classList.toggle('pland',on);if(on&&!was)scrollNow()}
+function scrollNow(){const sc=$('pbody'),g=sc&&sc.querySelector('.pgrid'),l=g&&g.querySelector('.pnow');if(!l)return;sc.scrollLeft=Math.max(0,parseFloat(l.style.left)-206-60)}
+window.addEventListener('orientationchange',()=>setTimeout(landscapeUpdate,200));window.addEventListener('resize',landscapeUpdate);
+new MutationObserver(landscapeUpdate).observe(document.getElementById('t-planner'),{attributes:true,attributeFilter:['class']});
+setInterval(placeNow,30000);
 
 
 weekStart=mondayNum(Math.floor(Date.now()/86400000));
 $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/86400000));
-load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderLive(); renderPlanner(); renderActivity(); renderPI(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); fetchChanges(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();fetchChanges();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
+load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderHoliday(); renderWtd(); renderPay(); renderLive(); renderPlanner(); renderActivity(); renderPI(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); fetchChanges(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();fetchChanges();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
@@ -837,7 +1002,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 <div id="csvsheet" role="dialog" aria-modal="true" aria-label="Save or share audit CSV">
   <button class="scrim" id="csvclose" aria-label="Close"></button>
   <div class="pane">
-    <h2 style="margin:0">Save / Share audit CSV</h2>
+    <h2 style="margin:0">Save / Share audit spreadsheet</h2>
     <p class="note" id="csvname" style="margin:4px 0 0"></p>
     <p class="note" style="margin:2px 0 0">Pick Drive, then HFRS contract oncall, then Audit exports. Opens in Google Sheets.</p>
     <label>Period</label>
@@ -851,12 +1016,12 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
   </div>
 </div>
 <div id="csvtoast" role="status"></div>
-<script src="csv-audit.js"></script>
+<script src="csv-audit.js"></script><script src="audit-xlsx.js"></script>
 <script>
 (function(){
 var st={kind:'8w',daily:false};
 function todayNum(){var n=new Date();return dayNum(n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()))}
-function fname(){return 'LiveCrewing_Audit_'+iso(todayNum())+'.csv'}
+function fname(){return 'LiveCrewing_Audit_'+iso(todayNum())+'.xlsx'}
 function toast(t){var e=$('csvtoast');e.textContent=t;e.style.display='block';setTimeout(function(){e.style.display='none'},2800)}
 function openS(){$('csvname').textContent=fname();var a=dayNum($('auditDate').value||defaultAudit());$('csvfrom').value=iso(a-WINDOW_DAYS);$('csvto').value=iso(a-1);$('csverr').style.display='none';$('csvsheet').classList.add('on')}
 function closeS(){$('csvsheet').classList.remove('on')}
@@ -871,11 +1036,11 @@ $('csvdaily').onclick=function(){st.daily=!st.daily;this.setAttribute('aria-pres
 $('csvgo').onclick=function(){
   var r=range();if(!r){var e=$('csverr');e.textContent='Pick a valid From and To date.';e.style.display='block';return}
   var csv=AuditCSV.buildAuditCSV({entries:entries,from:r.from,to:r.to,now:Date.now(),exportedAt:new Date(),kind:st.kind,daily:st.daily,lib:{calcRange:calcRange,entryHours:entryHours,dayNum:dayNum},K:{COUNTS:COUNTS,NEVER:NEVER,WEEKLY:WEEKLY,CONTRACT:CONTRACT,WEEKS:WEEKS}});
-  var name=fname(),file=new File([csv],name,{type:'text/csv'});
+  var name=fname(),bytes=AuditXLSX.buildAuditXLSX(csv,{WEEKLY:WEEKLY,CONTRACT:CONTRACT,WEEKS:WEEKS},st.kind),file=new File([bytes],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   if(navigator.canShare&&navigator.canShare({files:[file]})){
-    navigator.share({files:[file],title:name}).then(function(){closeS();toast('CSV ready')}).catch(function(e){if(!e||e.name!=='AbortError'){dl()}});
+    navigator.share({files:[file],title:name}).then(function(){closeS();toast('Spreadsheet ready')}).catch(function(e){if(!e||e.name!=='AbortError'){dl()}});
   }else dl();
-  function dl(){var u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);closeS();toast('CSV downloaded')}
+  function dl(){var u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);closeS();toast('Spreadsheet downloaded')}
 };
 })();
 </script>

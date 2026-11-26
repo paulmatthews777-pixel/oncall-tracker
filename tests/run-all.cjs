@@ -14,4 +14,9 @@ const ac=spawnSync(process.execPath,['tests/activity.test.cjs'],{encoding:'utf8'
 console.log('activity ->',ac.status===0?'PASS':'FAIL');if(ac.status!==0){bad++;console.log((ac.stdout||'').slice(-1500),(ac.stderr||'').slice(-1500))}
 const rs=spawnSync(process.execPath,['tests/relay-send.test.cjs'],{encoding:'utf8'});
 console.log('relay-send ->',rs.status===0?'PASS':'FAIL');if(rs.status!==0){bad++;console.log((rs.stdout||'').slice(-1500),(rs.stderr||'').slice(-1500))}
+const ab=spawnSync(process.execPath,['tests/autobook.test.cjs'],{encoding:'utf8'});
+console.log('autobook ->',ab.status===0?'PASS':'FAIL');if(ab.status!==0){bad++;console.log((ab.stdout||'').slice(-1500),(ab.stderr||'').slice(-1500))}
+for(const t of ['planner-now','week-today','audit-xlsx','book-line','book-suggest','add-activity','fw-figures']){const x=spawnSync(process.execPath,['tests/'+t+'.test.cjs'],{encoding:'utf8'});
+console.log(t+' ->',x.status===0?'PASS':'FAIL');if(x.status!==0){bad++;console.log((x.stdout||'').slice(-1500),(x.stderr||'').slice(-1500))}}
 console.log(bad?'RESULT: FAIL':'RESULT: ALL PASS');process.exit(bad?1:0);
+
