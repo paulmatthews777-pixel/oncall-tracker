@@ -211,8 +211,8 @@ body{background:radial-gradient(ellipse at top,#123349 0,transparent 620px),var(
 #afrm .sub.ok{background:var(--accent);color:#06212c}
 #booking-result-list{list-style:none;padding:0}
 #booking-result-list li{margin:8px 0 0;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--raise)}
-#booking-result-list li[data-status="booked"]{color:#a3f0c3;background:#103825;border-color:#338056}
-#booking-result-list li[data-status="failed"],#booking-result-list li[data-status="missing"]{color:#ffc3bf;background:#471f26;border-color:#a45560}
+#booking-result-list li[data-status="booked"]{color:#a9ffc4;background:#12452b;border-color:#43ec69}
+#booking-result-list li[data-status="failed"],#booking-result-list li[data-status="missing"]{color:#ffd1d6;background:#5a1e2a;border-color:#ff455b}
 #booking-result-list li[data-status="queued"],#booking-result-list li[data-status="claimed"],#booking-result-list li[data-status="booking"],#booking-result-list li[data-status="unavailable"],#booking-result-list li[data-status="stalled"]{color:#ffe1a6;background:#382b17;border-color:#8a632a}
 
 #afrm .hd{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
@@ -261,6 +261,37 @@ main>.tab,.tab>.card{min-width:0}
 
 .draft-detail{white-space:pre-wrap;overflow-wrap:anywhere}
 #t-results #booking-results,#t-technical #technical-info{margin-top:0}
+
+.activity-events{border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.activity-event{border:0;border-radius:0;background:transparent;margin:0;padding:0}
+.activity-event+.activity-event{border-top:1px solid var(--line)}
+.activity-event>summary{display:grid;grid-template-columns:9px minmax(0,1fr) 18px;align-items:start;gap:10px;padding:12px;font-size:14px;list-style:none;cursor:pointer}
+.activity-event>summary::after{content:'›';font-size:19px;line-height:1.15;text-align:center}
+.activity-event[open]>summary::after{content:'⌄'}
+.activity-event>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:8px}
+.activity-event-dot{width:9px;height:9px;border-radius:3px;margin-top:6px}
+.activity-event-summary{min-width:0;overflow-wrap:anywhere}
+.activity-event-summary strong{display:block}
+.activity-event-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;margin-top:4px;color:var(--mute);font-size:12px;font-weight:400}
+.activity-event-detail{display:grid;gap:8px;margin:0;padding:10px 12px 12px 31px;border-top:1px solid var(--line);font-size:13px}
+.activity-event-detail dt{color:var(--mute);font-size:12px}
+.activity-event-detail dd{margin:2px 0 0;overflow-wrap:anywhere}
+
+#t-dashboard h1{font:700 26px var(--display);margin:0}
+.personal-dashboard{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.personal-dashboard .card{min-width:0;overflow-wrap:anywhere}
+@media (min-width:520px){.personal-dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}.personal-dashboard #paycard{grid-column:1/-1}}
+
+#t-week h1{font:700 26px var(--display);margin:0}
+#t-week .week-safety{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--raise);color:var(--accent);font-weight:700}
+#t-week #wstats{margin-top:14px}
+.week-detail>summary{min-height:24px;justify-content:space-between}
+.week-detail-body{display:flex;flex-direction:column;gap:10px;margin-top:12px;min-width:0}
+
+.activity-impact{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:6px;color:var(--mute);font-size:12px;font-weight:600;background:var(--raise)}
+.activity-impact.is-off{color:#ffd1d6;background:#5a1e2a;border:1px solid #ff455b}
+.activity-impact.is-min{color:#ffe1a6;background:#382b17;border:1px solid #e6a62b}
+.activity-impact.is-on{color:#a9ffc4;background:#12452b;border:1px solid #43ec69}
 </style>
 </head>
 <body>
@@ -275,18 +306,15 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 <main>
 
 <section class="tab" id="t-week"><button type="button" class="menu-back" data-page="more">‹ More</button>
+  <h1>Week and hours</h1>
   <div class="wk"><button class="btn sq" id="pw" aria-label="Previous week">‹</button><div class="t" id="wtitle"></div><button class="btn sq" id="nw" aria-label="Next week">›</button></div>
-  <div class="card"><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
-  <div class="card" id="hcard"></div>
-  <div class="card" id="wtdcard"></div>
-  <div class="card" id="paycard"></div>
-  <div class="card"><h2>Save hours: this week (to still hit 85)</h2><div id="wcur"></div></div>
-  <div class="card"><h2>Specified bands</h2><div id="wbands"></div></div>
-  <div class="stats" id="wstats"></div>
-  <div class="card"><h2>Day by day</h2><div id="wdays" style="display:flex;flex-direction:column;gap:10px"></div></div>
-  <div class="card"><h2>Full numbers</h2><div id="wfull" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <div class="card"><h2>Contract position</h2><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
+  <div class="card"><h2>Book off and stay in contract</h2><div class="week-safety" id="week-safety"></div><div id="wcur"></div></div>
+  <div class="card"><h2>Contract bands</h2><div id="wbands"></div><div class="stats" id="wstats"></div></div>
+  <details class="card week-detail"><summary>Day by day</summary><div id="wdays" class="week-detail-body"></div></details>
+  <details class="card week-detail"><summary>Full hours breakdown</summary><div id="wfull" class="week-detail-body"></div></details>
   
-  <div class="card"><h2>Save hours: coming weeks (to still hit 85)</h2><div id="oweeks" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <details class="card week-detail"><summary>Book-off options for coming weeks</summary><div id="oweeks" class="week-detail-body"></div></details>
   <button class="btn" id="tw">Back to this week</button>
 </section>
 
@@ -344,8 +372,19 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <h1>More</h1>
   <h2>Contract</h2>
   <div class="card menu-group"><button class="menu-link" data-page="week">Week and hours <span aria-hidden="true">›</span></button><button class="menu-link" data-page="audit">Audit and export <span aria-hidden="true">›</span></button></div>
+  <h2>Personal</h2>
+  <div class="card menu-group"><button type="button" class="menu-link" data-page="dashboard">My dashboard <span aria-hidden="true">›</span></button></div>
   <h2>Tools</h2>
   <div class="card menu-group"><button class="menu-link" data-page="pi">PI <span aria-hidden="true">›</span></button><button class="menu-link" data-page="data">Data and import <span aria-hidden="true">›</span></button><button class="menu-link" data-page="technical">About and technical info <span aria-hidden="true">›</span></button></div>
+</section>
+<section class="tab" id="t-dashboard">
+  <button type="button" class="menu-back" data-page="more">‹ More</button>
+  <h1>My dashboard</h1>
+  <div class="personal-dashboard">
+  <div class="card" id="hcard"></div>
+  <div class="card" id="wtdcard"></div>
+  <div class="card" id="paycard"></div>
+  </div>
 </section>
 <section class="tab" id="t-technical"><button type="button" class="menu-back" data-page="more">‹ More</button>
 <details id="technical-info" class="card" open>
@@ -398,7 +437,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
       <label>Type<select id="fType"><option value="avail">Available</option><option value="turnout">Turn out</option><option value="drill">Drill</option><option value="rota">Rota</option><option value="leave">Annual leave</option><option value="absence">Absence</option><option value="detach">Detachment (not counted)</option><option value="unavail">Unavailable (not counted)</option><option value="course">Course (not counted)</option></select></label>
       <label>Start<input type="time" id="fStart" value="18:00"></label>
       <label>End<input type="time" id="fEnd" value="23:00"></label>
-      <label>Band<select id="fBand"><option value="P1">P1</option><option value="P3">P3</option><option value="P4">P4</option><option value="U">Unspecified</option></select></label>
+      <label>Band<select id="fBand"><option value="P1">P1</option><option value="P3">P3</option><option value="P4">P4</option><option value="U">P2</option></select></label>
     </div>
     <button class="btn primary" id="add">Add entry</button>
   </div></details>
@@ -478,13 +517,13 @@ function render(){
   const w=calcRange(entries,weekStart,weekStart+7,now), thisMon=mondayNum(Math.floor(now/86400000));
   $('wtitle').innerHTML=fm(weekStart)+' – '+fm(weekStart+6)+'<small>'+(weekStart===thisMon?'This week':(weekStart<thisMon?'Past week':'Coming week'))+'</small>';
   $('whero').innerHTML=hero(w,85,60,'Week of '+fm(weekStart));
-  $('wbands').innerHTML=band('P1 weekdays','Mon–Fri daytime',w.done.P1,w.all.P1,WEEKLY.P1)+band('P3 weekend nights','Fri and Sat nights',w.done.P3,w.all.P3,WEEKLY.P3)+band('P4 weekend days','Sat and Sun daytime',w.done.P4,w.all.P4,WEEKLY.P4);
-  $('wstats').innerHTML=stat(f1(w.all.S+w.all.ABS)+' <small style="color:var(--mute);font-weight:400">/ 60</small>','Specified (with absence)')+stat(f1(w.all.U),'Unspecified of 25')+stat(f1(w.all.ABS),'Absence credit');
+  $('wbands').innerHTML=band('P1 weekdays','Mon–Fri daytime',w.done.P1,w.all.P1,WEEKLY.P1)+band('P2','25 h weekly allocation',w.done.U,w.all.U,CONTRACT-(WEEKLY.P1+WEEKLY.P3+WEEKLY.P4))+band('P3 weekend nights','Fri and Sat nights',w.done.P3,w.all.P3,WEEKLY.P3)+band('P4 weekend days','Sat and Sun daytime',w.done.P4,w.all.P4,WEEKLY.P4);
+  $('wstats').innerHTML=stat(f1(w.all.S+w.all.ABS)+' <small style="color:var(--mute);font-weight:400">/ 60</small>','Specified (with absence)')+stat(f1(w.all.U),'P2 hours of 25')+stat(f1(w.all.ABS),'Absence credit');
   // Audit
   const r=calcRange(entries,a-WINDOW_DAYS,a,now), specT=SPEC_BY_SUB[sub]*WEEKS, totT=CONTRACT*WEEKS;
   $('ahero').innerHTML=hero(r,totT,specT,'Audit '+fm(a)+' · last 56 days');
   $('abands').innerHTML=band('P1 weekdays','8-week target',r.done.P1,r.all.P1,WEEKLY.P1*WEEKS)+band('P3 weekend nights','8-week target',r.done.P3,r.all.P3,WEEKLY.P3*WEEKS)+band('P4 weekend days','8-week target',r.done.P4,r.all.P4,WEEKLY.P4*WEEKS)+band('Specified overall','P1 + P3 + P4 + absence',r.done.S+r.done.ABS,r.all.S+r.all.ABS,specT);
-  $('astats').innerHTML=stat(f1(r.all.S+r.all.ABS),'Specified + absence of '+specT)+stat(f1(r.all.U),'Unspecified of '+(totT-specT))+stat(f1(r.all.ABS),'Absence credit');
+  $('astats').innerHTML=stat(f1(r.all.S+r.all.ABS),'Specified + absence of '+specT)+stat(f1(r.all.U),'P2 hours of '+(totT-specT))+stat(f1(r.all.ABS),'Absence credit');
   // Data
   const sorted=entries.map((e,i)=>({e,i})).sort((x,y)=>y.e.date.localeCompare(x.e.date)||y.e.start.localeCompare(x.e.start));
   const NAMES={avail:'Available',turnout:'Turn out',drill:'Drill',rota:'Rota',leave:'Annual leave',absence:'Absence',detach:'Detachment',unavail:'Unavailable',course:'Course'};
@@ -511,7 +550,7 @@ function frow(name,t,d,a,noDiff){
 function fullTable(r,T){
   let h=frow('P1 weekdays',T.P1,r.done.P1,r.all.P1)+frow('P3 weekend nights',T.P3,r.done.P3,r.all.P3)+frow('P4 weekend days',T.P4,r.done.P4,r.all.P4)+frow('Specified',T.S,r.done.S,r.all.S);
   if(r.all.ABS>0.005) h+=frow('Specified + absence (A8)',T.S,r.done.S+r.done.ABS,r.all.S+r.all.ABS);
-  h+=frow('Unspecified',T.U,r.done.U,r.all.U,true);
+  h+=frow('P2',T.U,r.done.U,r.all.U,true);
   if(r.all.ABS>0.005) h+=frow('Absence credit',null,r.done.ABS,r.all.ABS,true);
   return h+frow('Total',T.T,r.done.T,r.all.T);
 }
@@ -571,7 +610,7 @@ function extras(w,r,audit,sub,specT,totT,now){
     if(x.off)return '<div class="kv"><span>'+cb(lab+' all day ('+f1(x.tot)+' h)')+lab+'</span><b style="color:var(--good)">Book off all day · '+f1(x.tot)+' h</b></div>';
     if(x.parts.length){const m=mergeParts(x.parts);return '<div class="kv"><span>'+cb(lab+' '+m.map(p=>p.s+'-'+p.e).join(', ')+' ('+f1(x.partH)+' h)')+lab+'</span><b style="color:var(--good)">Part day · '+f1(x.partH)+' h free<br><span style="font-weight:400;color:var(--mute);font-size:12px">'+m.map(p=>p.s+'–'+p.e).join(', ')+'</span></b></div>'}
     return '<div class="kv"><span>'+lab+'</span><b style="color:var(--mute)">Keep · '+f1(x.tot)+' h</b></div>'};
-  const STRATS=['Earliest days first','Latest days first','Unspecified hours first','Biggest days first'];
+  const STRATS=['Earliest days first','Latest days first','P2 hours first','Biggest days first'];
   const savers={};
   const saver=(boxId,btnId,title,sp0,from,to,inclToday)=>{
     const box=$(boxId); if(!box)return;
@@ -671,6 +710,7 @@ function extras(w,r,audit,sub,specT,totT,now){
     wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
   $('wcur').innerHTML=curHtml;
+  $('week-safety').textContent=!curW?'No book-off estimate for this week':curH>0?f1(curH)+' h you can book off this week':'No time you can book off within the weekly targets';
   if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from-1,curW.to,true);
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
@@ -680,10 +720,10 @@ function extras(w,r,audit,sub,specT,totT,now){
     const f=Math.max(m,a0), t=Math.min(m+7,a1), full=(f===m&&t===m+7), x=calcRange(entries,f,t,now);
     const diff=x.all.T-85, ok=!full||diff>=-0.005;
     wk+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+(full?'':' <small style="color:var(--mute);font-weight:400">('+(t-f)+' days in audit)</small>')+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(ok?'ok':'no')+'">'+f1(x.all.T)+(full?' / 85':' h')+'</span></summary><div>'
-      +kv('P1 weekdays',f1(x.all.P1)+(full?' / 35':''))+kv('P3 weekend nights',f1(x.all.P3)+(full?' / 13':''))+kv('P4 weekend days',f1(x.all.P4)+(full?' / 12':''))+kv('Unspecified',f1(x.all.U)+(full?' / 25':''))+(x.all.ABS>0.005?kv('Absence credit',f1(x.all.ABS)):'')+kv('Done / booked ahead',f1(x.done.T)+' / '+f1(x.all.T-x.done.T))+'</div></details>';
+      +kv('P1 weekdays',f1(x.all.P1)+(full?' / 35':''))+kv('P3 weekend nights',f1(x.all.P3)+(full?' / 13':''))+kv('P4 weekend days',f1(x.all.P4)+(full?' / 12':''))+kv('P2',f1(x.all.U)+(full?' / 25':''))+(x.all.ABS>0.005?kv('Absence credit',f1(x.all.ABS)):'')+kv('Done / booked ahead',f1(x.done.T)+' / '+f1(x.all.T-x.done.T))+'</div></details>';
   }
   $('aweeks').innerHTML=wk;
-  $('arules').innerHTML='<p class="rule"><b>Counts:</b> available, turn out, drills, rota and annual leave.</p><p class="rule"><b>Never counts:</b> detachments, unavailable and courses.</p><p class="rule"><b>Absence:</b> adds to the total only, at 85 ÷ 168 hours for each hour absent, and is added to the specified balance in the A8 line.</p><p class="rule"><b>Bands by clock time:</b> P1 Mon–Fri 06:00–18:00, P4 Sat–Sun 06:00–18:00, P3 Fri and Sat 18:00–24:00 and Sat and Sun 00:00–06:00. Everything else is unspecified.</p><p class="rule"><b>Targets at 85 hours:</b> P1 35, P3 13, P4 12, unspecified 25 a week. Over 8 weeks that is 280, 104, 96, 200, total 680. Specified overall is tested as one figure.</p><p class="rule"><b>Audit:</b> the 56 days before the audit date, looking back from the 1st of the month.</p>';
+  $('arules').innerHTML='<p class="rule"><b>Counts:</b> available, turn out, drills, rota and annual leave.</p><p class="rule"><b>Never counts:</b> detachments, unavailable and courses.</p><p class="rule"><b>Absence:</b> adds to the total only, at 85 ÷ 168 hours for each hour absent, and is added to the specified balance in the A8 line.</p><p class="rule"><b>Bands by clock time:</b> P1 Mon–Fri 06:00–18:00, P4 Sat–Sun 06:00–18:00, P3 Fri and Sat 18:00–24:00 and Sat and Sun 00:00–06:00. Everything else falls under P2.</p><p class="rule"><b>Targets at 85 hours:</b> P1 35, P3 13, P4 12 and P2 25 a week. Over 8 weeks that is 280, 104, 96, 200, total 680. Specified overall is tested as one figure.</p><p class="rule"><b>Audit:</b> the 56 days before the audit date, looking back from the 1st of the month.</p>';
   // ---- data info
   const inA=entries.filter(e=>inWindow(e,audit)), cnt=inA.filter(e=>!NEVER.includes(e.type));
   $('dinfo').innerHTML=kv('Source',source==='firewatch'?'FireWatch':(source==='manual'?'Added by hand':(source==='example'?'Example':'None')))+kv('Last updated',importedAt?new Date(importedAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'–')+kv('Lines held',entries.length)+kv('In this audit',inA.length+' ('+cnt.length+' counted)')+kv('Audit window',fm(dayNum(audit)-WINDOW_DAYS)+' – '+fm(dayNum(audit)-1))+kv('Detachments, unavailable, courses',inA.length-cnt.length+' lines not counted');
@@ -702,7 +742,7 @@ $('rows').onclick=e=>{const b=e.target.closest('button[data-i]');if(!b)return;en
 
 function show(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));
-  const parent=['booking','station','results'].includes(t)?'live':['week','audit','pi','data','technical'].includes(t)?'more':t;
+  const parent=['booking','station','results'].includes(t)?'live':['week','audit','pi','data','technical','dashboard'].includes(t)?'more':t;
   document.querySelectorAll('nav button').forEach(button=>{
     const current=button.dataset.t===parent;
     button.classList.toggle('on',current);
@@ -869,7 +909,7 @@ function renderBook(){const box=$('lbody');if(!box)return;
   if(!snap||snap.v!==2||Date.now()-snap.t>15*60000){box.innerHTML='<p class="note" style="margin:10px 0 0">Out of date or no planner data, so no suggestions.</p>';return}
   const P=window.__fwAllPeople(),me=P.find(p=>p.name===ME_NAME);
   if(!me){box.innerHTML='<p class="note" style="margin:10px 0 0">'+ME_NAME+' not found on the Winterton planner.</p>';return}
-  const s=bookSuggest(snap,nowAbs,me,b=>barMeta(b).away),col={full:'#4fae5a',min:'#f2c230',off:'#e24b4a'},nm={full:'green',min:'yellow',off:'red'};
+  const s=bookSuggest(snap,nowAbs,me,b=>barMeta(b).away),col={full:'#43ec69',min:'#f2c230',off:'#ff455b'},nm={full:'green',min:'yellow',off:'red'};
   const row=(x,c,t1,t2)=>'<div class="bkr" style="border-left-color:'+c+'"><b>'+lt(x.fromAbs)+'-'+lt(x.toAbs)+'</b> '+t1+'<small>'+t2+'</small></div>';
   let h='';
   if(bk.mode==='on'){
@@ -934,7 +974,7 @@ const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDat
 function plannerWeekStart(iso){const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10)}
 const dName=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 const pn=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
-const pcol=(v,mn,pl)=>v<mn?'#FD0022':(v<pl?'#FFBF28':'#46D93C');
+const pcol=(v,mn,pl)=>v<mn?'#ff455b':(v<pl?'#FFBF28':'#43ec69');
 const pesc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ROLE_ORDER={WM:0,CM:1,ACMO:2,FF:3,FS:4};
 const isAct=b=>b[0]==='Activity'||b[0]==='DrillEmployeeActivity';
@@ -955,7 +995,7 @@ function dayHTML(date,N){N=N||1;
   N=Math.max(1,Math.min(N,rng.dates.length-di));const d0=di*1440,dEnd=d0+1440*N,dsl=rng.dates.slice(di,di+N),today=dsl.includes(londonNow().date),sep=N>1;
   let h='<div class="pgrid" data-nd="'+dsl.join(',')+'" data-cw="576" style="min-width:'+(206+576*N)+'px">'+(sep?'<div class="pr ph"><div class="pl"></div><div class="pm"></div><div class="pm"></div>'+dsl.map(d=>'<div class="pd" data-d="'+d+'">'+dName(d)+'</div>').join('')+'</div>':'')+'<div class="pr ph"><div class="pl"></div><div class="pm">Min</div><div class="pm">Plan</div>'+dsl.map(()=>[...Array(24).keys()].map(i=>'<div class="pc'+(sep&&i===0?' pz':'')+'">'+String(i).padStart(2,'0')+'</div>').join('')).join('')+'</div>';
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&dsl.every((_,k)=>r.n[di+k]));if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
-    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
+    for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+'#111'+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
   for(const p of sortedPeople()){
     let bars='';
@@ -1048,7 +1088,7 @@ document.addEventListener('click',e=>{if(e.target.closest('#aplus'))openActForm(
 function parseActivity(r){const out=[];if(!r||!Array.isArray(r.people))return out;const M={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11},seen=new Set();
 for(const p of r.people){for(const b of (p.bars||[])){try{const L=String((b&&b[1])||'').split('\n').map(x=>x.trim());const u=L.find(x=>/^Updated:/.test(x));if(!u)continue;const m=/^Updated:\s*(\d{1,2}) (\w{3}) (\d{4}) (\d{1,2}):(\d{2})\s*By:\s*(.+)$/.exec(u);if(!m||M[m[2]]===undefined)continue;
 const emp=((L.find(x=>/^Employee:/.test(x))||'').replace(/^Employee:\s*/,'')||p.name||'').trim();const type=(L.find((x,i)=>i>0&&x&&!/^(Employee:|Updated:)/.test(x))||'Activity').replace(/\s*:.*$/,'').trim()||'Activity';const upd=Date.UTC(+m[3],M[m[2]],+m[1],+m[4],+m[5]);
-const key=emp+'|'+L[0]+'|'+type+'|'+upd;if(seen.has(key))continue;seen.add(key);out.push({who:emp,type:type,range:L[0],by:m[6].trim(),updatedAt:upd,colour:String(b[2]||'888888'),mins:(+b[4]||0)-(+b[3]||0)})}catch(e){}}}
+const key=emp+'|'+L[0]+'|'+type+'|'+upd;if(seen.has(key))continue;seen.add(key);out.push({who:emp,type:type,range:L[0],by:m[6].trim(),updatedAt:upd,colour:String(b[2]||'888888'),from:Number(b[3]),to:Number(b[4]),minimum:(L.join(' ').match(/\b(?:minimum|minimal) crewing\s*:\s*(yes|no)\b/i)||[])[1]?.toLowerCase()||'',mins:(+b[4]||0)-(+b[3]||0)})}catch(e){}}}
 return out.sort((a,b)=>b.updatedAt-a.updatedAt)}
 function actPeriod(date,mode){const q=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date||'');if(!q)return null;const y=+q[1],mo=+q[2]-1,d=+q[3],t=Date.UTC(y,mo,d);if(mode==='month')return{from:Date.UTC(y,mo,1),to:Date.UTC(y,mo+1,1)};const dow=(new Date(t).getUTCDay()+6)%7,from=t-dow*864e5;return{from:from,to:from+7*864e5}}
 function actAgg(entries){const t={},by={};for(const e of entries){if(!t[e.type])t[e.type]={n:0,c:e.colour};t[e.type].n++;by[e.by]=(by[e.by]||0)+1}const total=entries.length;
@@ -1057,7 +1097,25 @@ function actDonut(types,sel){const tot=types.reduce((q,t)=>q+t.n,0);if(!tot)retu
 types.forEach((t,i)=>{const len=t.n/tot*C,gap=types.length>1?Math.min(2,len/4):0,on=sel===t.type,dl=Math.max(0,len-gap);segs+='<circle class="dseg'+(on?' sel':'')+'" data-at="'+i+'" cx="100" cy="100" r="'+R+'" fill="none" stroke="#'+t.colour+'" stroke-width="'+(on?34:28)+'" stroke-dasharray="'+dl.toFixed(2)+' '+(C-dl).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" style="animation-delay:'+(i*80)+'ms"/>';off+=len});
 return '<svg viewBox="0 0 200 200" role="img" aria-label="Activity by type" style="max-width:260px;width:100%;display:block;margin:0 auto"><g transform="rotate(-90 100 100)">'+segs+'</g><text x="100" y="98" text-anchor="middle" pointer-events="none" style="font:700 30px var(--display);fill:var(--ink)">'+tot+'</text><text x="100" y="118" text-anchor="middle" pointer-events="none" style="font:12px var(--body);fill:var(--mute)">entries</text></svg>'}
 function actResp(colour){const c=String(colour||'').toUpperCase();return c==='28FFFE'?'Turned out':(c==='FD50E9'?'Attended':'')}
-function actGroups(es){const m=new Map();for(const e of es){const k=e.type+'|'+e.range+'|'+e.updatedAt+'|'+e.by;let g=m.get(k);if(!g){g={type:e.type,range:e.range,by:e.by,updatedAt:e.updatedAt,colour:e.colour,people:[]};m.set(k,g)}if(!g.people.includes(e.who))g.people.push(e.who)}return [...m.values()]}
+function actGroups(es){const m=new Map();for(const e of es){const k=e.type+'|'+e.range+'|'+e.updatedAt+'|'+e.by;let g=m.get(k);if(!g){g={type:e.type,range:e.range,by:e.by,updatedAt:e.updatedAt,colour:e.colour,from:e.from,to:e.to,minimum:[],people:[]};m.set(k,g)}if(e.minimum&&!g.minimum.includes(e.minimum))g.minimum.push(e.minimum);if(!g.people.includes(e.who))g.people.push(e.who)}return [...m.values()]}
+function activityCoverage(r,event){
+  if(!Number.isFinite(r?.base)||!Array.isArray(r.dates)||!Array.isArray(r.rows)||
+    !Number.isFinite(event.from)||!Number.isFinite(event.to)||event.from>=event.to||event.to-event.from>7*1440)return '';
+  const rows=['CT','BA','ERD','OIC'].map(name=>r.rows.find(row=>row.name===name));
+  if(rows.some(row=>!row||row.min==null||row.plan==null||row.min===''||row.plan===''||!Number.isFinite(Number(row.min))||!Number.isFinite(Number(row.plan))))return '';
+  const formatter=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'});
+  let worst='full',missing=false;
+  for(let minute=Math.floor((r.base+event.from)/60)*60;minute<r.base+event.to;minute+=60){
+    const parts=Object.fromEntries(formatter.formatToParts(new Date(minute*60000)).map(part=>[part.type,part.value]));
+    const day=r.dates.indexOf(parts.year+'-'+parts.month+'-'+parts.day);
+    const counts=rows.map(row=>row.n?.[day]?.[Number(parts.hour)]);
+    if(counts.some(count=>count==null||String(count).trim()===''||!Number.isFinite(Number(count)))){missing=true;continue}
+    if(rows.some((row,i)=>Number(counts[i])<Number(row.min)))return 'Off the run during this period';
+    if(rows.some((row,i)=>Number(counts[i])<Number(row.plan)))worst='minimum';
+  }
+  if(missing)return '';
+  return worst==='minimum'?'Minimum crewing during this period':'On the run during this period';
+}
 let ac={mode:'week',w:'all',k:'all',d:'',sel:''},acTypes=[],acAnim=true;const INC_COL=['28FFFE','FD50E9'];
 function actFilter(all,per,f){const dk=ms=>new Date(ms).toISOString().slice(0,10);return all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to&&(f.k==='all'||(f.k==='__inc'?INC_COL.includes(String(e.colour).toUpperCase()):e.type===f.k))&&(f.w==='all'||e.who===f.w)&&(!f.d||dk(e.updatedAt)===f.d))}
 function renderActivity(){const el=$('abody');if(!el)return;[...document.querySelectorAll('#amode button')].forEach(b=>b.classList.toggle('on',b.dataset.am===ac.mode));
@@ -1073,7 +1131,20 @@ if(!ag.total){el.innerHTML='<div class="card"><p class="note" style="margin:0">N
 const grp=actGroups(es),verb=g=>actResp(g.colour)||(/turn/i.test(g.type)?'Turned out':(/attend|drill/i.test(g.type)?'Attended':'Recorded for'));
 const selT=ag.types.find(t=>t.type===ac.sel),selEs=selT?es.filter(e=>e.type===selT.type):[],cnt=r=>selEs.filter(e=>actResp(e.colour)===r).length;
 el.innerHTML='<div class="card"><h2>By type</h2>'+actDonut(ag.types,ac.sel).replace(/class="dseg/g,acAnim?'class="dseg':'style="animation:none" class="dseg')+'<div style="margin-top:8px;font-size:13px;color:var(--mute);min-height:20px">'+(selT?'<b style="color:var(--ink)">'+pesc(selT.type)+'</b>: '+selT.n+' ('+Math.round(selT.pct)+'%)'+(cnt('Turned out')?' · Turned out '+cnt('Turned out'):'')+(cnt('Attended')?' · Attended '+cnt('Attended'):'')+'<br>'+[...new Set(selEs.map(e=>e.who))].map(pesc).join(', '):'Tap a slice or a type for detail')+'</div><div style="margin-top:6px">'+ag.types.map((t,i)=>'<div data-at="'+i+'" style="display:flex;align-items:center;gap:8px;font-size:14px;padding:5px 0;cursor:pointer'+(t.type===ac.sel?';color:var(--ink);font-weight:600':'')+'"><i style="width:11px;height:11px;border-radius:3px;flex:none;background:#'+t.colour+'"></i><span style="flex:1;min-width:0">'+pesc(t.type)+'</span><b>'+t.n+'</b><span style="color:var(--mute);width:42px;text-align:right">'+Math.round(t.pct)+'%</span></div>').join('')+'</div></div>'
-+'<div class="card"><h2>All events</h2>'+grp.map(g=>'<details style="border-top:1px solid var(--line);padding:8px 0"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none"><i style="width:10px;height:10px;border-radius:3px;flex:none;background:#'+g.colour+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(g.people.length===1?pesc(g.people[0])+' · ':'')+pesc(g.type)+(g.people.length>1?' · '+g.people.length+' people':'')+'</span><small style="color:var(--mute)">'+f(g.updatedAt)+'</small></summary><div style="font-size:12px;color:var(--mute);padding:6px 0 0 18px;line-height:1.6">'+pesc(g.range)+'<br>Event recorder: '+pesc(g.by)+' at '+f(g.updatedAt)+'<br>'+verb(g)+': '+g.people.map(pesc).join(', ')+'</div></details>').join('')+'</div>';acAnim=true}
++'<div class="card"><h2>All events</h2><div class="activity-events">'+grp.map(g=>{
+  const people=g.people.join(', ');
+  const preview=g.people.length>1?g.people.length+' people':people;
+  const unavailable=/\bunavailable\b/i.test(g.type);
+  const coverage=unavailable?activityCoverage(rng,g):'';
+  const minimum=g.minimum.length===1?(g.minimum[0]==='yes'?'Yes':'No'):'Not recorded in the feed';
+  const impactClass=coverage.startsWith('Off')?'is-off':coverage.startsWith('Minimum')?'is-min':coverage?'is-on':'';
+  return '<details class="activity-event"><summary><span class="activity-event-dot" aria-hidden="true" style="background:#'+g.colour+'"></span>'
+    +'<span class="activity-event-summary"><strong>'+pesc(g.type)+'</strong><span class="activity-event-meta"><span>'+pesc(preview)+'</span><span>'+f(g.updatedAt)+'</span></span>'+(unavailable?'<span class="activity-impact '+impactClass+'">'+pesc(coverage||'Coverage unavailable')+'</span>'+(minimum==='Yes'?'<span class="activity-impact is-min">Minimum crewing: Yes</span>':''):'')+'</span></summary>'
+    +'<dl class="activity-event-detail"><div><dt>Event time</dt><dd>'+pesc(g.range)+'</dd></div>'
+    +'<div><dt>Recorded by</dt><dd>'+pesc(g.by)+'</dd></div>'
+    +(unavailable?'<div><dt>Minimum crewing answer</dt><dd>'+minimum+'</dd></div><div><dt>Planner coverage</dt><dd>'+pesc(coverage||'Unavailable for this period')+'</dd></div>':'')
+    +'<div><dt>'+verb(g)+'</dt><dd>'+pesc(people)+'</dd></div></dl></details>';
+}).join('')+'</div></div>';acAnim=true}
 document.addEventListener('click',e=>{const t=e.target.closest('#abody [data-at]');if(!t)return;const ty=acTypes[+t.dataset.at];if(ty){ac.sel=ac.sel===ty.type?'':ty.type;acAnim=false;renderActivity()}});
 document.addEventListener('change',e=>{if(e.target.id==='akind'){ac.k=e.target.value;ac.sel='';renderActivity()}if(e.target.id==='awho'){ac.w=e.target.value;ac.sel='';renderActivity()}if(e.target.id==='adate'){ac.d=e.target.value;renderActivity()}});
 document.addEventListener('click',e=>{const b=e.target.closest('#amode [data-am]');if(!b)return;ac.mode=b.dataset.am;ac.sel='';renderActivity()});
@@ -1090,7 +1161,7 @@ const all=chg.items,today=dk(Date.now()),wk=Date.now()-7*864e5,q=pif.q.trim().to
 const es0=all.filter(e=>(pif.k==='all'||(pif.k==='event'?/^event/.test(e.kind):e.kind===pif.k))&&(!q||String(e.who||'').toLowerCase().includes(q))&&(!pif.d||dk(e.t)===pif.d)),es=pif.crit?es0.filter(piCritical):es0,hid=es0.length-es.length;
 const age=Math.round((Date.now()-chg.t)/60000);
 $('pinote').textContent=all.filter(e=>dk(e.t)===today).length+' today \u00b7 '+all.filter(e=>e.t>=wk).length+' this week \u00b7 updated '+(age<1?'just now':age+' min ago')+(hid?' \u00b7 '+hid+' minor hidden':'');
-const L={on:['booked on','#46D93C'],off:['booked off','#FD0022'],event:['added','#F9BF92'],'event-removed':['removed','#94CDDB']};
+const L={on:['booked on','#43ec69'],off:['booked off','#ff455b'],event:['added','#F9BF92'],'event-removed':['removed','#94CDDB']};
 if(!es.length){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes match</p></div>';return}
 el.innerHTML='<div class="card">'+es.slice(0,200).map(e=>{const l=L[e.kind]||['changed','#9aa3b2'];return '<div style="border-top:1px solid var(--line);padding:8px 0"><div style="display:flex;gap:8px;align-items:center"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+l[1]+'"></i><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+pesc(e.who)+' '+l[0]+(e.label?' \u00b7 '+pesc(e.label):'')+'</span><small style="color:var(--mute)">'+tm(e.t)+'</small></div><div style="font-size:12px;color:var(--mute);padding:4px 0 0 18px;line-height:1.5">'+(e.text?'Shift: '+pesc(e.text)+'<br>':'')+'Seen by the feed at '+tm(e.t)+' \u00b7 by '+pesc(e.by||e.who)+' \u00b7 Authorised by: not available</div></div>'}).join('')+'</div>'}
 document.addEventListener('click',e=>{const b=e.target.closest('#pimode [data-pi]');if(!b)return;pif.k=b.dataset.pi;renderPI()});
