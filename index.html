@@ -241,7 +241,8 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <div class="card" id="lbook"><h2>Book on / off</h2>
     <div class="row-q" id="lquick"></div>
     <div class="pseg" id="lbmode" style="margin-top:12px"><button data-bm="on" class="on">Book on</button><button data-bm="off">Book off</button></div>
-    <div id="lbody"></div></div>  <div class="card" id="lcustom"><h2>Custom time off</h2>
+    <div id="lbody"></div></div>  <div class="card" id="lcustom"><h2 id="ctitle">Custom time off</h2>
+    <div class="pseg" id="cmode" style="margin-bottom:10px"><button data-cm="off" class="on">Book off</button><button data-cm="on">Book on</button></div>
     <div style="display:flex;gap:8px"><input type="date" id="cfd" aria-label="From date" style="flex:1;min-width:0"><input type="time" id="cft" aria-label="From time" style="flex:1;min-width:0"></div>
     <div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="ctd" aria-label="To date" style="flex:1;min-width:0"><input type="time" id="ctt" aria-label="To time" style="flex:1;min-width:0"></div>
     <p class="note" id="cnote" style="margin:10px 0"></p>
@@ -957,22 +958,26 @@ document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data
   if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=pv.mode==='week'?plannerWeekStart(t.value||pv.from):(t.value||pv.from);if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
 $('prefresh').onclick=fetchRange;
-/* ===== Custom time off: any from/to date and time, sent as a #BOOK line ===== */
+/* ===== Custom time off / on: any from/to date and time, sent as a #BOOK line ===== */
 (function(){const g=id=>document.getElementById(id);if(!g('csend'))return;
 const p2=n=>String(n).padStart(2,'0'),iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
-const t0=new Date(),t1=new Date(t0.getTime()+864e5);
+let mode='off';const t0=new Date(),t1=new Date(t0.getTime()+864e5);
 g('cfd').value=iso(t0);g('cft').value='18:00';g('ctd').value=iso(t1);g('ctt').value='06:00';
-const val=()=>{const f=g('cfd').value+'T'+g('cft').value,t=g('ctd').value+'T'+g('ctt').value;
- if(!g('cfd').value||!g('cft').value||!g('ctd').value||!g('ctt').value||t<=f)return null;return{from:f,to:t}};
-const dl=s=>new Date(s).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-const show=()=>{const v=val();g('cnote').textContent=v?'Book off: '+dl(v.from)+' to '+dl(v.to):'Check the dates: the end must be after the start.';g('csend').disabled=!v};
-['cfd','cft','ctd','ctt'].forEach(i=>g(i).addEventListener('input',show));show();
-g('csend').onclick=async()=>{const v=val();if(!v)return;const b=g('csend');
- const txt='Custom time off - please book this in FireWatch now:\n'+dl(v.from)+' to '+dl(v.to)+'\n#BOOK '+JSON.stringify([v]);
+const val=()=>{if(!g('cfd').value||!g('cft').value||!g('ctd').value||!g('ctt').value)return null;const f=g('cfd').value+'T'+g('cft').value,t=g('ctd').value+'T'+g('ctt').value;return t>f?{from:f,to:t}:null};
+const dl=x=>new Date(x).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const show=m=>{const v=val();g('cnote').textContent=m||(v?(mode==='off'?'Book off: ':'Book on: ')+dl(v.from)+' to '+dl(v.to)+(mode==='on'?' (sent as a message only, autobook cannot book on yet)':''):'Check the dates: the end must be after the start.')};
+['cfd','cft'].forEach(i=>g(i).addEventListener('input',()=>{if(!val()&&g('cfd').value&&g('cft').value){const e=new Date(new Date(g('cfd').value+'T'+g('cft').value).getTime()+432e5);g('ctd').value=iso(e);g('ctt').value=p2(e.getHours())+':'+p2(e.getMinutes())}show()}));
+['ctd','ctt'].forEach(i=>g(i).addEventListener('input',()=>show()));
+g('cmode').querySelectorAll('button').forEach(bt=>bt.onclick=()=>{mode=bt.dataset.cm;g('cmode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===bt));g('ctitle').textContent=mode==='off'?'Custom time off':'Custom time on';show()});
+show();
+g('csend').onclick=async()=>{const v=val();if(!v){show();return}const b=g('csend');if(b.disabled)return;b.disabled=true;b.textContent='Sending...';
+ const txt='Custom time '+mode+' - please book this in FireWatch now:\n'+dl(v.from)+' to '+dl(v.to)+'\n'+(mode==='off'?'#BOOK ':'#BOOKON ')+JSON.stringify([v]);
  try{await navigator.clipboard.writeText(txt)}catch(e){}
- const ok=await relaySend(txt);b.textContent=ok?'Sent to Claude':'Saved and copied - paste it to Claude';
+ const ok=await relaySend(txt);let k='';try{k=localStorage.getItem('oncall-relay-key')||''}catch(e){}
+ b.textContent=ok?'Sent to Claude':'Not sent';
+ show(ok?(mode==='off'?'Sent. Autobook picks it up within about a minute.':'Sent as a message. Claude has to book this one by hand.'):'Did not reach the relay'+(k?' (check your signal and try again).':' (no relay key saved on this phone).')+' Text copied.');
  try{if(!ok&&navigator.share)await navigator.share({text:txt})}catch(e){}
- setTimeout(()=>b.textContent='Save and send to Claude',4000)};})();
+ setTimeout(()=>{b.textContent='Save and send to Claude';b.disabled=false},5000)};})();
 /* ===== #BOOK machine line for the PC auto-booker: UK local ISO ranges, minutes are from the start of day dn ===== */
 function bookRanges(rs,dn){const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
   return rs.map(x=>({from:iso(dn+Math.floor(x.s/1440))+'T'+hm(x.s),to:iso(dn+Math.floor(x.e/1440))+'T'+hm(x.e)}))}
