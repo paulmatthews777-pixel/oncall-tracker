@@ -178,7 +178,7 @@ nav button.on svg{stroke:var(--accent)}
 .bkr{border-left:4px solid var(--line);background:var(--raise);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:13px}.bkr b{font-weight:700}.bkr small{display:block;color:var(--mute);font-size:12px}
 .fab{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:#8a0820;color:#fff;font:400 34px/54px var(--body);text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:pointer;z-index:7;padding:0}
 #afrm .pane2{position:absolute;left:0;right:0;bottom:0;background:#262626;border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;max-width:560px;margin:0 auto}#afrm .hd{background:#c60c30;padding:12px 16px;font-weight:600;border-radius:20px 20px 0 0}
-#afrm .fl{display:block;border-bottom:1px solid #ddd;padding:8px 16px 6px}#afrm .fl small{display:block;color:#aaa;font-size:11px}#afrm .fl select,#afrm .fl input{width:100%;background:transparent;border:0;color:var(--ink);font:16px var(--body);padding:4px 0;min-height:30px}#afrm .fl select option{color:#111}
+#afrm .fl{display:block;border-bottom:1px solid #ddd;padding:8px 16px 6px}#afrm .fl small{display:block;color:#aaa;font-size:11px}#afrm .fl select,#afrm .fl input{width:100%;background:transparent;border:0;color:var(--ink);font:16px var(--body);padding:4px 0;min-height:30px}#afrm .fl select{color-scheme:dark}#afrm .fl select option,#afrm .fl select optgroup{background:#242424;color:#f3f5f8}
 #afrm .sub{display:block;width:calc(100% - 32px);margin:14px 16px 20px;padding:13px;border:0;border-radius:6px;font:600 15px var(--body);background:#999;color:#222}#afrm .sub.ok{background:#c60c30;color:#fff;cursor:pointer}
 .pseg{display:flex;gap:6px;margin-bottom:10px}.pseg button,.pctl button{flex:1;background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 6px;font:600 13px var(--body);cursor:pointer;min-height:40px}.pseg button.on{border-color:var(--accent);color:#fff}
 .pctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.pctl input{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px;flex:1;min-width:120px}.pctl button{flex:0 0 40px;padding:0}
@@ -188,6 +188,73 @@ nav button.on svg{stroke:var(--accent)}
 @keyframes dsg{from{stroke-dasharray:0 440}}.dseg{cursor:pointer;animation:dsg .7s ease-out both;transition:stroke-width .15s}#akind,#awho,#adate{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px}@media (prefers-reduced-motion:reduce){.dseg{animation:none}}
 #splash{position:fixed;inset:0;z-index:9999;background:#061426 url(startup-crewing.jpg) center/auto 100% no-repeat;transition:opacity .5s}
 .splash-title{position:absolute;inset:37% 0 auto;padding:0 12px;text-align:center;font:700 clamp(32px,8vw,64px)/1.1 var(--display);color:#f4f8ff;text-shadow:0 3px 16px #001323}
+#booking-results{margin-top:14px;padding:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+#booking-results h2{margin:0 0 6px;color:var(--ink)}
+#booking-result-list{margin:8px 0 0;padding-left:22px;color:var(--ink)}
+
+:root{
+  --bg:#071321;--surface:#102337;--raise:#19334a;--line:#34536d;
+  --ink:#f0f7ff;--mute:#b4c7d9;--faint:#93acc3;
+  --accent:#39e7f1;--good:#88e8b6;--warn:#ffd183;--bad:#ffaaa6
+}
+body{background:radial-gradient(ellipse at top,#123349 0,transparent 620px),var(--bg)}
+.top,nav{background:#091a2bf2}
+.btn.primary,.fab{background:var(--accent);color:#06212c}
+#cfm,#afrm{backdrop-filter:blur(8px)}
+#afrm .pane2{background:var(--surface);border:1px solid var(--line)}
+#afrm .hd{background:#0a1d30;color:var(--ink);font:700 20px var(--display)}
+#afrm .fl{border:0;padding:6px 16px}
+#afrm .fl small{color:var(--mute);font-size:13px;margin-bottom:4px}
+#afrm .fl input,#afrm .fl select{border:1px solid var(--line);border-radius:9px;background:#0a1b2c;padding:8px 10px;min-height:42px}
+#afrm .fl select option,#afrm .fl select optgroup{background:#102337;color:var(--ink)}
+#afrm .sub{background:#304a61;color:#deebf5;border-radius:9px}
+#afrm .sub.ok{background:var(--accent);color:#06212c}
+#booking-result-list{list-style:none;padding:0}
+#booking-result-list li{margin:8px 0 0;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--raise)}
+#booking-result-list li[data-status="booked"]{color:#a3f0c3;background:#103825;border-color:#338056}
+#booking-result-list li[data-status="failed"],#booking-result-list li[data-status="missing"]{color:#ffc3bf;background:#471f26;border-color:#a45560}
+#booking-result-list li[data-status="queued"],#booking-result-list li[data-status="claimed"],#booking-result-list li[data-status="booking"],#booking-result-list li[data-status="unavailable"],#booking-result-list li[data-status="stalled"]{color:#ffe1a6;background:#382b17;border-color:#8a632a}
+
+#afrm .hd{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1;border-bottom:1px solid var(--line)}
+#afrm .hd h2{margin:0;font:inherit}
+#afrm .hd button{border:0;background:none;color:var(--ink);font:inherit;font-size:28px;min-width:36px;min-height:36px;cursor:pointer}
+#afrm .af-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:0 16px}
+#afrm .af-pair .fl{min-width:0;padding-inline:0}
+#afrm .af-pair input{min-width:0}
+#afrm textarea{display:block;width:100%;resize:vertical;border:1px solid var(--line);border-radius:9px;background:#0a1b2c;color:var(--ink);font:16px var(--body);padding:10px}
+#cfm{align-items:center!important}
+.booking-result-time{margin-top:4px;font-size:13px}
+
+#technical-info{margin-top:14px}#technical-info summary{cursor:pointer;font-weight:700}
+#technical-rows{margin:12px 0}
+#technical-rows div{display:grid;grid-template-columns:minmax(76px,1fr) minmax(0,2fr);gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+#technical-rows dd{margin:0;text-align:right;overflow-wrap:anywhere}
+#technical-rows dt{color:var(--mute)}
+.af-crew{margin:12px 16px;border:1px solid var(--line);border-radius:10px;padding:8px;min-width:0}
+.af-person{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;margin-bottom:6px}
+.af-person input,.af-person select{width:100%;min-width:0;background:#0a1b2c;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px}
+.review-sheet{width:min(440px,calc(100% - 28px));padding:20px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.review-sheet::backdrop{background:#04101c88;backdrop-filter:blur(8px)}
+.review-sheet h2{margin:0 0 10px}
+.review-sheet ul{list-style:none;padding:0;margin:0 0 12px}
+.review-sheet li{padding:8px 10px;background:var(--raise);border-bottom:1px solid var(--line);white-space:pre-wrap;overflow-wrap:anywhere}
+.review-sheet button+button{margin-top:8px}
+
+.home-heading h1,#t-activity h1,#t-more h1{font:700 26px var(--display);margin:0 0 6px}
+.home-heading p{margin:0;color:var(--mute)}
+.home-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.home-actions button{min-height:64px}
+.menu-group{padding:0;overflow:hidden}
+.menu-link{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:48px;text-align:left;color:var(--ink);font:600 15px var(--body);cursor:pointer}
+.menu-link span{color:var(--accent);font-size:22px}
+.menu-group .menu-link{background:transparent;border:0;padding:10px 14px}
+.menu-group .menu-link+.menu-link{border-top:1px solid var(--line)}
+.menu-back{align-self:flex-start;min-height:44px;background:transparent;color:var(--accent);border:0;font:600 15px var(--body);cursor:pointer;padding:6px 0}
+#t-more h2{font-size:14px;color:var(--mute);margin:4px 0 0}
+.activity-switch{margin:2px 0}
+#activity-history:not([hidden]),#activity-drafts:not([hidden]){display:grid;gap:10px}
+.draft-detail{white-space:pre-wrap;overflow-wrap:anywhere}
+#t-results #booking-results,#t-technical #technical-info{margin-top:0}
 </style>
 </head>
 <body>
@@ -196,12 +263,12 @@ nav button.on svg{stroke:var(--accent)}
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
-async function relaySend(text){try{const k=relayKey();if(!k)return false;const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL+'/req',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();return !!(r.ok&&j&&j.ok===true)}finally{clearTimeout(t)}}catch(e){return false}}
+async function relaySend(text){try{const k=relayKey();if(!k)return false;const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL+'/req',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();if(r.ok&&j&&j.ok===true){if(typeof window!=="undefined"&&window.trackBookingResult)window.trackBookingResult(j);return true}return false}finally{clearTimeout(t)}}catch(e){return false}}
 (function(){const s=document.getElementById('splash');const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
-<section class="tab on" id="t-week">
+<section class="tab" id="t-week"><button type="button" class="menu-back" data-page="more">‹ More</button>
   <div class="wk"><button class="btn sq" id="pw" aria-label="Previous week">‹</button><div class="t" id="wtitle"></div><button class="btn sq" id="nw" aria-label="Next week">›</button></div>
   <div class="card"><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
   <div class="card" id="hcard"></div>
@@ -217,7 +284,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   <button class="btn" id="tw">Back to this week</button>
 </section>
 
-<section class="tab" id="t-audit">
+<section class="tab" id="t-audit"><button type="button" class="menu-back" data-page="more">‹ More</button>
   <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn primary" id="csvbtn" aria-label="Download audit as coloured spreadsheet" style="display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>Download spreadsheet</button></div>
   <div class="card"><div class="hero" id="ahero"></div></div>
   <div class="card"><h2>Save hours: 8 week audit (to still pass)</h2><div id="afree"></div><button class="btn primary" id="copyoff" style="margin-top:12px">Copy list to book in FireWatch</button></div>
@@ -235,8 +302,15 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
   </div>
 </section>
 
-<section class="tab" id="t-live">
+<section class="tab on" id="t-live">
+  <div class="home-heading"><h1>Home</h1><p>Winterton</p></div>
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
+  <div class="home-actions"><button type="button" class="btn primary" data-home-book="on">Book on</button><button type="button" class="btn" data-home-book="off">Book off</button></div>
+  <button type="button" class="menu-link card" data-page="results">Booking results <span aria-hidden="true">›</span></button>
+  <button type="button" class="menu-link card" data-page="station">Station status and crew <span aria-hidden="true">›</span></button>
+</section>
+<section class="tab" id="t-booking">
+  <button type="button" class="menu-back" data-page="live">‹ Home</button>
   <div class="card" id="lbook"><h2>Book on / off</h2>
     <div class="row-q" id="lquick"></div>
     <div class="pseg" id="lbmode" style="margin-top:12px"><button data-bm="on" class="on">Book on</button><button data-bm="off">Book off</button></div>
@@ -247,17 +321,45 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
     <p class="note" id="cnote" style="margin:10px 0"></p>
     <button class="btn primary" id="csend">Save and send to Claude</button></div>
 
+</section>
+<section class="tab" id="t-station"><button type="button" class="menu-back" data-page="live">‹ Home</button>
   <div class="card"><h2 id="lsh">Station status</h2><p class="note" style="margin:0 0 10px">Tap an hour to see each 15 minutes. Green: full crew (5+). Yellow: minimal crewing (4 with 2 BA, 1 OIC, 1 ERD), still on the run. Red: short or missing a required skill, off the run.</p><div id="lhours"></div></div>
   <div class="card"><h2 id="lcrew">Crew roster</h2><div id="lon"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
+<section class="tab" id="t-results"><button type="button" class="menu-back" data-page="live">‹ Home</button>
+<div class="card" id="booking-results">
+  <h2>Booking results</h2>
+  <p class="note">Results reported by FireWatch Autobook.</p>
+  <ul id="booking-result-list" aria-live="polite"><li>No booking results on this device yet.</li></ul>
+</div>
+</section>
+<section class="tab" id="t-more">
+  <h1>More</h1>
+  <h2>Contract</h2>
+  <div class="card menu-group"><button class="menu-link" data-page="week">Week and hours <span aria-hidden="true">›</span></button><button class="menu-link" data-page="audit">Audit and export <span aria-hidden="true">›</span></button></div>
+  <h2>Tools</h2>
+  <div class="card menu-group"><button class="menu-link" data-page="pi">PI <span aria-hidden="true">›</span></button><button class="menu-link" data-page="data">Data and import <span aria-hidden="true">›</span></button><button class="menu-link" data-page="technical">About and technical info <span aria-hidden="true">›</span></button></div>
+</section>
+<section class="tab" id="t-technical"><button type="button" class="menu-back" data-page="more">‹ More</button>
+<details id="technical-info" class="card" open>
+  <summary>About and technical info</summary>
+  <dl id="technical-rows"></dl>
+  <button type="button" class="btn primary" id="technical-copy">Copy all</button>
+  <p id="technical-note" role="status"></p>
+</details>
+</section>
 
 <section class="tab" id="t-activity">
-<button class="fab" id="aplus" aria-label="Add activity">+</button>
+<h1>Activity</h1>
+<button class="btn primary" id="aplus" aria-label="Add activity">+ Add activity</button>
+<div class="pseg activity-switch" aria-label="Activity views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
+<div id="activity-history">
 <div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="adate" aria-label="Date recorded" style="flex:1;min-width:0"></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
-<div id="abody"></div>
+<div id="abody"></div></div>
+<div id="activity-drafts" hidden></div>
 </section>
-<section class="tab" id="t-pi">
+<section class="tab" id="t-pi"><button type="button" class="menu-back" data-page="more">‹ More</button>
 <div class="card"><div class="pseg" id="pimode"><button data-pi="all" class="on">All</button><button data-pi="on">Booked on</button><button data-pi="off">Booked off</button><button data-pi="event">Events</button></div>
 <div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="pisearch" placeholder="Search a name" aria-label="Search a name" style="flex:1;min-width:0"><input type="date" id="pidate" aria-label="Date" style="width:140px"></div>
 <label style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;cursor:pointer"><input type="checkbox" id="picrit" checked style="accent-color:var(--accent);width:20px;height:20px">Critical only (run-affecting)</label>
@@ -273,7 +375,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 
 <div style="display:none"><div class="card"><div class="hero" id="ohero"></div></div></div>
 
-<section class="tab" id="t-data">
+<section class="tab" id="t-data"><button type="button" class="menu-back" data-page="more">‹ More</button>
   <div class="card">
     <h2>Update from FireWatch</h2>
     <p class="note" style="margin-bottom:12px">In FireWatch, press Open in tracker app and your hours load here. Or press Copy for tracker app there, then paste below.</p>
@@ -300,13 +402,11 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 
 </main>
 
-<nav aria-label="Sections">
-  <button class="on" data-t="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Week</button>
-  <button data-t="audit"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Audit</button>
-  <button data-t="live"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>Live</button>
+<nav aria-label="Main navigation">
+  <button class="on" data-t="live" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10H3zM9 20v-6h6v6"/></svg>Home</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
 <button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Activity</button>
-<button data-t="pi"><svg viewBox="0 0 24 24"><path d="M4 12h16M7 12l1.5-6h7L17 12"/><circle cx="8.5" cy="16.5" r="2.5"/><circle cx="15.5" cy="16.5" r="2.5"/></svg>PI</button>
+  <button data-t="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</button>
 </nav>
 
 <script>
@@ -531,7 +631,7 @@ function extras(w,r,audit,sub,specT,totT,now){
         try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
         let copied=false;try{await navigator.clipboard.writeText(txt);copied=true}catch(e){}
         const relayOk=await relaySend(txt);
-        ov.remove();b.textContent=relayOk?'Sent to Claude':'Sent – paste it to Claude if it did not open';
+        ov.remove();b.textContent=relayOk?'Sent to relay':'Sent – paste it to Claude if it did not open';
         try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
         setTimeout(()=>b.textContent='Save and send to Claude',4000)}};
   };
@@ -541,7 +641,7 @@ function extras(w,r,audit,sub,specT,totT,now){
       try{localStorage.setItem('oncall-offsel-'+btn,JSON.stringify({at:Date.now(),sel}))}catch(e){}
       try{await navigator.clipboard.writeText(txt)}catch(e){}
       const relayOk=await relaySend(txt);
-      b.textContent=relayOk?'Sent to Claude':'Saved and copied – paste it to Claude';
+      b.textContent=relayOk?'Sent to relay':'Saved and copied – paste it to Claude';
       try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
       setTimeout(()=>b.textContent=label,3000)}};
   const freeH=x=>x.off?x.tot:(x.partH||0);
@@ -594,8 +694,25 @@ $('import').onclick=()=>{const p=parsePaste($('paste').value);if(p.length){setEn
 $('add').onclick=()=>{const d=$('fDate').value;if(!d)return;if(source==='example')entries=[];source='manual';importedAt=Date.now();entries.push({date:d,start:$('fStart').value,end:$('fEnd').value,type:$('fType').value,band:$('fBand').value});render()};
 $('rows').onclick=e=>{const b=e.target.closest('button[data-i]');if(!b)return;entries.splice(+b.dataset.i,1);render()};
 
-function show(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));window.scrollTo(0,0)}
+function show(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));
+  const parent=['booking','station','results'].includes(t)?'live':['week','audit','pi','data','technical'].includes(t)?'more':t;
+  document.querySelectorAll('nav button').forEach(button=>{
+    const current=button.dataset.t===parent;
+    button.classList.toggle('on',current);
+    if(current)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+  });
+  if(t==='technical')document.getElementById('technical-info').dispatchEvent(new Event('toggle'));
+  window.scrollTo(0,0);
+}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>show(b.dataset.page));
+document.querySelectorAll('[data-home-book]').forEach(button=>button.onclick=()=>{
+  show('booking');
+  const mode=button.dataset.homeBook;
+  document.querySelector('[data-bm="'+mode+'"]').click();
+  document.querySelector('[data-cm="'+mode+'"]').click();
+});
 
 function fromHash(){const m=/^#d=(.+)$/.exec(location.hash);if(!m)return;try{const t=decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))));const p=parsePaste(t);if(p.length){entries=p;source='firewatch';importedAt=Date.now()}}catch(e){}history.replaceState(null,'',location.pathname+location.search)}
 
@@ -857,30 +974,68 @@ function multiHTML(from,to){
   return h+'</div>'}
 
 /* ===== Add activity (+): FireWatch-style form. Saves a draft only; nothing is sent until the booking process supports activities ===== */
-const ACT_TYPES=['On-Call turnout','On-Call attendance','Drill','Training','On-call EFR','Detachment'];
+const ACT_TYPES={
+  'On-Call':[
+    'On-Call AWAP','On-Call Drone - Fire - Admin/Training','On-Call Drone - Police - Admin/Training',
+    'On-Call EMAS - Admin/Training','On-Call Health & Safety','On-Call Incident Admin',
+    'On-Call Maintenance - Appliances & Equipment','On-Call Maintenance - Station','On-Call Meetings',
+    'On-Call Occupational Health Activities','On-Call Prevention Activities','On-Call Protection Activities',
+    'On-Call Recruitment','On-Call Station Administration','On-Call Training','On-Call YAS - Admin/Training'
+  ],
+  FT:[
+    'FT - Bank Holiday Uplift','FT - Come in Early/Hang Back/Long Incident',
+    'FT - Detached/Deployed Back to Home Station','FT - Detached/Deployed from Home Station',
+    'FT - Overtime - Plain Time','FT - Pre-arranged Overtime'
+  ]
+};
 function actDraftValid(f){if(!f||!f.type||!f.sd||!f.st||!f.ed||!f.et)return false;return (f.ed+'T'+f.et)>(f.sd+'T'+f.st)}
-function actDraftSave(f){let a=[];try{a=JSON.parse(localStorage.getItem('oncall-act-drafts')||'[]')}catch(e){}a.push(Object.assign({savedAt:Date.now()},f));try{localStorage.setItem('oncall-act-drafts',JSON.stringify(a))}catch(e){}return a.length}
+function actDraftSave(f){let a=[];try{a=JSON.parse(localStorage.getItem('oncall-act-drafts')||'[]')}catch(e){}a.push(Object.assign({savedAt:Date.now()},f));localStorage.setItem('oncall-act-drafts',JSON.stringify(a));return a.length}
 function openActForm(){const old=document.getElementById('afrm');if(old)old.remove();
   const L=londonHM(),hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
   const ov=document.createElement('div');ov.id='afrm';ov.style.cssText='position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.62)';
-  ov.innerHTML='<div class="pane2"><div class="hd">Activity</div>'
-   +'<label class="fl"><small>Activity Type</small><select id="af-type"><option value="">Select an Activity Type</option>'+ACT_TYPES.map(x=>'<option>'+x+'</option>').join('')+'</select></label>'
+  ov.innerHTML='<div class="pane2" role="dialog" aria-modal="true" aria-labelledby="af-title"><div class="hd"><button id="af-back" type="button" aria-label="Close Add activity">‹</button><h2 id="af-title">Add activity</h2></div>'
+   +'<label class="fl"><small>Event Source</small><input id="af-source" value="Extra Hours" readonly></label>'
+   +'<label class="fl"><small>Activity Type</small><select id="af-type"><option value="">Select an Activity Type</option>'+Object.entries(ACT_TYPES).map(([group,types])=>'<optgroup label="'+group+'">'+types.map(type=>'<option>'+type.replace(/&/g,'&amp;')+'</option>').join('')+'</optgroup>').join('')+'</select></label>'
    +'<label class="fl"><small>Station</small><input id="af-st" value="Winterton" readonly></label>'
    +'<label class="fl"><small>Contract Type</small><input value="Retained" readonly></label>'
    +'<label class="fl"><small>Role</small><input value="Firefighter" readonly></label>'
-   +'<label class="fl"><small>Team</small><select id="af-team"><option value="">Select a Team</option></select></label>'
+   +'<label class="fl"><small>Team</small><input id="af-team" placeholder="Enter a team"></label>'
+   +'<div class="af-pair">'
    +'<label class="fl"><small>Start Date</small><input type="date" id="af-sd" value="'+L.date+'"></label>'
    +'<label class="fl"><small>Start Time</small><input type="time" id="af-stm" value="'+hm(L.min)+'"></label>'
+   +'</div>'
+   +'<div class="af-pair">'
    +'<label class="fl"><small>End Date</small><input type="date" id="af-ed" value="'+L.date+'"></label>'
    +'<label class="fl"><small>End Time</small><input type="time" id="af-etm" value="'+hm(Math.min(L.min+60,1439))+'"></label>'
-   +'<label class="fl"><small>Comment</small><input id="af-cm" placeholder="Enter a comment"></label>'
-   +'<p class="note" id="af-note" style="margin:10px 16px 0"></p><button class="sub" id="af-go" disabled>Submit</button></div>';
+   +'</div>'
+   +'<label class="fl"><small>Comment</small><textarea id="af-cm" rows="3" placeholder="Enter a comment"></textarea></label>'
+   +'<fieldset class="af-crew"><legend>Who was there</legend><div id="af-people"></div><datalist id="af-crew-names"></datalist><button type="button" class="btn" id="af-add-person">+ Add person</button></fieldset>'
+   +'<p class="note" id="af-note" style="margin:10px 16px 0"></p><button class="sub" id="af-go" disabled>Review and save</button></div>';
   document.body.appendChild(ov);
-  const get=()=>({type:$('af-type').value,station:'Winterton',contract:'Retained',role:'Firefighter',team:$('af-team').value,sd:$('af-sd').value,st:$('af-stm').value,ed:$('af-ed').value,et:$('af-etm').value,comment:$('af-cm').value});
+  const crew=$('af-people');
+  if(Array.isArray(rng?.people))for(const member of sortedPeople()){
+    const option=document.createElement('option');option.value=member.name;$('af-crew-names').append(option);
+  }
+  $('af-add-person').onclick=()=>{
+    const row=document.createElement('div');row.className='af-person';
+    row.innerHTML='<input list="af-crew-names" aria-label="Crew member" placeholder="Name"><select aria-label="Attendance"><option>Turned Out</option><option>Attended</option></select><button type="button" class="btn" aria-label="Remove crew member">×</button>';
+    row.querySelector('button').onclick=()=>row.remove();
+    crew.append(row);row.querySelector('input').focus();
+  };
+  const get=()=>({type:$('af-type').value,source:$('af-source').value,station:'Winterton',contract:'Retained',role:'Firefighter',team:$('af-team').value,sd:$('af-sd').value,st:$('af-stm').value,ed:$('af-ed').value,et:$('af-etm').value,comment:$('af-cm').value,people:[...crew.children].map(row=>({name:row.querySelector('input').value.trim(),response:row.querySelector('select').value}))});
   const upd=()=>{const ok=actDraftValid(get());$('af-go').classList.toggle('ok',ok);$('af-go').disabled=!ok};
   ov.querySelectorAll('select,input').forEach(x=>{x.oninput=upd;x.onchange=upd});
+  $('af-back').onclick=()=>ov.remove();
   ov.onclick=e=>{if(e.target===ov)ov.remove()};
-  $('af-go').onclick=()=>{const f=get();if(!actDraftValid(f))return;const n=actDraftSave(f);$('af-note').textContent='Draft saved ('+n+' stored). Nothing is sent to FireWatch yet.';$('af-go').disabled=true;$('af-go').classList.remove('ok');setTimeout(()=>ov.remove(),1800)};
+  $('af-go').onclick=async()=>{
+    const f=get();if(!actDraftValid(f))return;
+    const names=f.people.map(person=>person.name.toLowerCase());
+    if(names.some(name=>!name)||new Set(names).size!==names.length){$('af-note').textContent='Enter a different name for each crew member.';return}
+    const accepted=await reviewSheet('Review activity',[f.type,f.station+' · '+f.contract+' · '+f.role,f.team,f.sd+' '+f.st+' → '+f.ed+' '+f.et,f.comment,...f.people.map(person=>person.name+' · '+person.response)].filter(Boolean),'Save local draft');
+    if(!accepted)return;
+    try{actDraftSave(f)}catch{$('af-note').textContent='Couldn’t save the draft on this device.';return}
+    $('af-note').textContent='Activity draft saved on this device.';window.refreshActivityDrafts();
+  };
   upd()}
 document.addEventListener('click',e=>{if(e.target.closest('#aplus'))openActForm()});
 /* ===== Activity tab: who booked what, from the planner bars ===== */
@@ -969,12 +1124,15 @@ const show=m=>{const v=val();g('cnote').textContent=m||(v?(mode==='off'?'Book of
 ['ctd','ctt'].forEach(i=>g(i).addEventListener('input',()=>show()));
 g('cmode').querySelectorAll('button').forEach(bt=>bt.onclick=()=>{mode=bt.dataset.cm;g('cmode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===bt));g('ctitle').textContent=mode==='off'?'Custom time off':'Custom time on';show()});
 show();
-g('csend').onclick=async()=>{const v=val();if(!v){show();return}const b=g('csend');if(b.disabled)return;b.disabled=true;b.textContent='Sending...';
+g('csend').onclick=async()=>{const v=val();if(!v){show();return}const b=g('csend');if(b.disabled)return;b.disabled=true;
+ if(!await reviewSheet(mode==='off'?'Confirm booking off':'Confirm booking on',[dl(v.from),dl(v.to),mode==='off'?'On-Call Unavailable':'On-Call Available'],'Confirm and send')){b.disabled=false;return}
+ b.textContent='Sending...';
  const txt='Custom time '+mode+' - please book this in FireWatch now:\n'+dl(v.from)+' to '+dl(v.to)+'\n'+(mode==='off'?'#BOOK ':'#BOOKON ')+JSON.stringify([v]);
  try{await navigator.clipboard.writeText(txt)}catch(e){}
  const ok=await relaySend(txt);let k='';try{k=localStorage.getItem('oncall-relay-key')||''}catch(e){}
- b.textContent=ok?'Sent to Claude':'Not sent';
- show(ok?(mode==='off'?'Sent. Autobook picks it up within about a minute.':'Sent as a message. Claude has to book this one by hand.'):'Did not reach the relay'+(k?' (check your signal and try again).':' (no relay key saved on this phone).')+' Text copied.');
+ b.textContent=ok?'Sent to relay':'Not sent';
+ if(ok&&mode==='off')window.setTimeout(()=>document.getElementById('t-booking').classList.contains('on')&&document.querySelector('[data-page=results]').click(),300);
+ show(ok?(mode==='off'?'Sent to relay. See Booking results for the outcome.':'Sent as a message. Claude has to book this one by hand.'):'Did not reach the relay'+(k?' (check your signal and try again).':' (no relay key saved on this phone).')+' Text copied.');
  try{if(!ok&&navigator.share)await navigator.share({text:txt})}catch(e){}
  setTimeout(()=>{b.textContent='Save and send to Claude';b.disabled=false},5000)};})();
 /* ===== #BOOK machine line for the PC auto-booker: UK local ISO ranges, minutes are from the start of day dn ===== */
@@ -1067,6 +1225,144 @@ $('csvgo').onclick=function(){
   }else dl();
   function dl(){var u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);closeS();toast('Spreadsheet downloaded')}
 };
+})();
+</script>
+<script>
+(function(){
+  const storageKey='oncall-booking-results';
+  const idPattern=/^[a-zA-Z0-9-]{8,64}$/;
+  const messages={
+    queued:'Sent to relay · Waiting for FireWatch',
+    claimed:'Picked up by Autobook',
+    booking:'Booking in FireWatch',
+    booked:'Booked · Confirmed by Autobook',
+    failed:'Check FireWatch · Autobook could not complete or verify this booking',
+    stalled:'Check FireWatch · Autobook stopped reporting progress',
+    unavailable:'Awaiting confirmation · Status temporarily unavailable',
+    missing:'Check FireWatch · Booking result unavailable'
+  };
+  const final=new Set(['booked','failed','missing']);
+  let results=[];
+  try {
+    const saved=JSON.parse(localStorage.getItem(storageKey)||'[]');
+    if(Array.isArray(saved))results=saved.filter(item=>item&&idPattern.test(item.id)&&Number.isFinite(item.at)).slice(0,10);
+  } catch {}
+  const list=document.getElementById('booking-result-list');
+  function render(){
+    if(!results.length)return;
+    list.replaceChildren(...results.map(item=>{
+      const li=document.createElement('li');
+      li.dataset.status=item.status;
+      const time=new Intl.DateTimeFormat('en-GB',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/London'}).format(item.at);
+      const message=document.createElement('strong');
+      message.textContent=messages[item.status]||messages.queued;
+      const stamp=document.createElement('div');
+      stamp.className='booking-result-time';
+      stamp.textContent=time;
+      li.append(message,stamp);
+      return li;
+    }));
+  }
+  function save(){try{localStorage.setItem(storageKey,JSON.stringify(results))}catch{}}
+  let checking=false;
+  async function refresh(){
+    if(checking||document.hidden)return;
+    const pending=results.filter(item=>!final.has(item.status));
+    if(!pending.length)return;
+    let key;
+    try{key=localStorage.getItem('oncall-relay-key')}catch{return}
+    if(!key)return;
+    checking=true;
+    try{
+      await Promise.all(pending.map(async item=>{
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),8000);
+        try{
+          const response=await fetch(RELAY_URL+'/status?id='+encodeURIComponent(item.id),{headers:{'X-Relay-Key':key},cache:'no-store',signal:controller.signal});
+          if(response.status===404){item.status='missing';return}
+          const body=response.ok?await response.json():null;
+          item.status=body&&body.ok&&body.id===item.id&&Object.hasOwn(messages,body.status)?body.status:'unavailable';
+        }catch{item.status='unavailable'}
+        finally{clearTimeout(timeout)}
+      }));
+      save();render();
+    }finally{checking=false}
+  }
+  window.trackBookingResult=function(receipt){
+    if(!idPattern.test(receipt.id)||typeof receipt.id!=='string')return;
+    if(!results.some(item=>item.id===receipt.id)){
+      results=[{id:receipt.id,at:Date.now(),status:'queued'},...results].slice(0,10);
+      save();render();
+    }
+    refresh();
+  };
+  render();
+  refresh();
+  setInterval(refresh,10000);
+  document.addEventListener('visibilitychange',refresh);
+})();
+</script>
+<script>
+function reviewSheet(title,lines,action){
+  const dialog=document.createElement('dialog');dialog.className='review-sheet';dialog.setAttribute('aria-label',title);
+  const form=document.createElement('form');form.method='dialog';
+  const heading=document.createElement('h2');heading.textContent=title;
+  const list=document.createElement('ul');
+  for(const line of lines){const item=document.createElement('li');item.textContent=line;list.append(item)}
+  for(const [label,value,style] of [[action,'yes','btn primary'],['Back','back','btn']]){
+    const button=document.createElement('button');button.value=value;button.className=style;button.textContent=label;form.append(button);
+  }
+  form.prepend(heading,list);dialog.append(form);document.body.append(dialog);
+  return new Promise(resolve=>{dialog.addEventListener('close',()=>{const confirmed=dialog.returnValue==='yes';dialog.remove();resolve(confirmed)},{once:true});dialog.showModal()});
+}
+(function(){
+  const info=document.getElementById('technical-info'),rows=document.getElementById('technical-rows'),note=document.getElementById('technical-note');
+  async function fill(){
+    let key=false,last='No booking result on this device',cache='Unavailable';
+    try{key=!!localStorage.getItem('oncall-relay-key');const item=JSON.parse(localStorage.getItem('oncall-booking-results')||'[]')[0];if(item)last=new Date(item.at).toLocaleString('en-GB')+' · '+item.status}catch{}
+    try{cache=(await caches.keys()).filter(name=>name.startsWith('tracker-')).join(', ')||'No cached app'}catch{}
+    const feedTime=rng?.t?new Date(rng.t):null;
+    const values=[
+      ['App',APP_VERSION],['Cache',cache],['Relay key',key?'Saved on this device':'Not saved'],
+      ['Planner feed',feedTime&&!isNaN(feedTime)?feedTime.toLocaleString('en-GB'):'No update loaded'],
+      ['Phone',navigator.userAgent+' · '+screen.width+' × '+screen.height],
+      ['Offline',(navigator.onLine?'Online':'Offline')+' · Service worker '+(navigator.serviceWorker?.controller?'active':'inactive')],
+      ['Last booking',last]
+    ];
+    rows.replaceChildren(...values.map(([label,value])=>{const row=document.createElement('div'),term=document.createElement('dt'),data=document.createElement('dd');term.textContent=label;data.textContent=value;row.append(term,data);return row}));
+  }
+  info.addEventListener('toggle',()=>{if(info.open)fill()});
+  document.getElementById('technical-copy').onclick=async()=>{await fill();try{await navigator.clipboard.writeText(rows.innerText);note.textContent='Copied'}catch{note.textContent='Copy unavailable. You can select the information above.'}};
+})();
+</script>
+<script>
+(function(){
+  const history=document.getElementById('activity-history'),drafts=document.getElementById('activity-drafts');
+  const historyButton=document.getElementById('activity-history-button'),draftButton=document.getElementById('activity-drafts-button');
+  function showDrafts(visible){
+    history.hidden=visible;drafts.hidden=!visible;
+    for(const [button,active] of [[historyButton,!visible],[draftButton,visible]]){
+      button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));
+    }
+    if(!visible)return;
+    let items;
+    try{items=JSON.parse(localStorage.getItem('oncall-act-drafts')||'[]');if(!Array.isArray(items))throw Error()}
+    catch{drafts.textContent='Drafts couldn’t be read on this device.';return}
+    drafts.replaceChildren();
+    if(!items.length){drafts.textContent='No local activity drafts yet.';return}
+    for(const draft of items.slice().reverse()){
+      if(!draft||typeof draft!=='object')continue;
+      const card=document.createElement('details');card.className='card';
+      const title=document.createElement('summary');title.textContent=draft.type||'Activity draft';
+      const detail=document.createElement('p');detail.className='draft-detail';
+      const people=Array.isArray(draft.people)?draft.people.filter(Boolean).map(person=>person.name+' · '+person.response):[];
+      detail.textContent=[[draft.sd,draft.st].filter(Boolean).join(' ')+' → '+[draft.ed,draft.et].filter(Boolean).join(' '),draft.comment,...people,'Saved on this device'].filter(Boolean).join('\n');
+      card.append(title,detail);drafts.append(card);
+    }
+  }
+  historyButton.onclick=()=>showDrafts(false);
+  draftButton.onclick=()=>showDrafts(true);
+  window.refreshActivityDrafts=()=>{if(!drafts.hidden)showDrafts(true)};
 })();
 </script>
 </body>
