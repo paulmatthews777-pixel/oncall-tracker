@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e1014">
 <title>Live Crewing</title>
-<link rel="manifest" href="manifest.webmanifest?v=3">
-<link rel="icon" href="icon-fire-192.png"><link rel="apple-touch-icon" href="icon-fire-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-crewing-192.png"><link rel="apple-touch-icon" href="icon-crewing-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -186,19 +186,18 @@ nav button.on svg{stroke:var(--accent)}
 .pleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mute);margin-top:10px}.pleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 #abody summary::-webkit-details-marker{display:none}
 @keyframes dsg{from{stroke-dasharray:0 440}}.dseg{cursor:pointer;animation:dsg .7s ease-out both;transition:stroke-width .15s}#akind,#awho,#adate{background:var(--raise);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px;font:14px var(--body);min-height:40px}@media (prefers-reduced-motion:reduce){.dseg{animation:none}}
+#splash{position:fixed;inset:0;z-index:9999;background:#061426 url(startup-crewing.jpg) center/auto 100% no-repeat;transition:opacity .5s}
+.splash-title{position:absolute;inset:37% 0 auto;padding:0 12px;text-align:center;font:700 clamp(32px,8vw,64px)/1.1 var(--display);color:#f4f8ff;text-shadow:0 3px 16px #001323}
 </style>
 </head>
 <body>
-<div id="splash" style="position:fixed;inset:0;z-index:9999;background:#0e1014 url(splash.jpg) center 35%/cover no-repeat;transition:opacity .5s;display:flex;flex-direction:column;justify-content:space-between">
-<div style="background:linear-gradient(#000d,#0000);padding:calc(env(safe-area-inset-top) + 34px) 16px 70px;text-align:center"><div style="font:400 clamp(56px,17vw,96px)/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;letter-spacing:.06em;color:#ff1a1a;text-shadow:0 0 18px #ff3b00aa,0 3px 0 #5a0000,0 6px 24px #000">FIREWATCH</div><div style="font:600 15px 'DM Sans',sans-serif;letter-spacing:.35em;color:#fff;opacity:.9;margin-top:6px">LIVE CREWING</div></div>
-<div style="display:flex;justify-content:flex-end;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);background:linear-gradient(#0000,#000b)"><span id="appver" style="font:600 14px 'DM Sans',sans-serif;color:#fff;opacity:.9"></span></div>
-</div>
+<div id="splash"><div class="splash-title">Live Crewing</div></div>
 <script>const APP_VERSION='v46';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
 async function relaySend(text){try{const k=relayKey();if(!k)return false;const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL+'/req',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();return !!(r.ok&&j&&j.ok===true)}finally{clearTimeout(t)}}catch(e){return false}}
-(function(){const s=document.getElementById('splash');document.getElementById('appver').textContent=APP_VERSION;const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
+(function(){const s=document.getElementById('splash');const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
 
