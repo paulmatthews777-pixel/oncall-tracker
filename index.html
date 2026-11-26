@@ -252,7 +252,13 @@ body{background:radial-gradient(ellipse at top,#123349 0,transparent 620px),var(
 .menu-back{align-self:flex-start;min-height:44px;background:transparent;color:var(--accent);border:0;font:600 15px var(--body);cursor:pointer;padding:6px 0}
 #t-more h2{font-size:14px;color:var(--mute);margin:4px 0 0}
 .activity-switch{margin:2px 0}
-#activity-history:not([hidden]),#activity-drafts:not([hidden]){display:grid;gap:10px}
+main>.tab,.tab>.card{min-width:0}
+#activity-history:not([hidden]),#activity-drafts:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
+#activity-history .card,#activity-drafts .card,#abody{min-width:0;overflow-wrap:anywhere}
+.activity-date-label{display:block;margin-top:8px}
+.activity-date-label input{display:block;margin-top:4px;max-width:100%}
+#afrm .af-pair input{max-width:100%}
+
 .draft-detail{white-space:pre-wrap;overflow-wrap:anywhere}
 #t-results #booking-results,#t-technical #technical-info{margin-top:0}
 </style>
@@ -355,7 +361,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
 <button class="btn primary" id="aplus" aria-label="Add activity">+ Add activity</button>
 <div class="pseg activity-switch" aria-label="Activity views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
 <div id="activity-history">
-<div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="adate" aria-label="Date recorded" style="flex:1;min-width:0"></div><p class="note" id="anote" style="margin:10px 0 0"></p></div>
+<div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><label class="activity-date-label">Date recorded <input type="date" id="adate"></label><p class="note" id="anote" style="margin:10px 0 0"></p></div>
 <div id="abody"></div></div>
 <div id="activity-drafts" hidden></div>
 </section>
