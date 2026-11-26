@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src https://live-crewing-relay.paulm-crewing.workers.dev; base-uri 'none'; form-action 'none'">
+<title>Live Crewing · Owner passkey setup</title>
+<style>
+body{max-width:540px;margin:30px auto;padding:20px;background:#071321;color:#f0f7ff;font:16px/1.6 system-ui}
+label{display:grid;gap:5px;margin:18px 0}input,button{padding:12px;border:1px solid #36536b;border-radius:10px;font:inherit;background:#19334a;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #3de6ec}p{color:#acc1d4}#result{white-space:pre-wrap;color:#ffd183}
+</style>
+<h1>Owner passkey setup</h1>
+<p>Use only after separately approving the Worker preparation deployment. Registration requires a separate owner enrolment token. It is never saved on this device. This page cannot switch enforcement on.</p>
+<p>The probe verifies a fake request server-side, but <strong>never enters the booking queue</strong>. The old local-only device credential is not automatically trusted or imported.</p>
+<label>Relay key<input id="relay-key" type="password" autocomplete="off"></label>
+<label>Owner enrolment token<input id="owner-token" type="password" autocomplete="off"></label>
+<button id="enrol">Enrol this phone</button>
+<button id="probe">Test system prompt (no booking)</button>
+<p id="result" role="status"></p>
+<script src="bookoff-client.js"></script>
+<script src="security-setup.js"></script>
+</html>
