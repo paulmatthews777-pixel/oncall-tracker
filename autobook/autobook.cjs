@@ -2,22 +2,55 @@
 const relay = require('./relay.cjs'), state = require('./state.cjs'), audit = require('./audit.cjs'), {parseBook, isTest} = require('./parse.cjs');
 const now = () => new Date().toISOString();
 
+async function publishResult(id, result, relayClient) {
+  const {status, report, readbackVerified} = result;
+  try {
+    const reply = await relayClient.status(id, status, report, readbackVerified);
+    const accepted = reply.status >= 200 && reply.status < 300 && reply.j?.ok === true;
+    const alreadyFinal = reply.status === 409 && reply.j?.status === status;
+    if (accepted || alreadyFinal) {
+      state.set(id, {resultPending: false});
+      return;
+    }
+    console.log(now() + ' result pending ' + id + ' HTTP ' + reply.status);
+  } catch {
+    console.log(now() + ' result pending ' + id + ' after relay or local storage error');
+  }
+}
+
 async function processRequest(req, deps) {
   const {fw, relay: rl} = deps;
   const rec = {id: req.id, text: req.text, ranges: [], steps: [], confirmations: [], status: 'failed', report: '', readback: 'n/a'};
   const step = (s, r) => rec.steps.push({at: now(), step: s, result: r});
   const finish = async (status, report) => {
     rec.status = status; rec.report = report;
-    state.set(req.id, {status, ranges: rec.ranges});
     let f = ''; try { f = require('path').basename(audit.write(rec)); } catch (e) { step('audit write', 'FAILED ' + e.message); }
-    await rl.status(req.id, status, report + (f ? '\nAudit: ' + f : ''));
+    const result = {status, ranges: rec.ranges, readback: rec.readback,
+      readbackVerified: status === 'booked' && /^OK/.test(rec.readback),
+      report: report + (f ? '\nAudit: ' + f : ''), resultPending: true};
+    state.set(req.id, result);
+    await publishResult(req.id, result, rl);
     return rec;
   };
   const prev = state.load()[req.id];
-  if (prev && (prev.status === 'booked' || prev.status === 'failed')) { step('state', 'already ' + prev.status); return finish(prev.status, 'Already processed (' + prev.status + '), not repeated.'); }
+  if (prev && (prev.status === 'booked' || prev.status === 'failed')) {
+    step('state', 'already ' + prev.status);
+    rec.status = prev.status;
+    rec.ranges = prev.ranges || [];
+    rec.readback = prev.readback || 'n/a';
+    rec.report = prev.report || 'Already processed (' + prev.status + '), not repeated.';
+    if (prev.resultPending) await publishResult(req.id, prev, rl);
+    return rec;
+  }
   if (isTest(req.text)) { step('guard', 'test request'); return finish('failed', 'test request ignored'); }
   const p = parseBook(req.text);
   if (p.error) { step('parse', p.error); return finish('failed', p.error); }
+  const lw = new Intl.DateTimeFormat('en-GB', {timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).formatToParts(new Date()); const g = k => lw.find(x => x.type === k).value;
+  const nowL = g('year') + '-' + g('month') + '-' + g('day') + 'T' + g('hour') + ':' + g('minute');
+  const clipped = p.ranges.map(r => (r.from < nowL && r.to > nowL) ? {from: nowL, to: r.to} : r);
+  if (JSON.stringify(clipped) !== JSON.stringify(p.ranges)) step('clip', 'past start moved to now ' + nowL);
+  if (!clipped.length) return finish('failed', 'All requested times were already in the past');
+  p.ranges = clipped;
   rec.ranges = p.ranges; step('parse', p.ranges.length + ' range(s)');
   const crashed = prev && prev.status === 'booking';
   state.set(req.id, {status: 'booking', ranges: rec.ranges});
@@ -32,8 +65,8 @@ async function processRequest(req, deps) {
     const out = await fw.bookRanges(p.ranges, rec, step);
     rec.readback = out.readback;
     const warn = rec.confirmations.map(c => c.replace(/\s+/g, ' ').slice(0, 160)).join(' | ');
-    if (out.ok) return finish('booked', 'Booked ' + p.ranges.length + ' range(s). Read-back ' + out.readback + '.' + (warn ? '\nFireWatch: ' + warn : ''));
-    return finish('failed', 'Not booked: ' + out.error + '. Read-back ' + out.readback);
+    if (out.ok && /^OK/.test(out.readback)) return finish('booked', 'Book Off coverage confirmed for ' + p.ranges.length + ' range(s). Read-back ' + out.readback + '. Existing entries may have been reused; no new event implied.' + (warn ? '\nFireWatch: ' + warn : ''));
+    return finish('failed', 'Check FireWatch: ' + (out.error||'read-back unconfirmed') + '. Read-back ' + out.readback + '. Do not retry automatically.');
   } catch (e) {
     step('error', e.message);
     return finish('failed', 'Error: ' + e.message);
@@ -41,6 +74,9 @@ async function processRequest(req, deps) {
 }
 
 async function once(deps) {
+  for (const [id, result] of Object.entries(state.load())) {
+    if (result.resultPending === true) await publishResult(id, result, deps.relay);
+  }
   const n = await deps.relay.next();
   if (!n.j || !n.j.req) return null;
   return processRequest(n.j.req, deps);

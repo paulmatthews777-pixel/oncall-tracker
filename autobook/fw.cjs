@@ -4,6 +4,7 @@ const {spawnSync} = require('child_process'), fs = require('fs'), os = require('
 const FW = 'https://humberside.firewatch.cloud/FireWatchWebClient';
 const AHK = 'C:/Users/paulm/AppData/Local/Programs/AutoHotkey/v2/AutoHotkey64.exe';
 const TYPE = 'On-Call - Unavailable';
+const calendarReadback = require('./calendar-readback.cjs');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ev = (c, js) => cdp.evalJs(c, js);
 async function waitFor(c, js, ms, what) {
@@ -54,9 +55,9 @@ function covered(segs, from, to) {
   return at >= end;
 }
 async function readback(c, range) {
-  await ensureCalendar(c);
-  let day = range.from.slice(0, 10); const last = range.to.slice(0, 10); let segs = [];
-  while (true) { await gotoDate(c, day); segs = segs.concat(await segments(c)); const dt = new Date(day + 'T12:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 7); day = dt.toISOString().slice(0, 10); if (day > last) break; }
+  const weeks = calendarReadback.weeksFor(range);
+  let segs = [];
+  for (const week of weeks) segs=segs.concat(await calendarReadback.readWeek(c,week,ev));
   return covered(segs, range.from, range.to);
 }
 async function openAndFill(c, range, step) {
@@ -105,19 +106,21 @@ async function confirmFlow(c, rec, step) {
     if (bad) throw new Error('FireWatch said: ' + bad.slice(0, 160));
     if (!st.form) { step('saved', 'form closed'); return; }
   }
-  throw new Error('no result from FireWatch after OK');
+  const diag = await ev(c, "(()=>{const t=[...document.querySelectorAll('.k-dialog,.k-window,.k-notification,.field-validation-error,.validation-summary-errors')].filter(e=>e.getClientRects().length).map(e=>e.innerText.replace(/\\s+/g,' ').trim()).filter(Boolean);return t.join(' || ').slice(0,400)})()").catch(() => '');
+  step('no result after OK', 'screen: ' + String(diag || '(nothing visible)')); rec.noResult = true; try { await clearDialogs(c); } catch (x) {} return;
 }
 async function bookRanges(ranges, rec, step) {
   const c = await getTab();
   try {
     for (const r of ranges) {
       if (await readback(c, r)) { step('duplicate check', 'already present ' + r.from + ' to ' + r.to); continue; }
+      rec.noResult = false;
       try {
         await openAndFill(c, r, step); await toPinPanel(c, step, rec); await fillPin(c, step); await confirmFlow(c, rec, step);
-      } catch (e) { try { await clearDialogs(c); } catch (x) {} return {ok: false, error: e.message, readback: 'n/a'}; }
+      } catch (e) { try { await clearDialogs(c); } catch (x) {} let rb = 'n/a'; try { rb = (await readback(c, r)) ? 'OK (present despite error)' : 'FAIL'; } catch (x) {} if (/^OK/.test(rb)) { step('read-back', 'present despite error: ' + e.message); continue; } return {ok: false, error: e.message, readback: rb}; }
       await sleep(1500);
       const ok = await readback(c, r); step('read-back', (ok ? 'OK ' : 'NOT FOUND ') + r.from + ' to ' + r.to);
-      if (!ok) return {ok: false, error: 'read-back did not find the booking', readback: 'FAIL'};
+      if (!ok) return {ok: false, error: rec.noResult ? 'FireWatch showed nothing after OK and the booking is not on the calendar (screen text is in the audit file)' : 'read-back did not find the booking', readback: 'FAIL'};
     }
     return {ok: true, readback: 'OK'};
   } finally { c.close(); }

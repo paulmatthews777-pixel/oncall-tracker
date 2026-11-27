@@ -1,0 +1,4 @@
+autobook/state.json
+.wrangler/
+tests/*.local.*
+tests/.bookoff-profile-*/

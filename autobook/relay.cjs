@@ -9,7 +9,7 @@ async function call(method, path, body) {
 }
 module.exports = {
   next: () => call('GET', '/next'),
-  status: (id, status, report) => call('POST', '/status', {id, status, report: String(report || '').slice(0, 3900)}),
+  status: (id, status, report, readbackVerified=false) => call('POST', '/status', {id, status, report: String(report || '').slice(0, 3900),readbackVerified:status==='booked'&&readbackVerified===true}),
   heartbeat: () => call('POST', '/status', {heartbeat: true}),
   call
 };

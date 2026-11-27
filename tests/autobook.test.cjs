@@ -14,9 +14,9 @@ ok('parse all day', () => assert.strictEqual(parseBook('#BOOK [{"from":"2026-11-
 ok('parse BST date untouched', () => assert.strictEqual(parseBook('#BOOK [{"from":"2026-07-01T09:00","to":"2026-07-01T17:00"}]').ranges[0].from, '2026-07-01T09:00'));
 ok('fmtFw', () => assert.strictEqual(fmtFw('2026-11-25T09:05'), '25/11/2026 09:05'));
 ok('isTest', () => { assert.ok(isTest('T4 TEST - do not book')); assert.ok(!isTest('Week 48 please book')); });
-const {processRequest} = require('../autobook/autobook.cjs');
+const {processRequest, once} = require('../autobook/autobook.cjs');
 const state = require('../autobook/state.cjs');
-const mkRelay = () => { const calls = []; return {calls, status: async (id, s, r) => { calls.push([id, s, r]); return {status: 200}; }}; };
+const mkRelay = () => { const calls = []; return {calls, status: async (id, s, r) => { calls.push([id, s, r]); return {status: 200, j: {ok: true}}; }}; };
 const mkFw = (res) => ({n: 0, v: 0, bookRanges: async function (r, rec, step) { this.n++; rec.confirmations.push('Impact: Short 1 Crewing Total'); step('book', 'x'); return res; }, verifyRanges: async function () { this.v++; return {ok: false}; }});
 const book = '#BOOK [{"from":"2026-11-25T09:00","to":"2026-11-25T15:00"}]';
 (async () => {
@@ -33,9 +33,39 @@ const book = '#BOOK [{"from":"2026-11-25T09:00","to":"2026-11-25T15:00"}]';
   ok('test ignored', () => { assert.strictEqual(r.status, 'failed'); assert.ok(/test request ignored/.test(rl.calls[0][2])); });
   r = await processRequest({id: 'a4', text: 'no machine line'}, {fw, relay: rl = mkRelay()});
   ok('no #BOOK fails', () => assert.strictEqual(r.status, 'failed'));
+  fw = mkFw({ok:true,readback:'n/a'});rl=mkRelay();
+  r=await processRequest({id:'unconfirmed-local',text:book},{fw,relay:rl});
+  ok('ok without read-back cannot be Booked',()=>{assert.strictEqual(r.status,'failed');assert.match(r.report,/Check FireWatch/);assert(!rl.calls.some(c=>c[1]==='booked'))});
   state.set('a5', {status: 'booking', ranges: []}); fw = mkFw({ok: true, readback: 'OK'});
   r = await processRequest({id: 'a5', text: book}, {fw, relay: rl = mkRelay()});
   ok('crash restart: read-back only, never rebook', () => { assert.strictEqual(fw.n, 0); assert.strictEqual(fw.v, 1); assert.strictEqual(r.status, 'failed'); assert.ok(/manual check/.test(rl.calls.pop()[2])); });
+  const pendingCalls = [];
+  let relayUp = false;
+  const recoveringRelay = {
+    next: async () => ({j: {none: true}}),
+    status: async (id, status, report, verified) => {
+      pendingCalls.push({id, status, report, verified});
+      return status === 'booked' && !relayUp ? {status: 503} : {status: 200, j: {ok: true}};
+    }
+  };
+  fw = mkFw({ok: true, readback: 'OK'});
+  await processRequest({id: 'pending-result', text: book}, {fw, relay: recoveringRelay});
+  ok('a rejected callback keeps verified read-back pending', () => {
+    assert.strictEqual(state.load()['pending-result'].resultPending, true);
+    assert.strictEqual(state.load()['pending-result'].readbackVerified, true);
+  });
+  relayUp = true;
+  await once({fw, relay: recoveringRelay});
+  await once({fw, relay: recoveringRelay});
+  ok('poll retries only the saved result and clears it after acceptance', () => {
+    assert.strictEqual(fw.n, 1);
+    assert.strictEqual(fw.v, 0);
+    assert.strictEqual(state.load()['pending-result'].resultPending, false);
+    const results = pendingCalls.filter(call => call.status === 'booked');
+    assert.strictEqual(results.length, 2);
+    assert.deepStrictEqual(results[0], results[1]);
+    assert.strictEqual(results[1].verified, true);
+  });
   // relay client against a local mock server
   const seen = [];
   const srv = http.createServer((q, s) => { seen.push([q.method, q.url, q.headers['x-pc-key']]); s.setHeader('Content-Type', 'application/json'); s.end(JSON.stringify(q.url === '/next' ? {ok: true, none: true} : {ok: true})); });
