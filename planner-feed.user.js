@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Winterton planner feed for tracker app
 // @namespace    paulmatthews777-pixel
-// @version      1.17
+// @version      1.18
 // @description  Pushes the Winterton planner (Live tab) and your contract hours (Week/Audit tabs) to the tracker app
 // @match        https://humberside.firewatch.cloud/FireWatchWebClient*
 // @grant        GM_xmlhttpRequest
@@ -126,16 +126,16 @@ async function fwRange(stationId,tok,offFrom,offTo){
   days.forEach((A,di)=>{if(!A)return;for(const g of ['Crewing','Qualifications'])for(const r of grp(A,g)){const d=r.RowData,k=g+'|'+d.Name,o=rowMap[k]=rowMap[k]||{g,name:d.Name,min:d.Min,plan:d.Plan,n:dates.map(()=>null)};o.min=d.Min;o.plan=d.Plan;
     o.n[di]=H.map(h=>{try{return JSON.parse(d[h]).needSlot[0].cellText||''}catch(e){return ''}})}});
   const byName={},seenB=new Set();
-  days.forEach(A=>{if(!A)return;const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');const seenN=new Set();
-    for(const r of grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[])){if(seenN.has(r.RowData.Name))continue;seenN.add(r.RowData.Name);const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
+  days.forEach(A=>{if(!A)return;const rootRes=((A.__root&&A.__root.RowChildren)||[]).find(c=>c.RowData&&c.RowData.Description==='Resource');
+    fwForEachResourceRow(grp(A,'Resource').concat(rootRes?rootRes.RowChildren:[]),r=>{const d=r.RowData,o=byName[d.Name]=byName[d.Name]||{name:d.Name,role:d.Role||'',q:'',iv:[],bars:[]};
       if(d.Role&&!o.role)o.role=d.Role;
-      for(const h of H){let cell;try{cell=JSON.parse(d[h]).plannerItem[0]}catch(e){continue}
-        for(const it of [cell].concat(cell.appointments||[])){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
-          const tip=String(it.tooltip||''),isOn=it.type==='RotaAssignment'||(it.type==='Activity'&&/On-Call - (Available|Turn Out)/i.test(tip));
+      for(const h of H){
+        for(const it of fwPlannerItems(d[h])){if(!it.itemDateTimeStart||!it.itemDateTimeEnd)continue;
+          const tip=String(it.tooltip||''),isOn=fwIsOnCallItem(it);
           if(it.type==='RotaAssignment'&&it.cellText&&!o.q)o.q=it.cellText;
           const s=E(it.itemDateTimeStart),e=E(it.itemDateTimeEnd);if(isNaN(s)||isNaN(e)||e<=s)continue;
           if(!isOn){const key=o.name+'|'+it.type+'|'+s+'|'+e;if(!seenB.has(key)){seenB.add(key);o.bars.push([String(it.type),fullTip(tip),light(it.colour),s-base,e-base])}continue}
-          o.iv.push([s-base,e-base])}}}});
+          o.iv.push([s-base,e-base])}}});});
   const people=Object.values(byName).filter(p=>p.name.trim().toLowerCase()!=='rachael cook').map(p=>{p.iv.sort((a,b)=>a[0]-b[0]);const m=[];for(const v of p.iv){const l=m[m.length-1];if(l&&v[0]<=l[1])l[1]=Math.max(l[1],v[1]);else m.push([v[0],v[1]])}p.iv=m;return p});
   return {v:3,t:Date.now(),base,dates,station:'Winterton',rows:Object.values(rowMap),people};
 }
