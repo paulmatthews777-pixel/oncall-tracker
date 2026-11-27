@@ -1,4 +1,4 @@
-const C='tracker-v53-events-page',F=['./','index.html','bookoff-client.js','events-page.js','csv-audit.js','audit-xlsx.js','manifest.webmanifest','icon-crewing-192.png','icon-crewing-512.png','startup-crewing.jpg'];
+const C='tracker-v54-events-sync',F=['./','index.html','bookoff-client.js','events-page.js','csv-audit.js','audit-xlsx.js','manifest.webmanifest','icon-crewing-192.png','icon-crewing-512.png','startup-crewing.jpg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F.map(u=>new Request(u,{cache:'reload'})))));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim()});
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request)))});
