@@ -32,12 +32,12 @@ async function readHolidays(c) {
 }
 
 let last = {remaining: null, at: 0};
-// Full calendar scan when "left" changes, or every 6 hours; otherwise a single cheap read.
+// Full calendar scan when "left" changes, or every hour; otherwise a single cheap read.
 async function syncHoliday(getTab, relay, force = false) {
   const c = await getTab();
   try {
     const remaining = await readRemaining(c);
-    if (!force && remaining === last.remaining && Date.now() - last.at < 6 * 3600e3) return 'unchanged';
+    if (!force && remaining === last.remaining && Date.now() - last.at < 3600e3) return 'unchanged';
     const entries = await readHolidays(c);
     const r = await relay.call('POST', '/data/holiday', {remaining, leaveYear: {from: LEAVE_YEAR_START, to: LEAVE_YEAR_END, confirmed: false}, entries});
     if (r.status !== 200) throw new Error('relay /data/holiday HTTP ' + r.status);

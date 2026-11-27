@@ -1607,7 +1607,7 @@ function render(){
   const bm=byMonth(d.entries),ph=payHol();let rows='',tot=0,ptot=0,allOk=true;
   for(const k of Object.keys(bm).sort()){tot+=bm[k];const p=ph[k];if(p!==undefined)ptot+=p;const ok=p===undefined?null:Math.abs(p-bm[k])<0.01;if(ok===false)allOk=false;rows+='<tr><td>'+mLab(k)+'</td><td>'+h1(bm[k])+'</td><td>'+(ok===null?'<span style="color:var(--mute)">not paid yet</span>':ok?'<span style="color:var(--good)">✓ '+h1(p)+'</span>':'<span style="color:var(--bad)">✗ '+h1(p)+'</span>')+'</td></tr>'}
   const ly=d.leaveYear||{};const now7=now.slice(0,7);
-  let list=d.entries;if(mode==='month')list=list.filter(e=>e.from.slice(0,7)===now7||e.to.slice(0,7)===now7);else if(mode==='custom'&&cf&&ct)list=list.filter(e=>e.to.slice(0,10)>=cf&&e.from.slice(0,10)<=ct);
+  let list=d.entries;if(mode==='month')list=list.filter(e=>e.from.slice(0,7)<=now7&&e.to.slice(0,7)>=now7);else if(mode==='custom'&&cf&&ct)list=list.filter(e=>e.to.slice(0,10)>=cf&&e.from.slice(0,10)<=ct);
   const seg=(m,l)=>'<button data-hm="'+m+'" class="'+(mode===m?'on':'')+'">'+l+'</button>';
   const age=hol.at?Math.round((Date.now()-Date.parse(hol.at))/60000):null;
   el.innerHTML='<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+ring+'<div style="flex:1;min-width:150px">'
