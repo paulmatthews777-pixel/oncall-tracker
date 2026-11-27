@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-GB">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Live Crewing Demo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1a2a;color:#eef4fb;font:16px/1.5 system-ui}
+main{max-width:480px;margin:auto;padding:20px 16px}section{background:#11233a;border:1px solid #294762;border-radius:16px;padding:14px;margin:12px 0}
+button,a,select{font:inherit;color:#eef4fb;background:#18304c;border:1px solid #38e6f0;border-radius:10px;padding:8px 12px}
+button{cursor:pointer}a{display:inline-block}small{color:#a9bfd3}li{padding:5px 0}
+</style>
+<main>
+<p><strong>Demo mode</strong> &middot; Fictional data</p>
+<h1>Live Crewing</h1>
+<section>
+<h2>This week</h2>
+<p id="hours"></p>
+<label>Plan a week <select id="week"><option>This week</option><option>Next week</option><option>In two weeks</option></select></label>
+</section>
+<section>
+<h2>Events</h2>
+<ul id="events"></ul>
+</section>
+<p>Bookings and live sync are disabled in Demo mode. This screen does not read saved Live Crewing data.</p>
+<button type="button" id="randomise">Generate new examples</button>
+<a href="./index.html" rel="noreferrer">Exit Demo mode</a>
+</main>
+<script>
+const week=document.querySelector('#week');
+const hours=document.querySelector('#hours');
+const events=document.querySelector('#events');
+const types=['Training drill','Practice exercise','Standby','Equipment check'];
+const randomInt=(max)=>Math.floor(Math.random()*max);
+let samples;
+function generate(){
+  samples=Array.from({length:3},()=>({
+    booked:86+randomInt(28),
+    events:Array.from({length:3},()=>types[randomInt(types.length)]+' at '+String(8+randomInt(13)).padStart(2,'0')+':00')
+  }));
+  render();
+}
+function render(){
+  const sample=samples[week.selectedIndex];
+  hours.textContent=sample.booked+' / 85 h booked';
+  events.replaceChildren(...sample.events.map(title=>{
+    const row=document.createElement('li');
+    row.textContent=title;
+    return row;
+  }));
+}
+week.addEventListener('change',render);
+document.querySelector('#randomise').addEventListener('click',generate);
+generate();
+</script>
+</html>

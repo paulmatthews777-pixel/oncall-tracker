@@ -307,7 +307,7 @@ main>.tab,.tab>.card{min-width:0}
 </head>
 <body>
 <div id="splash"><div class="splash-title">Live Crewing</div></div>
-<script>const APP_VERSION='v55';
+<script>const APP_VERSION='v56';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -320,7 +320,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <h1>Week and hours</h1>
   <div class="wk"><button class="btn sq" id="pw" aria-label="Previous week">‹</button><div class="t" id="wtitle"></div><button class="btn sq" id="nw" aria-label="Next week">›</button></div>
   <div class="card"><h2>Contract position</h2><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
-  <div class="card"><h2>Book off and stay in contract</h2><div class="week-safety" id="week-safety"></div><div id="wcur"></div></div>
+  <div class="card"><h2>Book off and stay in contract</h2><label>Choose booking week<select id="book-week"></select></label><div class="week-safety" id="week-safety"></div><div id="wcur"></div></div>
   <div class="card"><h2>Contract bands</h2><div id="wbands"></div><div class="stats" id="wstats"></div></div>
   <details class="card week-detail"><summary>Day by day</summary><div id="wdays" class="week-detail-body"></div></details>
   <details class="card week-detail"><summary>Full hours breakdown</summary><div id="wfull" class="week-detail-body"></div></details>
@@ -350,6 +350,15 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 <section class="tab on" id="t-live">
   <div class="home-heading"><h1>Home</h1><p>Winterton</p></div>
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
+  <div class="card"><h2>This week</h2><div id="home-week"></div><button type="button" class="btn" data-page="week">Book off and stay in contract</button></div>
+  <div class="dashboard-tiles">
+    <button type="button" class="dashboard-tile" data-page="pay"><span class="tile-icon" aria-hidden="true">&#128183;</span><span>Pay</span></button>
+    <button type="button" class="dashboard-tile" data-events-sync><span class="tile-icon" aria-hidden="true">&#128260;</span><span>Events sync<br><small>Winterton FireWatch events</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="personal"><span class="tile-icon" aria-hidden="true">&#128100;</span><span>Personal info<br><small>Details and contacts</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="notifications"><span class="tile-icon" aria-hidden="true">&#128276;</span><span>Notifications</span></button>
+    <button type="button" class="dashboard-tile" data-page="daily"><span class="tile-icon" aria-hidden="true">&#129658;</span><span>Daily check<br><small>App, feeds and relay</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="holiday"><span class="tile-icon" aria-hidden="true">&#127958;&#65039;</span><span>Holiday</span></button>
+  </div>
   <div class="home-actions"><button type="button" class="btn primary" data-home-book="on">Book on</button><button type="button" class="btn" data-home-book="off">Book off</button></div>
 
   <button type="button" class="menu-link card" data-page="results">Booking results <span aria-hidden="true">›</span></button>
@@ -391,16 +400,49 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <h2>Personal</h2>
   <div class="card menu-group"><button type="button" class="menu-link" data-page="dashboard">My dashboard <span aria-hidden="true">›</span></button></div>
   <h2>Tools</h2>
+  <div class="card"><a class="menu-link" href="./demo.html" rel="noreferrer">Demo mode <span aria-hidden="true">&#8250;</span></a></div>
   <div class="card menu-group"><button class="menu-link" data-page="pi">PI <span aria-hidden="true">›</span></button><button class="menu-link" data-page="data">Data and import <span aria-hidden="true">›</span></button><button class="menu-link" data-page="technical">About and technical info <span aria-hidden="true">›</span></button></div>
 </section>
 <section class="tab" id="t-dashboard">
   <button type="button" class="menu-back" data-page="more">‹ More</button>
   <h1>My dashboard</h1>
-  <div class="dashboard-tiles"><button type="button" class="dashboard-tile" data-page="pay"><span class="tile-icon" aria-hidden="true">💷</span><span><span class="tv" id="paytile-v">£–</span><span>Pay<br><small id="paytile-s">Loading</small></span></span></button><button type="button" class="dashboard-tile" data-page="holiday"><span class="tile-icon" aria-hidden="true">📅</span><span><span class="tv" id="holtile-v">– h</span><span>Holiday<br><small id="holtile-s">Loading</small></span></span></button></div>
+  <div class="dashboard-tiles"><button type="button" class="dashboard-tile" data-page="pay"><span class="tile-icon" aria-hidden="true">💷</span><span><span class="tv" id="paytile-v">£–</span><span>Pay<br><small id="paytile-s">Loading</small></span></span></button><button type="button" class="dashboard-tile" data-page="holiday"><span class="tile-icon" aria-hidden="true">&#127958;&#65039;</span><span><span class="tv" id="holtile-v">– h</span><span>Holiday<br><small id="holtile-s">Loading</small></span></span></button>
+    <button type="button" class="dashboard-tile" data-page="week"><span class="tile-icon" aria-hidden="true">&#128198;</span><span>This week<br><small id="dashboard-week"></small></span></button>
+    <button type="button" class="dashboard-tile" data-events-sync><span class="tile-icon" aria-hidden="true">&#128260;</span><span>Events sync<br><small>Winterton FireWatch events</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="personal"><span class="tile-icon" aria-hidden="true">&#128100;</span><span>Personal info<br><small>Details and contacts</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="notifications"><span class="tile-icon" aria-hidden="true">&#128276;</span><span>Notifications</span></button>
+    <button type="button" class="dashboard-tile" data-page="daily"><span class="tile-icon" aria-hidden="true">&#129658;</span><span>Daily check<br><small>App, feeds and relay</small></span></button>
+    <button type="button" class="dashboard-tile" data-page="results"><span class="tile-icon" aria-hidden="true">&#10003;</span><span>Booking results</span></button>
+  </div>
   <div class="personal-dashboard">
   <div class="card" id="hcard"></div>
   <div class="card" id="wtdcard"></div>
   </div>
+</section>
+<section class="tab" id="t-personal">
+  <button type="button" class="menu-back" data-page="live">&#8249; Home</button>
+  <h1>Personal info</h1>
+  <form id="personal-form" autocomplete="off">
+    <div class="card"><h2>Details</h2><label>Name<input name="name" maxlength="120"></label><label>Brigade number<input name="brigade" maxlength="40"></label></div>
+    <div class="card"><h2>Contacts</h2><label>Work email<input type="email" name="email" maxlength="160"></label><label>Mobile<input type="tel" name="mobile" maxlength="40"></label></div>
+    <p class="note">Enter only details you want saved in this browser. FireWatch sync is unavailable.</p>
+    <button class="btn primary" type="submit">Save on this device</button>
+    <button class="btn" type="button" id="clear-personal">Clear saved details</button>
+    <p id="personal-status" role="status"></p>
+  </form>
+</section>
+<section class="tab" id="t-notifications">
+  <button type="button" class="menu-back" data-page="live">&#8249; Home</button>
+  <h1>Notifications</h1>
+  <div class="card"><h2>Send me</h2><label><input type="checkbox" id="notify-bookings"> Booking results</label><p id="notify-status" role="status"></p>
+  <p class="note">This device can receive a generic alert when the open app checks a booking result. Activity, Daily Check and station alerts require background delivery.</p></div>
+  <button class="btn" data-page="results">View booking results</button>
+</section>
+<section class="tab" id="t-daily">
+  <button type="button" class="menu-back" data-page="live">&#8249; Home</button>
+  <h1>Daily check</h1>
+  <div class="card" id="daily-check" aria-live="polite"></div>
+  <button class="btn" id="rerun-daily">Check again</button>
 </section>
 <section class="tab" id="t-technical"><button type="button" class="menu-back" data-page="more">‹ More</button>
 <details id="technical-info" class="card" open>
@@ -645,11 +687,11 @@ function extras(w,r,audit,sub,specT,totT,now){
     return '<div class="kv"><span>'+lab+'</span><b style="color:var(--mute)">Keep · '+f1(x.tot)+' h</b></div>'};
   const STRATS=['Earliest days first','Latest days first','P2 hours first','Biggest days first'];
   const savers={};
-  const saver=(boxId,btnId,title,sp0,from,to,inclToday)=>{
+  const saver=(boxId,btnId,title,sp0,from,to,inclToday,requireTargets=false)=>{
     const box=$(boxId); if(!box)return;
     const tmin=s=>(+s.slice(0,2))*60+(+s.slice(3,5)), hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
     const NL=inclToday?londonHM():null,tdn=NL?dayNum(NL.date):null,nm=NL?Math.ceil(NL.min/15)*15:0;
-    const blocks=saverBlocks(from,to,NL);
+    const blocks=saverBlocks(from,to,NL,requireTargets).filter(b=>!requireTargets||b.dn<to-1||b.sm+b.len<=1440);
     const st=savers[boxId]||(savers[boxId]={k:0,sel:null,open:new Set(),edit:false});
     const full=b=>{const s=new Set();for(let i=0;i<b.n;i++)s.add(i);return s};
     const hrs=(b,set)=>set.size/b.n*b.h;
@@ -681,6 +723,7 @@ function extras(w,r,audit,sub,specT,totT,now){
           +bs.map(b=>{const set=st.sel.get(b.id),isFull=set&&set.size===b.n;return '<label class="shift" style="cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:10px;padding:8px 0;flex:0 0 auto;font-size:13px;color:var(--ink)"><input type="checkbox" data-id="'+b.id+'"'+(isFull?' checked':'')+' style="accent-color:var(--accent);width:20px;height:20px"><span class="tm">'+b.s+'–'+b.e+'</span><span class="ty">'+b.b+'</span><span class="hb">'+(set&&!isFull?f1(hrs(b,set))+' of '+f1(b.h):f1(b.h))+'</span></label>'}).join('')+'</div></details>'});
       h+='<button class="btn" id="'+boxId+'e" style="margin-top:12px">'+(st.edit?'Done editing':'Edit hours')+'</button>';
       box.innerHTML=h;
+      if(requireTargets)$(btnId).disabled=bad.length>0||free<=0.005;
       $(boxId+'p').onclick=()=>{st.k=(st.k+STRATS.length-1)%STRATS.length;st.sel=suggest(st.k);draw()};
       $(boxId+'n').onclick=()=>{st.k=(st.k+1)%STRATS.length;st.sel=suggest(st.k);draw()};
       $(boxId+'e').onclick=()=>{st.edit=!st.edit;draw()};
@@ -697,10 +740,12 @@ function extras(w,r,audit,sub,specT,totT,now){
         const hh=ch.reduce((q,x)=>q+hrs(x,st.sel.get(x.id)),0);tot+=hh;bookRanges(ranges(bs),dn).forEach(x=>book.push(x));
         if(ch.length===bs.length&&ch.every(x=>st.sel.get(x.id).size===x.n)){lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' all day ('+f1(hh)+' h)')}
         else{lines.push(DAYN[(dn+3)%7]+' '+fm(dn)+' '+ranges(bs).map(x=>hm(x.s)+'-'+hm(x.e)).join(', ')+' ('+f1(hh)+' h)')}});
+      if(requireTargets&&!book.length)return;
       const old=document.getElementById('cfm');if(old)old.remove();
       const ov=document.createElement('div');ov.id='cfm';ov.style.cssText='position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;padding:16px';
       const sp=(function(){const q={...sp0};blocks.forEach(x=>{const s=st.sel.get(x.id);if(s)take(q,x,hrs(x,s))});return q})();
       const bad=['P1','P3','P4','S','T'].filter(k=>sp[k]<-0.005);
+      if(requireTargets&&bad.length)return;
       ov.innerHTML='<div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:440px;width:100%;max-height:85vh;overflow:auto"><h2 style="margin:0 0 6px;font:700 20px var(--display)">Confirm booking off</h2><p style="margin:0 0 12px;color:var(--mute);font-size:14px">'+(lines.length?'This sends your choice to be booked in FireWatch using your PIN shortcut. Nothing changes in FireWatch until the booking runs.':'Nothing is selected.')+'</p>'+(lines.length?'<div style="background:var(--raise);border-radius:12px;padding:6px 12px;margin-bottom:12px">'+lines.map(l=>'<div style="padding:8px 0;border-top:1px solid var(--line);font-size:14px">'+l+'</div>').join('')+'<div style="padding:8px 0;border-top:1px solid var(--line);font-weight:700">Total '+f1(tot)+' h off</div></div><p style="margin:0 0 14px;font-size:14px;color:'+(bad.length?'var(--bad)':'var(--good)')+'">'+(bad.length?'Warning: short on '+bad.map(k=>k==='S'?'specified':k==='T'?'total':k).join(', ')+' with this choice.':'Your contract targets still hold.')+'</p>':'')+'<div style="display:flex;gap:10px"><button class="btn" id="cfmNo" style="flex:1">Cancel</button>'+(lines.length?'<button class="btn primary" id="cfmYes" style="flex:2">Confirm and send</button>':'')+'</div></div>';
       document.body.appendChild(ov);
       $('cfmNo').onclick=()=>ov.remove();
@@ -743,9 +788,35 @@ function extras(w,r,audit,sub,specT,totT,now){
     wTot+=h;
     wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
+  const firstWeek=mondayNum(today);
+  const weekPicker=$('book-week');
+  const weekOptions=Array.from({length:WEEKS},(_,i)=>firstWeek+7*i);
+  weekPicker.innerHTML=(weekOptions.includes(weekStart)?'':'<option value="" disabled>Choose a booking week</option>')+
+    weekOptions.map(m=>'<option value="'+m+'">'+(m===firstWeek?'This week · ':'')+fm(m)+' – '+fm(m+6)+'</option>').join('');
+  weekPicker.value=weekOptions.includes(weekStart)?String(weekStart):'';
+  const bookedThisWeek=calcRange(entries,firstWeek,firstWeek+7,now).all.T;
+  const bookedLabel=entries.length?f1(bookedThisWeek)+' / '+CONTRACT+' h':'No contract data';
+  $('home-week').innerHTML=kv('Booked',bookedLabel);
+  $('dashboard-week').textContent=bookedLabel;
   $('wcur').innerHTML=curHtml;
   $('week-safety').textContent=!curW?'No book-off estimate for this week':curH>0?f1(curH)+' h you can book off this week':'No time you can book off within the weekly targets';
-  if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from-1,curW.to,true);
+  if(weekStart===firstWeek){
+    if(curW)saver('wsv','savewk','Book me off (this week)',curW.wsp,curW.from-1,curW.to,true);
+  }else if(weekOptions.includes(weekStart)){
+    const {all}=calcRange(entries,weekStart,weekStart+7,now);
+    const boxId='wsv-'+weekStart, btnId='savewk-'+weekStart;
+    $('week-safety').textContent=fm(weekStart)+' – '+fm(weekStart+6);
+    $('wcur').innerHTML=kv('Booked this week',f1(all.T)+' / '+CONTRACT+' h')+
+      (all.T>0.005?'<div id="'+boxId+'"></div><button class="btn primary" id="'+btnId+'" style="margin-top:12px"></button>':
+      '<p class="note">No contract hours are loaded for this week.</p>');
+    if(all.T>0.005){
+      const spare={P1:all.P1-WEEKLY.P1,P3:all.P3-WEEKLY.P3,P4:all.P4-WEEKLY.P4,S:all.S+all.ABS-specT/WEEKS,T:all.T-CONTRACT};
+      saver(boxId,btnId,'Book me off ('+fm(weekStart)+' – '+fm(weekStart+6)+')',spare,weekStart,weekStart+7,false,true);
+    }
+  }else{
+    $('week-safety').textContent='Choose this week or a coming week to plan Book Off';
+    $('wcur').innerHTML='';
+  }
   $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
@@ -765,6 +836,7 @@ function extras(w,r,audit,sub,specT,totT,now){
 function parsePaste(text){const out=[];for(const line of text.split(/\r?\n/)){const p=line.split(',').map(s=>s.trim());if(p.length<5||!/^\d{4}-\d{2}-\d{2}$/.test(p[0]))continue;out.push({date:p[0],start:p[1],end:p[2],type:p[3].toLowerCase(),band:p[4].toUpperCase()})}return out}
 function setEntries(p){entries=p;source='firewatch';importedAt=Date.now();render()}
 
+$('book-week').onchange=()=>{weekStart=Number($('book-week').value);render()};
 $('pw').onclick=()=>{weekStart-=7;render()};
 $('nw').onclick=()=>{weekStart+=7;render()};
 $('tw').onclick=()=>{weekStart=mondayNum(Math.floor(Date.now()/86400000));render()};
@@ -774,9 +846,85 @@ $('import').onclick=()=>{const p=parsePaste($('paste').value);if(p.length){setEn
 $('add').onclick=()=>{const d=$('fDate').value;if(!d)return;if(source==='example')entries=[];source='manual';importedAt=Date.now();entries.push({date:d,start:$('fStart').value,end:$('fEnd').value,type:$('fType').value,band:$('fBand').value});render()};
 $('rows').onclick=e=>{const b=e.target.closest('button[data-i]');if(!b)return;entries.splice(+b.dataset.i,1);render()};
 
+const personalKey='oncall-device-personal';
+const notificationKey='oncall-notify-bookings';
+const personalForm=$('personal-form');
+function loadPersonalDetails(){
+  personalForm.reset();
+  const saved=stored(personalKey,value=>value&&typeof value==='object')||{};
+  for(const input of personalForm.querySelectorAll('input')){
+    if(typeof saved[input.name]==='string')input.value=saved[input.name];
+  }
+}
+personalForm.onsubmit=event=>{
+  event.preventDefault();
+  try{
+    localStorage.setItem(personalKey,JSON.stringify(Object.fromEntries(new FormData(personalForm))));
+    $('personal-status').textContent='Saved in this browser.';
+  }catch{$('personal-status').textContent='This browser did not save the details.'}
+};
+$('clear-personal').onclick=()=>{
+  try{
+    localStorage.removeItem(personalKey);
+    personalForm.reset();
+    $('personal-status').textContent='Saved details cleared.';
+  }catch{$('personal-status').textContent='This browser could not clear the details.'}
+};
+function renderNotificationSetting(){
+  const supported='Notification' in window&&'serviceWorker' in navigator;
+  const setting=$('notify-bookings');
+  setting.disabled=!supported||(supported&&Notification.permission==='denied');
+  setting.checked=supported&&Notification.permission==='granted'&&stored(notificationKey,value=>value===true)===true;
+  $('notify-status').textContent=!supported?'Notifications are unavailable on this device.':
+    Notification.permission==='denied'?'Notifications are blocked in your browser settings.':
+    setting.checked?'Booking result alerts are on.':'Booking result alerts are off.';
+}
+$('notify-bookings').onchange=async event=>{
+  const setting=event.target;
+  try{
+    const enabled=setting.checked&&await Notification.requestPermission()==='granted';
+    localStorage.setItem(notificationKey,JSON.stringify(enabled));
+  }finally{renderNotificationSetting()}
+};
+async function notifyBookingResult(){
+  if(!('Notification' in window)||Notification.permission!=='granted'||!stored(notificationKey,value=>value===true))return;
+  try{
+    const worker=await navigator.serviceWorker.getRegistration();
+    if(worker?.active)await worker.showNotification('Live Crewing',{body:'A booking result is ready to review.'});
+  }catch{}
+}
+let dailyCheckRun=0;
+async function renderDailyCheck(){
+  const run=++dailyCheckRun;
+  const display=$('daily-check');
+  function paint(relay,autobook){
+    if(run!==dailyCheckRun)return;
+    display.innerHTML='<h2>Checks on this device</h2>'+kv('App',APP_VERSION)+
+      kv('Calendar data',importedAt?new Date(importedAt).toLocaleString('en-GB',{timeZone:'Europe/London'}):'Unavailable')+
+      kv('Planner data',snap?.t?new Date(snap.t).toLocaleString('en-GB',{timeZone:'Europe/London'}):'Unavailable')+
+      kv('Relay',relay)+kv('Autobook heartbeat',autobook)+
+      '<p class="note">Checked on demand. Windows scheduled checks are unavailable here.</p>';
+  }
+  const key=storedRelayKey();
+  if(!key){paint('Device not connected','Unavailable');return}
+  paint('Checking','Checking');
+  try{
+    const response=await fetch(RELAY_URL+'/status',{headers:{'X-Relay-Key':key},cache:'no-store',signal:AbortSignal.timeout(8000)});
+    const result=response.ok?await response.json():null;
+    if(!result?.ok){paint('Unavailable','Unavailable');return}
+    paint('Connected',result.pcAlive===true?'Recent':result.pcAlive===false?'Stale or missing':'Unavailable');
+  }catch{paint('Unavailable','Unavailable')}
+}
+function storedRelayKey(){
+  try{return localStorage.getItem('oncall-relay-key')||''}catch{return ''}
+}
+$('rerun-daily').onclick=renderDailyCheck;
 function show(t){
+  if(t==='daily')renderDailyCheck();
+  if(t==='personal')loadPersonalDetails();
+  if(t==='notifications')renderNotificationSetting();
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));
-  const parent=['booking','station','results'].includes(t)?'live':['week','audit','pi','data','technical','dashboard','pay','holiday'].includes(t)?'more':t;
+  const parent=['booking','station','results','personal','notifications','daily'].includes(t)?'live':['week','audit','pi','data','technical','dashboard','pay','holiday'].includes(t)?'more':t;
   document.querySelectorAll('nav button').forEach(button=>{
     const current=button.dataset.t===parent;
     button.classList.toggle('on',current);
@@ -787,6 +935,13 @@ function show(t){
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>show(b.dataset.page));
+document.querySelectorAll('[data-events-sync]').forEach(button=>button.onclick=()=>{
+  show('activity');
+  $('activity-history-button').click();
+  const dataSource=$('station-data-source');
+  dataSource.value='firewatch';
+  dataSource.dispatchEvent(new Event('change'));
+});
 document.querySelectorAll('[data-home-book]').forEach(button=>button.onclick=()=>{
   show('booking');
   const mode=button.dataset.homeBook;
@@ -1276,11 +1431,11 @@ g('csend').onclick=async()=>{const v=val();if(!v){show();return}const b=g('csend
 function bookRanges(rs,dn){const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
   return rs.map(x=>({from:iso(dn+Math.floor(x.s/1440))+'T'+hm(x.s),to:iso(dn+Math.floor(x.e/1440))+'T'+hm(x.e)}))}
 /* ===== Save hours blocks (today is clipped to start from now) ===== */
-function saverBlocks(from,to,NL){const tmin=s=>(+s.slice(0,2))*60+(+s.slice(3,5)),hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+function saverBlocks(from,to,NL,availabilityOnly=false){const tmin=s=>(+s.slice(0,2))*60+(+s.slice(3,5)),hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
   const blocks=[],tdn=NL?dayNum(NL.date):null,nm=NL?Math.ceil(NL.min/15)*15:0;
   const bpush=(dn,e,sm,len,orig)=>blocks.push({id:dn+'|'+hm(sm)+'|'+e.end,dn,s:hm(sm),e:e.end,h:entryHours(e)*len/orig,b:e.band,sm,len,n:Math.max(1,Math.round(len/15))});
   for(let dn=(NL?Math.min(from,tdn-1):from);dn<to;dn++){const ds=iso(dn);
-    entries.filter(e=>e.date===ds&&COUNTS.includes(e.type)&&entryHours(e)>0.005&&['P1','P3','P4','U'].includes(e.band)).sort((a,b)=>a.start.localeCompare(b.start)).forEach(e=>{const sm=tmin(e.start),len=(((tmin(e.end)-sm)%1440)+1440)%1440||1440;
+    entries.filter(e=>e.date===ds&&(availabilityOnly?e.type==='avail':COUNTS.includes(e.type))&&entryHours(e)>0.005&&['P1','P3','P4','U'].includes(e.band)).sort((a,b)=>a.start.localeCompare(b.start)).forEach(e=>{const sm=tmin(e.start),len=(((tmin(e.end)-sm)%1440)+1440)%1440||1440;
       if(NL&&dn<tdn){if(dn!==tdn-1||sm+len<=1440)return;const endM=sm+len-1440;if(endM<=nm||nm>=1440)return;bpush(tdn,e,nm,endM-nm,len);return}
       if(NL&&dn===tdn){const s2=Math.max(sm,nm);if(s2>=1440||sm+len<=s2)return;bpush(dn,e,s2,sm+len-s2,len);return}
       bpush(dn,e,sm,len,len)})}
@@ -1420,7 +1575,9 @@ $('csvgo').onclick=function(){
           if(response.status===404){item.status='missing';return}
           const body=response.ok?await response.json():null;
           if(body&&body.ok&&typeof body.report==='string')item.report=body.report;
+          const previousStatus=item.status;
           item.status=body&&body.ok&&body.id===item.id&&Object.hasOwn(messages,body.status)?(body.status==='booked'&&!body.readbackVerified?'missing':body.status):'unavailable';
+          if(previousStatus!==item.status&&(item.status==='booked'||item.status==='failed'))notifyBookingResult();
         }catch{item.status='unavailable'}
         finally{clearTimeout(timeout)}
       }));
