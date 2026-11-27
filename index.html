@@ -243,6 +243,13 @@ body{background:radial-gradient(ellipse at top,#123349 0,transparent 620px),var(
 .home-heading h1,#t-activity h1,#t-more h1{font:700 26px var(--display);margin:0 0 6px}
 .home-heading p{margin:0;color:var(--mute)}
 .home-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.home-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.home-tile{display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-height:96px;padding:12px;border-radius:16px;border:1px solid var(--accent);background:var(--raise);color:var(--ink);text-align:left;font:600 15px var(--body);cursor:pointer}
+.home-tile .tv{font-size:20px;font-weight:800}.home-tile small{color:var(--mute);font-weight:400;font-size:12px}
+.pay-table{width:100%;border-collapse:collapse;font-size:14px}.pay-table th{color:var(--mute);font-weight:500;font-size:12px;text-align:right;padding:4px 0}.pay-table th:first-child,.pay-table td:first-child{text-align:left}.pay-table td{padding:8px 0;border-top:1px solid var(--line);text-align:right}
+.pay-flag{border-radius:12px;padding:9px 11px;margin-top:8px;font-size:13px}.pay-flag.w{background:#382b17;border:1px solid #8a632a;color:#ffe1a6}.pay-flag.ok{background:#12452b;border:1px solid #338056;color:#a9ffc4}
+.pay-bars{display:flex;align-items:flex-end;gap:8px;height:130px;margin-top:6px}.pay-bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer}.pay-bars i{width:100%;border-radius:6px 6px 2px 2px;background:var(--accent);min-height:2px}.pay-bars .cur i{background:#89cff0}.pay-bars b{font-size:11px}.pay-bars small{color:var(--mute);font-size:11px}
+.pay-chip{display:inline-block;margin:8px 6px 0 0;padding:2px 8px;border-radius:7px;font-size:12px;font-weight:700}.pay-chip.y{background:#12452b;color:#a9ffc4;border:1px solid #43ec69}.pay-chip.n{background:var(--raise);color:var(--mute);border:1px solid var(--line)}
 .home-actions button{min-height:64px}
 .menu-group{padding:0;overflow:hidden}
 .menu-link{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:48px;text-align:left;color:var(--ink);font:600 15px var(--body);cursor:pointer}
@@ -296,7 +303,7 @@ main>.tab,.tab>.card{min-width:0}
 </head>
 <body>
 <div id="splash"><div class="splash-title">Live Crewing</div></div>
-<script>const APP_VERSION='v49';
+<script>const APP_VERSION='v50';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -340,6 +347,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="home-heading"><h1>Home</h1><p>Winterton</p></div>
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
   <div class="home-actions"><button type="button" class="btn primary" data-home-book="on">Book on</button><button type="button" class="btn" data-home-book="off">Book off</button></div>
+  <div class="home-tiles"><button type="button" class="home-tile" data-page="pay"><span class="tv" id="paytile-v">£–</span><span>Pay<br><small id="paytile-s">Loading</small></span></button></div>
   <button type="button" class="menu-link card" data-page="results">Booking results <span aria-hidden="true">›</span></button>
   <button type="button" class="menu-link card" data-page="station">Station status and crew <span aria-hidden="true">›</span></button>
 </section>
@@ -361,6 +369,8 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="card"><h2 id="lcrew">Crew roster</h2><div id="lon"></div></div>
   <button class="btn" id="lrefresh">Refresh now</button>
 </section>
+<section class="tab" id="t-pay"><button type="button" class="menu-back" data-page="live">‹ Home</button>
+<h1>Pay</h1><div id="paybody"><p class="note">Loading FireWatch Payments…</p></div></section>
 <section class="tab" id="t-results"><button type="button" class="menu-back" data-page="live">‹ Home</button>
 <div class="card" id="booking-results">
   <h2>Booking results</h2>
@@ -383,7 +393,6 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="personal-dashboard">
   <div class="card" id="hcard"></div>
   <div class="card" id="wtdcard"></div>
-  <div class="card" id="paycard"></div>
   </div>
 </section>
 <section class="tab" id="t-technical"><button type="button" class="menu-back" data-page="more">‹ More</button>
@@ -743,7 +752,7 @@ $('rows').onclick=e=>{const b=e.target.closest('button[data-i]');if(!b)return;en
 
 function show(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));
-  const parent=['booking','station','results'].includes(t)?'live':['week','audit','pi','data','technical','dashboard'].includes(t)?'more':t;
+  const parent=['booking','station','results','pay'].includes(t)?'live':['week','audit','pi','data','technical','dashboard'].includes(t)?'more':t;
   document.querySelectorAll('nav button').forEach(button=>{
     const current=button.dataset.t===parent;
     button.classList.toggle('on',current);
@@ -1508,6 +1517,47 @@ function reviewSheet(title,lines,action){
   historyButton.onclick=()=>showDrafts(false);
   draftButton.onclick=()=>showDrafts(true);
   window.refreshActivityDrafts=()=>{if(!drafts.hidden)showDrafts(true)};
+})();
+</script>
+<script>
+/* ===== Pay page: FireWatch Payments via the relay (gross only), checked against the 31 Oct 2026 payslip ===== */
+(function(){
+const PAYSLIP={rate:14.3947,dist:5.31,asOf:'31 Oct 2026'},FW_RATE=14.40,KEY='oncall-pay';
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gbp=v=>'£'+Number(v).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const COL={'Turn Outs':'#28fffe','Attendances':'#fd50e9','Disturbances':'#9aa3b2','Drill Hour(s)':'#f9bf92','Training Hour(s)':'#21b4fa','Extra Hour(s)':'#fd42d1','On Duty Hour(s)':'#46d93c','Holiday Hour(s)':'#f1fc31','Sickness Hour(s)':'#fd0022','Detached Duty Hour(s)':'#94cddb'};
+let pay=null,sel=null;try{pay=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+const mName=k=>new Date(k+'-01T12:00:00Z').toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});
+const mShort=k=>new Date(k+'-01T12:00:00Z').toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'});
+function slipLine(name,u,amt){if(!u||!amt)return null;if(name==='Disturbances')return Math.round(u*PAYSLIP.dist*100)/100;if(Math.abs(amt/u-FW_RATE)<0.006)return Math.round(u*PAYSLIP.rate*100)/100;return null}
+function flags(months){const out=[];for(const k of Object.keys(months).sort()){const m=months[k];for(const [n,[u,a]] of Object.entries(m.items||{})){if(!u||!a||!/Hour|Turn Outs|Attendances/.test(n))continue;const r=a/u;if(Math.abs(r-FW_RATE)>0.006&&Math.abs(r-13.87)>0.006)out.push(mShort(k)+' '+k.slice(0,4)+': '+n.replace('(s)','s')+' shows '+u+' but '+gbp(a)+', which is '+(a/FW_RATE).toFixed(2)+' h at '+gbp(FW_RATE)+'. Worth querying with payroll.')}}return out}
+function render(){
+  const el=document.getElementById('paybody'),tv=document.getElementById('paytile-v'),ts=document.getElementById('paytile-s');
+  const months=pay&&pay.data&&pay.data.months;
+  if(!months){if(el)el.innerHTML='<div class="card"><p class="note" style="margin:0">No pay data yet. The PC sends FireWatch Payments every hour while autobook runs. Check the relay key is saved under More.</p></div>';if(ts)ts.textContent='No data yet';return}
+  const keys=Object.keys(months).sort(),have=keys.filter(k=>months[k].total>0||months[k].totalHours>0);
+  if(!sel||!months[sel])sel=keys[keys.length-1];
+  const cur=months[keys[keys.length-1]];if(tv)tv.textContent=gbp(cur.total);if(ts)ts.textContent=mShort(keys[keys.length-1])+' · '+(cur.status&&cur.status.Authorised?'Authorised':cur.status&&cur.status.Checked?'Checked':'Not authorised');
+  if(!el)return;
+  const m=months[sel],i=keys.indexOf(sel);let slip=0,slipOk=true,rows='';
+  for(const [n,[u,a]] of Object.entries(m.items||{})){if(!u)continue;const sl=slipLine(n,u,a);if(sl===null&&a>0)slipOk=false;slip+=sl===null?a:sl;
+    rows+='<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;background:'+(COL[n]||'#888')+'"></i>'+esc(n.replace('(s)','s'))+'</td><td>'+(+u.toFixed(2))+'</td><td>'+gbp(a)+'</td><td>'+(a>0?(sl===null?'<span style="color:var(--mute)">'+gbp(a)+'*</span>':gbp(sl)):'–')+'</td></tr>'}
+  const d=Math.round((slip-m.total)*100);
+  const st=m.status||{},chips=['Checked','Authorised'].map(x=>'<span class="pay-chip '+(st[x]?'y':'n')+'">'+(st[x]?'✓ ':'')+x+'</span>').join('');
+  const max=Math.max(1,...keys.map(k=>months[k].total));
+  const bars=keys.filter(k=>have.includes(k)||k===keys[keys.length-1]).map(k=>'<div data-pm="'+k+'" class="'+(k===sel?'cur':'')+'"><b>'+gbp(Math.round(months[k].total)).replace('.00','')+'</b><i style="height:'+Math.max(2,months[k].total/max*100)+'%"></i><small>'+mShort(k)+'</small></div>').join('');
+  const fl=flags(months),age=pay.at?Math.round((Date.now()-Date.parse(pay.at))/60000):null;
+  el.innerHTML='<div class="card"><div class="pseg"><button data-pn="-1"'+(i<=0?' disabled':'')+'>‹</button><button class="on" style="flex:3">'+mName(sel)+'</button><button data-pn="1"'+(i>=keys.length-1?' disabled':'')+'>›</button></div>'
+   +'<p class="note" style="margin:10px 0 0">FireWatch Payments · Retained</p><div style="font:800 38px var(--display)">'+gbp(m.total)+'</div>'
+   +'<p class="note" style="margin:0">'+(+m.totalHours.toFixed(2))+' hours · at payslip rate <b style="color:var(--ink)">'+gbp(slip)+'</b>'+(d?' ('+(d<0?'−':'+')+Math.abs(d)+'p)':'')+'</p>'+chips+'</div>'
+   +(rows?'<div class="card"><h2>Breakdown</h2><table class="pay-table"><tr><th>Line</th><th>Units</th><th>FireWatch</th><th>Payslip</th></tr>'+rows+'<tr><td><b>Total</b></td><td><b>'+(+m.totalHours.toFixed(2))+'</b></td><td><b>'+gbp(m.total)+'</b></td><td><b>'+gbp(slip)+'</b></td></tr></table>'+(slipOk?'':'<p class="note">* Not at the current rate, shown as FireWatch paid it.</p>')+'</div>':'<div class="card"><p class="note" style="margin:0">Nothing recorded on FireWatch Payments for this month.</p></div>')
+   +'<div class="card"><h2>Cross-check</h2><div class="pay-flag w">FireWatch pays '+gbp(FW_RATE)+'/h, your '+PAYSLIP.asOf+' payslip pays £'+PAYSLIP.rate+'/h, so the payslip comes in a few pence lower.</div>'+fl.map(t=>'<div class="pay-flag w">'+esc(t)+'</div>').join('')+'<div class="pay-flag ok">Disturbance fee '+gbp(PAYSLIP.dist)+' matches FireWatch and your payslip.</div></div>'
+   +'<div class="card"><h2>Months · FireWatch</h2><div class="pay-bars">'+bars+'</div><p class="note">Gross only, from FireWatch Payments'+(age!==null?', updated '+(age<1?'just now':age<120?age+' min ago':Math.round(age/60)+' h ago'):'')+'. Tax, NI, pension and net pay are never shown or stored. Sent through the relay, never the public site.</p></div>'}
+async function fetchPay(){let k='';try{k=localStorage.getItem('oncall-relay-key')||''}catch(e){}if(!k){render();return}
+  try{const r=await fetch(RELAY_URL+'/data/pay',{headers:{'X-Relay-Key':k},cache:'no-store'});if(r.ok){const j=await r.json();if(j&&j.ok&&j.data&&j.data.months){pay={at:j.at,data:j.data};try{localStorage.setItem(KEY,JSON.stringify(pay))}catch(e){}}}}catch(e){}render()}
+document.addEventListener('click',e=>{const b=e.target.closest('#paybody [data-pn],#paybody [data-pm]');if(!b||!pay)return;const keys=Object.keys(pay.data.months).sort();if(b.dataset.pm)sel=b.dataset.pm;else{const i=keys.indexOf(sel)+ +b.dataset.pn;if(keys[i])sel=keys[i]}render()});
+window.payPage={render,fetchPay,slipLine,flags};
+render();fetchPay();setInterval(()=>{if(!document.hidden)fetchPay()},600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchPay()});
 })();
 </script>
 </body>

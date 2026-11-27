@@ -94,7 +94,7 @@ async function main() {
     process.exit(rec.status === 'dry-ok' ? 0 : 1);
   }
   if (a[0] === '--once') { const r = await once(deps); console.log(r ? r.status + ' ' + r.id : 'no request'); return; }
-  let lastHb = 0, busy = false;
+  let lastHb = 0, lastPay = 0, busy = false;
   console.log('autobook loop started ' + now());
   setInterval(async () => {
     if (busy) return;
@@ -102,6 +102,7 @@ async function main() {
     try {
       if (Date.now() - lastHb > 120000) { await relay.heartbeat(); lastHb = Date.now(); }
       await once(deps);
+      if (Date.now() - lastPay > 3600000) { lastPay = Date.now(); try { const n = await require('./pay-sync.cjs').syncPay(fw.getTab, relay); console.log(now() + ' pay synced ' + n + ' months'); } catch (e) { console.log(now() + ' pay sync error ' + e.message); } }
     } catch (e) { console.log(now() + ' tick error ' + e.message); }
     busy = false;
   }, 10000);
