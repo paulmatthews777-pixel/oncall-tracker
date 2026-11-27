@@ -658,7 +658,7 @@ function extras(w,r,audit,sub,specT,totT,now){
       box.querySelectorAll('input[type=checkbox]').forEach(c=>c.onchange=()=>{const b=blocks.find(x=>x.id===c.dataset.id);if(!b)return;if(c.checked)st.sel.set(b.id,full(b));else st.sel.delete(b.id);st.open.add(b.dn);draw()});
     };
     draw();
-    const b=$(btnId); b.textContent='Save and send to Claude';
+    const b=$(btnId); b.textContent='Book on FireWatch';
     b.onclick=()=>{const lines=[],book=[];let tot=0;
       [...new Set(blocks.map(x=>x.dn))].forEach(dn=>{const bs=blocks.filter(x=>x.dn===dn),ch=bs.filter(x=>st.sel.has(x.id));if(!ch.length)return;
         const hh=ch.reduce((q,x)=>q+hrs(x,st.sel.get(x.id)),0);tot+=hh;bookRanges(ranges(bs),dn).forEach(x=>book.push(x));
@@ -678,7 +678,7 @@ function extras(w,r,audit,sub,specT,totT,now){
         try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
         const relayOk=await relaySend(txt);
         ov.remove();b.textContent=window.lastBookOffSend?.message||(relayOk?'Sent to relay':'Submission not confirmed · Check FireWatch before retrying');
-        setTimeout(()=>b.textContent='Save and send to Claude',4000)}};
+        setTimeout(()=>b.textContent='Book on FireWatch',4000)}};
   };
   const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
     b.onclick=async()=>{const sel=[...$(box).querySelectorAll('.offc:checked')].map(c=>c.dataset.l);
