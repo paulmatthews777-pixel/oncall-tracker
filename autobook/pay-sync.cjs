@@ -16,7 +16,7 @@ function pageJs(y, m) {
 const r=await fetch('/FireWatchWebClient/Payments/GetPayments',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json; charset=utf-8','X-Requested-With':'XMLHttpRequest','__RequestVerificationToken':tok||''},body:JSON.stringify({StationID:${STATION},Month:${m},Year:${y}}),signal:AbortSignal.timeout(15000)});
 if(!r.ok)throw Error('Payments '+r.status);const j=await r.json();
 const doc=new DOMParser().parseFromString((Array.isArray(j)?j:[j]).map(p=>p.html||'').join(''),'text/html');
-const status={};doc.querySelectorAll('.contractPaymentType').forEach(d=>{const n=d.textContent.trim();if(n)status[n]=/\\/complete\\.png/.test(d.querySelector('img')?.getAttribute('src')||'')});
+const status={};doc.querySelectorAll('.contractPaymentType').forEach(d=>{const n=d.textContent.trim();if(/^(New|Checked|Authorised)$/.test(n))status[n]=/\\/complete\\.png/.test(d.querySelector('img')?.getAttribute('src')||'')});
 doc.querySelectorAll('script,style').forEach(e=>e.remove());const t=doc.body.textContent.replace(/\\s+/g,' ');
 const items={};for(const mm of t.matchAll(/([\\d.]+)\\s+([A-Za-z ()]+?)\\s*=\\s*\\D{0,3}([\\d.,]+)/g)){const k=mm[2].trim();if(k!=='Total')items[k]=[+mm[1],+mm[3].replace(/,/g,'')]}
 const th=(t.match(/Total Hour\\(s\\)\\s*=\\s*([\\d.]+)/)||[])[1],tt=(t.match(/Total\\s*=\\s*\\D{0,3}([\\d.,]+)/)||[])[1];
