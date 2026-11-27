@@ -66,9 +66,9 @@ async function collectInFireWatch(probe) {
         try {
           const detail = await waitFor(() => {
             const close = document.getElementById('EventForm_Close');
-            const number = document.getElementById('EventForm_Number');
+            const eventId = document.getElementById('BaseItemModel_EventForm_ID');
             const personnel = $('#eventPersonnelGrid').data('kendoGrid');
-            return visible(close) && number?.value === String(row.EventNo) && personnel && {personnel};
+            return visible(close) && eventId?.value.trim() === String(row.ID).trim() && personnel && {personnel};
           });
           const note = document.getElementById('EventForm_Comment');
           if (!note) throw Error('Missing event comment field');
@@ -108,7 +108,7 @@ async function main() {
   if (matching.length !== 1) throw Error('Use exactly one signed-in FireWatch Event Recording tab in the relay browser');
   const browser = await connect(matching[0].webSocketDebuggerUrl);
   try {
-    const snapshot = await evalJs(browser, '(' + collectInFireWatch + ')(' + probe + ')', probe ? 20000 : 20 * 60 * 1000);
+    const snapshot = await evalJs(browser, '(' + collectInFireWatch + ')(' + probe + ')', probe ? 20000 : 45 * 60 * 1000);
     if (probe) {
       if (!snapshot.checked) throw Error('No event details checked');
       console.log('Verified one Winterton event and its personnel grid. Window starts ' + snapshot.since + '.');
