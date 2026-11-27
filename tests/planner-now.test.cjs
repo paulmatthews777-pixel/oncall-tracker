@@ -12,7 +12,7 @@ assert.strictEqual(ctx.nowX(dates,46,{date:'2026-11-27',min:720}),206+92+23);
 assert.strictEqual(ctx.nowX(dates,576,{date:'2026-12-01',min:10}),null);
 // grid markup carries the data the line needs, and the line is placed after every render
 assert(/data-nd="'\+dsl\.join/.test(src)&&/data-nd="'\+dates\.join/.test(src),'grid data attrs');
-assert(/multiHTML\(pv\.from,pv\.to\);\s*placeNow\(\)/.test(src),'placeNow after render');
+assert(/multiHTML\(pv\.from,pv\.to,people\);\s*placeNow\(\)/.test(src),'placeNow after render');
 assert(/body\.pland \.top,body\.pland nav\{display:none\}/.test(src),'landscape css');
 // whole page script must still parse
 const blocks=[...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);assert(blocks.length>0);blocks.forEach(b=>new vm.Script(b));

@@ -11,3 +11,15 @@ test('week strip: 3 day blocks, width, real counts',()=>{const h=ctx.out('2026-1
 test('single day has no day header and stays 576px',()=>{const h=ctx.out('2026-11-25');assert.equal((h.match(/class="pd"/g)||[]).length,0);assert.ok(h.includes('width:576px'))});
 
 test('feed below plan is trusted, at plan uses real count',()=>{const h=ctx.out('2026-11-25');assert.ok(h.includes('>8<'))});
+
+test('fresh live availability fills the missing overnight bar and preserves later range data',()=>{
+  const context=vm.createContext({});
+  new vm.Script(fn('plannerAvailability')+';this.merge=plannerAvailability').runInContext(context);
+  const base=10080, now=2000000;
+  const person={name:'Sample crew',iv:[[base+420,base+510],[base+3000,base+3100]],bars:[]};
+  const range={base:0,t:now-540000};
+  const live={v:2,base,t:now-60000,rows:[{name:'CT',n:Array(48).fill(5)}],people:[{name:person.name,iv:[[0,510]]}]};
+  assert.equal(JSON.stringify(context.merge(person,range,live,now).iv),JSON.stringify([[base,base+510],[base+3000,base+3100]]));
+  assert.equal(context.merge(person,range,{...live,t:now-960000},now),person);
+  assert.equal(context.merge(person,{...range,t:now},live,now),person);
+});

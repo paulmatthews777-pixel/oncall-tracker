@@ -821,7 +821,7 @@ const CONTRACT_URL=RAW+'contract.json';
 const nc=u=>u+'?_='+Date.now();
 let lastC=0;
 async function fetchContract(force){if(!force&&Date.now()-lastC<300000)return;lastC=Date.now();try{const r=await fetch(nc(CONTRACT_URL),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(!j||!j.t||!j.text)return;if(importedAt&&j.t<=importedAt)return;const p=parsePaste(j.text);if(!p.length)return;entries=p;source='firewatch';importedAt=j.t;save();render()}catch(e){}}
-async function fetchLive(){try{const r=await fetch(nc(LIVE_URL),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive();updChip()}
+async function fetchLive(){try{const r=await fetch(nc(LIVE_URL),{cache:'no-store'});if(r.ok){setSnap(await r.json());snapErr=''}else snapErr='feed '+r.status}catch(e){snapErr='offline'}renderLive();updChip();if(document.getElementById('t-planner').classList.contains('on'))renderPlanner()}
 function fromPHash(){const m=/^#p=(.+)$/.exec(location.hash);if(!m)return false;try{setSnap(JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))));history.replaceState(null,'',location.pathname+location.search);return true}catch(e){}return false}
 function allGreen(x,h){return x.rows.length>0&&x.rows.every(r=>r.c[h]==='g')}
 function runState(x,h){if(!x.rows.length)return'off';const c=x.rows.map(r=>r.c[h]);if(c.some(v=>v!=='g'&&v!=='a'))return'off';return c.includes('a')?'min':'full'}
@@ -990,7 +990,32 @@ function popFor(p,b){return pops.push(p.name+'\n'+b[1])-1}
 const PKEY=['CT','BA','ERD','OIC'];
 function planHour(di,hr,name){const t0=di*1440+hr*60;let m=1e9;for(let q=0;q<4;q++){const c=fwCrewNumbers(rng.people,t0+q*15)[name];if(c<m)m=c}return m}
 function planDay(di,name){let m=1e9;for(let hr=0;hr<24;hr++){const c=planHour(di,hr,name);if(c<m)m=c}return m}
-function dayHTML(date,N){N=N||1;
+function plannerAvailability(person,range,live,now){
+  const current=live?.people?.find(p=>p.name===person.name);
+  if(live?.v!==2||live.t<range.t||now-live.t>15*60000||live.t>now+120000||
+     !Number.isFinite(live.base)||!Number.isFinite(range.base)||!Array.isArray(current?.iv))return person;
+  const hours=Math.min(48,live.rows?.find(row=>row.name==='CT')?.n?.length||0);
+  if(!hours)return person;
+  const start=live.base-range.base,end=start+hours*60;
+  const iv=[];
+  for(const [from,to] of person.iv){
+    if(from<start)iv.push([from,Math.min(to,start)]);
+    if(to>end)iv.push([Math.max(from,end),to]);
+  }
+  for(const [from,to] of current.iv){
+    const a=Math.max(start,start+from),b=Math.min(end,start+to);
+    if(b>a)iv.push([a,b]);
+  }
+  iv.sort((a,b)=>a[0]-b[0]);
+  const merged=[];
+  for(const slot of iv){
+    const last=merged[merged.length-1];
+    if(last&&slot[0]<=last[1])last[1]=Math.max(last[1],slot[1]);
+    else merged.push(slot);
+  }
+  return {...person,iv:merged};
+}
+function dayHTML(date,N,people=sortedPeople()){N=N||1;
   const di=rng.dates.indexOf(date);
   if(di<0)return '<p class="note" style="padding:8px">'+dName(date)+' is outside the loaded range ('+dName(rng.dates[0])+' to '+dName(rng.dates[rng.dates.length-1])+')</p>';
   N=Math.max(1,Math.min(N,rng.dates.length-di));const d0=di*1440,dEnd=d0+1440*N,dsl=rng.dates.slice(di,di+N),today=dsl.includes(londonNow().date),sep=N>1;
@@ -998,13 +1023,13 @@ function dayHTML(date,N){N=N||1;
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g&&dsl.every((_,k)=>r.n[di+k]));if(!rs.length)continue;h+='<div class="pg">'+g+'</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+dsl.map((_,k)=>r.n[di+k].map((x,hr)=>{const z=sep&&hr===0?' pz':'';if(x==='')return '<div class="pc'+z+'">-</div>';const fv=pn(x),v=PKEY.includes(r.name)&&fv>=pl?Math.max(fv,planHour(di+k,hr,r.name)):fv;return '<div class="pc'+z+'" style="background:'+pcol(v,mn,pl)+';color:'+'#111'+'">'+v+'</div>'}).join('')).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
-  for(const p of sortedPeople()){
+  for(const p of people){
     let bars='';
     for(const v of p.iv){const s=Math.max(v[0],d0),e=Math.min(v[1],dEnd);if(e<=s)continue;bars+='<div class="pb" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#46d93c;color:#111">'+((e-s)>=180?pesc(p.q):'')+'</div>'}
     for(const b of p.bars){const s=Math.max(b[3],d0),e=Math.min(b[4],dEnd);if(e<=s)continue;bars+='<div class="pb tap" data-p="'+popFor(p,b)+'" style="left:'+((s-d0)/60*24)+'px;width:'+((e-s)/60*24)+'px;background:#'+b[2]+';color:'+txtOn(b[2])+'">'+pesc(barLabel(b))+'</div>'}
     h+='<div class="pr"><div class="pl'+(today&&onNow(p.name)?' yl':'')+'"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div><div class="pt" style="width:'+(576*N)+'px'+(sep?';background-image:linear-gradient(90deg,#888 2px,transparent 2px);background-size:576px 100%;background-repeat:repeat-x':'')+'">'+bars+'</div></div>'}
   return h+'</div>'}
-function multiHTML(from,to){
+function multiHTML(from,to,people=sortedPeople()){
   const dates=[];for(let d=from;d<=to&&dates.length<31;d=addD(d,1))dates.push(d);
   if(!dates.length)return '<p class="note" style="padding:8px">Pick a start date before the end date</p>';
   const idx=dates.map(d=>rng.dates.indexOf(d));
@@ -1012,7 +1037,7 @@ function multiHTML(from,to){
   for(const g of ['Crewing','Qualifications']){const rs=rng.rows.filter(r=>r.g===g);if(!rs.length)continue;h+='<div class="pg">'+g+' (lowest each day)</div>';
     for(const r of rs){const mn=pn(r.min),pl=pn(r.plan);h+='<div class="pr"><div class="pl">'+pesc(r.name)+'</div><div class="pm">'+mn+'</div><div class="pm">'+pl+'</div>'+idx.map(i=>{const a=i>=0&&r.n[i]?r.n[i].filter(x=>x!=='').map(pn):[];if(!a.length)return '<div class="pc" style="width:46px">-</div>';const fm=Math.min.apply(null,a),v=PKEY.includes(r.name)&&fm>=pl?Math.max(fm,planDay(i,r.name)):fm;return '<div class="pc" style="width:46px;background:'+pcol(v,mn,pl)+';color:'+(v<mn?'#fff':'#111')+'">'+v+'</div>'}).join('')+'</div>'}}
   h+='<div class="pg">Resource</div>';
-  for(const p of sortedPeople()){h+='<div class="pr"><div class="pl"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div>'+idx.map(i=>{
+  for(const p of people){h+='<div class="pr"><div class="pl"><span style="margin:0;color:inherit;font-weight:400;font-size:12px">'+pesc(p.name)+'</span><span>'+pesc(p.role)+'</span></div><div class="pm"></div><div class="pm"></div>'+idx.map(i=>{
       if(i<0)return '<div class="pc" style="width:46px">-</div>';const d0=i*1440,d1=d0+1440;let best=null,bo=0;
       for(const b of p.bars){if(isAct(b))continue;const o=Math.min(b[4],d1)-Math.max(b[3],d0);if(o>bo){bo=o;best=b}}
       if(best&&bo>=360)return '<div class="pc tap" data-p="'+popFor(p,best)+'" style="width:46px;cursor:pointer;background:#'+best[2]+';color:'+txtOn(best[2])+'">'+pesc(barShort(best))+'</div>';
@@ -1180,7 +1205,8 @@ function renderPlanner(){
   const age=Math.round((Date.now()-rng.t)/60000);
   $('pnote').textContent=(pv.mode==='day'?dName(pv.date)+(pv.date===today?' (today)':''):pv.mode==='week'?dName(pv.from)+' to '+dName(addD(pv.from,6)):dName(pv.from)+' to '+dName(pv.to))+' · Winterton · updated '+(age<1?'just now':age+' min ago')+(age>90?' (out of date)':'');
   const pk=pv.mode+'|'+pv.date+'|'+pv.from+'|'+pv.to;if(pk!==pv.key){pv.key=pk;el.scrollLeft=0}
-  el.innerHTML=pv.mode==='day'?dayHTML(pv.date):pv.mode==='week'?dayHTML(pv.from,7):multiHTML(pv.from,pv.to);
+  const people=sortedPeople().map(person=>plannerAvailability(person,rng,snap,Date.now()));
+  el.innerHTML=pv.mode==='day'?dayHTML(pv.date,1,people):pv.mode==='week'?dayHTML(pv.from,7,people):multiHTML(pv.from,pv.to,people);
   placeNow();if(document.body.classList.contains('pland')&&pk!==pv.lkey){pv.lkey=pk;scrollNow()}
   $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
@@ -1189,7 +1215,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data
   if(t.dataset.d){pv.mode='day';pv.date=t.dataset.d;renderPlanner();window.scrollTo(0,0);return}
   if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=pv.mode==='week'?plannerWeekStart(t.value||pv.from):(t.value||pv.from);if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
-$('prefresh').onclick=fetchRange;
+$('prefresh').onclick=()=>Promise.all([fetchLive(),fetchRange()]).then(renderPlanner);
 /* ===== Custom time off / on: any from/to date and time, sent as a #BOOK line ===== */
 (function(){const g=id=>document.getElementById(id);if(!g('csend'))return;
 const p2=n=>String(n).padStart(2,'0'),iso=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
