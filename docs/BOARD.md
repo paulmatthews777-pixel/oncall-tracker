@@ -31,3 +31,4 @@ Before ending every task, update docs/BOARD.md with the actual outcome and curre
 - 2026-11-27 10:09 Codex: Reviewed the local and main boards. Main records Claude's Events UI complete in v53 at 686b03b. The local board records the completed private backfill and five-minute collector, which are still pending Git integration. Personal info, Notifications and Daily check remain queued on main.
 - 2026-11-27 10:13 Codex: Integrated the direct-detail collector and backfill board notes onto Claude's v53 main. Prepared v54 with matching app and service-worker versions.
 - 2026-11-27 Codex: Prepared self-contained full-interface Demo with fictional data and no live booking; local browser and offline checks passed, publication pending approval.
+- 2026-11-27 Codex: Added random fictional Demo schedules and a New examples control; phone-width browser and local tests passed.

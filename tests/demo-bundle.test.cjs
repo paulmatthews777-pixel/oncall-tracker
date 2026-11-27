@@ -14,7 +14,7 @@ assert(!/<script\s+src=/i.test(app),'Demo does not depend on separate scripts');
 assert.match(app,/Alex Example/,'Demo uses fictional people');
 assert(!app.includes('Paul Matthews'),'Demo must not show the real user name');
 assert(!app.includes('14.3947'),'Demo must not use the real payslip rate');
-assert.match(app,/APP_VERSION='v59'/,'Demo bundle matches the app release');
+assert.match(app,/APP_VERSION='v60'/,'Demo bundle matches the app release');
 const sw=fs.readFileSync('sw.js','utf8');
 assert(sw.includes("'demo.html'"),'offline cache includes the self-contained Demo');
 console.log('demo bundle PASS');

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Live Crewing Demo</title><style>html,body{height:100%;margin:0;background:#0e1014;color:white;font:14px system-ui}.bar{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 12px}a{color:white}iframe{width:100%;height:calc(100% - 42px);border:0}</style></head><body><div class="bar"><strong>Demo · fictional data</strong><a href="./index.html">Exit Demo</a></div><iframe title="Live Crewing Demo" sandbox="allow-scripts" srcdoc="&lt;!DOCTYPE html&gt;
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Live Crewing Demo</title><style>html,body{height:100%;margin:0;background:#0e1014;color:white;font:14px system-ui}.bar{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 12px}a{color:white}iframe{width:100%;height:calc(100% - 42px);border:0}</style></head><body><div class="bar"><strong>Demo · fictional data</strong><button id="new-demo" type="button" title="Generate new examples and reset Demo changes">New examples</button><a href="./index.html">Exit Demo</a></div><iframe title="Live Crewing Demo" sandbox="allow-scripts" srcdoc="&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en-GB&quot;&gt;
 &lt;head&gt;
 &lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27;; style-src &#x27;unsafe-inline&#x27;; img-src data:; connect-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;none&#x27;; object-src &#x27;none&#x27;&quot;&gt;
@@ -39,7 +39,8 @@
     const date = new Date(start.getTime() + i * 86400000);
     const day = date.getUTCDay();
     const ds = date.toISOString().slice(0, 10);
-    entries.push({date: ds, start: &#x27;06:00&#x27;, end: &#x27;18:00&#x27;, type: &#x27;avail&#x27;, band: day === 0 || day === 6 ? &#x27;P4&#x27; : &#x27;P1&#x27;});
+    const morningStart = [&#x27;06:00&#x27;,&#x27;07:00&#x27;,&#x27;08:00&#x27;][Math.floor(Math.random()*3)];
+    entries.push({date: ds, start: morningStart, end: &#x27;18:00&#x27;, type: &#x27;avail&#x27;, band: day === 0 || day === 6 ? &#x27;P4&#x27; : &#x27;P1&#x27;});
     entries.push({date: ds, start: &#x27;18:00&#x27;, end: &#x27;00:00&#x27;, type: &#x27;avail&#x27;, band: day === 5 || day === 6 ? &#x27;P3&#x27; : &#x27;U&#x27;});
     entries.push({date: ds, start: &#x27;00:00&#x27;, end: &#x27;06:00&#x27;, type: &#x27;avail&#x27;, band: day === 0 || day === 6 ? &#x27;P3&#x27; : &#x27;U&#x27;});
   }
@@ -437,7 +438,7 @@ main&gt;.tab,.tab&gt;.card{min-width:0}
 &lt;/head&gt;
 &lt;body&gt;
 &lt;div id=&quot;splash&quot;&gt;&lt;div class=&quot;splash-title&quot;&gt;Live Crewing&lt;/div&gt;&lt;/div&gt;
-&lt;script&gt;const APP_VERSION=&#x27;v59&#x27;;
+&lt;script&gt;const APP_VERSION=&#x27;v60&#x27;;
 const RELAY_URL=&#x27;https://live-crewing-relay.paulm-crewing.workers.dev&#x27;;
 function captureRelayKey(){try{const m=/[#&amp;]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem(&#x27;oncall-relay-key&#x27;,m[1]);const h=location.hash.replace(m[0],&#x27;&#x27;).replace(/^[#&amp;]+/,&#x27;&#x27;);history.replaceState(null,&#x27;&#x27;,location.pathname+location.search+(h?&#x27;#&#x27;+h:&#x27;&#x27;))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem(&#x27;oncall-relay-key&#x27;)||&#x27;&#x27;;if(!k&amp;&amp;typeof prompt===&#x27;function&#x27;){k=(prompt(&#x27;Relay key (asked once, kept on this phone only)&#x27;)||&#x27;&#x27;).trim();if(k)localStorage.setItem(&#x27;oncall-relay-key&#x27;,k)}return k}catch(e){return &#x27;&#x27;}}
@@ -2541,4 +2542,4 @@ render();fetchHol();setInterval(()=&gt;{if(!document.hidden)fetchHol()},600000);
 &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-"></iframe></body></html>
+"></iframe><script>document.getElementById('new-demo').onclick=()=>{const f=document.querySelector('iframe');f.srcdoc=f.srcdoc};</script></body></html>

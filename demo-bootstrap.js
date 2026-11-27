@@ -35,7 +35,8 @@
     const date = new Date(start.getTime() + i * 86400000);
     const day = date.getUTCDay();
     const ds = date.toISOString().slice(0, 10);
-    entries.push({date: ds, start: '06:00', end: '18:00', type: 'avail', band: day === 0 || day === 6 ? 'P4' : 'P1'});
+    const morningStart = ['06:00','07:00','08:00'][Math.floor(Math.random()*3)];
+    entries.push({date: ds, start: morningStart, end: '18:00', type: 'avail', band: day === 0 || day === 6 ? 'P4' : 'P1'});
     entries.push({date: ds, start: '18:00', end: '00:00', type: 'avail', band: day === 5 || day === 6 ? 'P3' : 'U'});
     entries.push({date: ds, start: '00:00', end: '06:00', type: 'avail', band: day === 0 || day === 6 ? 'P3' : 'U'});
   }

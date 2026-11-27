@@ -1,13 +1,14 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const code=fs.readFileSync('demo-bootstrap.js','utf8');
-function setup({isolated=true}={}){
+function setup({isolated=true,random=0}={}){
  const handlers={},elements=[];
  const document={documentElement:{textContent:''},head:{appendChild(x){elements.push(x)}},
   createElement(){return {}},addEventListener(name,fn){handlers[name]=fn}};
  const window={origin:isolated?'null':'https://example.test'};window.top={};
  let alerts=0;
- const context={window,document,location:{search:'?demo=1'},URLSearchParams,Map,Date,Array,JSON,TypeError,Error,navigator:{},alert(){alerts++}};
+ const math=Object.create(Math); math.random=()=>random;
+ const context={Math:math,window,document,location:{search:'?demo=1'},URLSearchParams,Map,Date,Array,JSON,TypeError,Error,navigator:{},alert(){alerts++}};
  vm.createContext(context);
  return {context,handlers,elements,get alerts(){return alerts}};
 }
@@ -16,6 +17,8 @@ function setup({isolated=true}={}){
  assert.equal(x.context.window.__demoMode,true);
  assert.equal(x.context.window.localStorage.getItem('oncall-relay-key'),null);
  assert.match(x.context.window.localStorage.getItem('oncall-tracker-v2'),/example/);
+ const alternate=setup({random:0.9});vm.runInContext(code,alternate.context);
+ assert.notDeepEqual(JSON.parse(x.context.window.localStorage.getItem('oncall-tracker-v2')).entries,JSON.parse(alternate.context.window.localStorage.getItem('oncall-tracker-v2')).entries,'different random choices produce different example schedules');
  await assert.rejects(x.context.window.fetch('https://example.invalid/'),/disabled/);
  for(const name of ['XMLHttpRequest','WebSocket','EventSource'])assert.throws(()=>new x.context.window[name](),/disabled/);
  let prevented=false,stopped=false;
