@@ -1270,7 +1270,7 @@ $('auditDate').value=defaultAudit(); $('fDate').value=iso(Math.floor(Date.now()/
 load(); fromHash(); loadSnap(); loadRng(); const gotP=fromPHash(); render(); renderHoliday(); renderWtd(); renderPay(); renderLive(); renderPlanner(); renderActivity(); renderPI(); if(gotP)show('live'); fetchLive(); fetchRange(); fetchContract(); fetchChanges(); setInterval(()=>{if(document.visibilityState==='visible'){fetchLive();fetchContract();fetchChanges();if(Date.now()-((rng&&rng.t)||0)>300000)fetchRange()}},60000);setInterval(updChip,20000);
 window.addEventListener('hashchange',()=>{fromHash();if(fromPHash())show('live');render();renderLive()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();fetchLive();fetchContract()}});
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register('sw.js').then(r=>{document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})});r.update().catch(()=>{})}).catch(()=>{})}
 </script>
 <style>
 #csvsheet{display:none;position:fixed;inset:0;z-index:1000}
