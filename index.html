@@ -303,7 +303,7 @@ main>.tab,.tab>.card{min-width:0}
 </head>
 <body>
 <div id="splash"><div class="splash-title">Live Crewing</div></div>
-<script>const APP_VERSION='v50';
+<script>const APP_VERSION='v51';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -347,7 +347,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="home-heading"><h1>Home</h1><p>Winterton</p></div>
   <div class="live-hero stale" id="lhero"><b>No planner data</b><span>Open FireWatch on the PC to load the Winterton planner</span></div>
   <div class="home-actions"><button type="button" class="btn primary" data-home-book="on">Book on</button><button type="button" class="btn" data-home-book="off">Book off</button></div>
-  <div class="home-tiles"><button type="button" class="home-tile" data-page="pay"><span class="tv" id="paytile-v">£–</span><span>Pay<br><small id="paytile-s">Loading</small></span></button></div>
+  <div class="home-tiles"><button type="button" class="home-tile" data-page="pay"><span class="tv" id="paytile-v">£–</span><span>Pay<br><small id="paytile-s">Loading</small></span></button><button type="button" class="home-tile" data-page="holiday"><span class="tv" id="holtile-v">– h</span><span>Holiday<br><small id="holtile-s">Loading</small></span></button></div>
   <button type="button" class="menu-link card" data-page="results">Booking results <span aria-hidden="true">›</span></button>
   <button type="button" class="menu-link card" data-page="station">Station status and crew <span aria-hidden="true">›</span></button>
 </section>
@@ -371,6 +371,8 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 </section>
 <section class="tab" id="t-pay"><button type="button" class="menu-back" data-page="live">‹ Home</button>
 <h1>Pay</h1><div id="paybody"><p class="note">Loading FireWatch Payments…</p></div></section>
+<section class="tab" id="t-holiday"><button type="button" class="menu-back" data-page="live">‹ Home</button>
+<h1>Holiday</h1><div id="holbody"><p class="note">Loading holiday from FireWatch…</p></div></section>
 <section class="tab" id="t-results"><button type="button" class="menu-back" data-page="live">‹ Home</button>
 <div class="card" id="booking-results">
   <h2>Booking results</h2>
@@ -752,7 +754,7 @@ $('rows').onclick=e=>{const b=e.target.closest('button[data-i]');if(!b)return;en
 
 function show(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));
-  const parent=['booking','station','results','pay'].includes(t)?'live':['week','audit','pi','data','technical','dashboard'].includes(t)?'more':t;
+  const parent=['booking','station','results','pay','holiday'].includes(t)?'live':['week','audit','pi','data','technical','dashboard'].includes(t)?'more':t;
   document.querySelectorAll('nav button').forEach(button=>{
     const current=button.dataset.t===parent;
     button.classList.toggle('on',current);
@@ -1558,6 +1560,49 @@ async function fetchPay(){let k='';try{k=localStorage.getItem('oncall-relay-key'
 document.addEventListener('click',e=>{const b=e.target.closest('#paybody [data-pn],#paybody [data-pm]');if(!b||!pay)return;const keys=Object.keys(pay.data.months).sort();if(b.dataset.pm)sel=b.dataset.pm;else{const i=keys.indexOf(sel)+ +b.dataset.pn;if(keys[i])sel=keys[i]}render()});
 window.payPage={render,fetchPay,slipLine,flags};
 render();fetchPay();setInterval(()=>{if(!document.hidden)fetchPay()},600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchPay()});
+})();
+</script>
+<script>
+/* ===== Holiday page: left from FireWatch Entitlement, taken/booked from Holiday entries on your calendar ===== */
+(function(){
+const KEY='oncall-holiday';
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const h1=v=>(Math.round(v*100)/100).toString();
+let hol=null,mode='month',cf='',ct='';try{hol=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+function nowL(){const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day+'T'+p.hour+':'+p.minute}
+const ms=x=>Date.parse(x+':00Z');
+function split(entries,now){let taken=0,ahead=0;for(const e of entries){const a=ms(e.from),b=ms(e.to),n=ms(now);if(b<=n)taken+=e.h;else if(a>=n)ahead+=e.h;else{taken+=(n-a)/36e5;ahead+=(b-n)/36e5}}return{taken,ahead}}
+function byMonth(entries){const m={};for(const e of entries){const k=e.from.slice(0,7);m[k]=(m[k]||0)+e.h}return m}
+function payHol(){try{const p=JSON.parse(localStorage.getItem('oncall-pay')||'null');const out={};for(const [k,v] of Object.entries(p&&p.data&&p.data.months||{})){const it=(v.items||{})['Holiday Hour(s)'];if(it){const d=new Date(k+'-15T12:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);out[d.toISOString().slice(0,7)]=it[0]}}return out}catch(e){return{}}}
+const mLab=k=>new Date(k+'-01T12:00:00Z').toLocaleDateString('en-GB',{month:'short',year:'numeric',timeZone:'UTC'});
+const dLab=x=>new Date(x+':00Z').toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',timeZone:'UTC'})+' '+x.slice(11,16);
+function render(){
+  const el=document.getElementById('holbody'),tv=document.getElementById('holtile-v'),ts=document.getElementById('holtile-s');
+  const d=hol&&hol.data;if(!d||!Array.isArray(d.entries)){if(el)el.innerHTML='<div class="card"><p class="note" style="margin:0">No holiday data yet. The PC sends it while autobook runs.</p></div>';if(ts)ts.textContent='No data yet';return}
+  const now=nowL(),sp=split(d.entries,now),ent=sp.taken+sp.ahead+d.remaining;
+  if(tv)tv.textContent=h1(d.remaining)+' h';if(ts)ts.textContent='left of '+h1(ent)+' h';
+  if(!el)return;
+  const C=2*Math.PI*56,tk=ent?sp.taken/ent*C:0,ah=ent?sp.ahead/ent*C:0,lf=ent?d.remaining/ent*C:0;
+  const ring='<svg viewBox="0 0 140 140" width="130" height="130" role="img" aria-label="Holiday: '+h1(d.remaining)+' hours left"><circle cx="70" cy="70" r="56" fill="none" stroke="#24405f" stroke-width="14"/><circle cx="70" cy="70" r="56" fill="none" stroke="#f1fc31" stroke-width="14" stroke-dasharray="'+tk.toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 70 70)"/><circle cx="70" cy="70" r="56" fill="none" stroke="#89cff0" stroke-width="14" stroke-dasharray="'+ah.toFixed(1)+' '+C.toFixed(1)+'" stroke-dashoffset="'+(-tk).toFixed(1)+'" transform="rotate(-90 70 70)"/><circle cx="70" cy="70" r="56" fill="none" stroke="#43ec69" stroke-width="14" stroke-dasharray="'+lf.toFixed(1)+' '+C.toFixed(1)+'" stroke-dashoffset="'+(-(tk+ah)).toFixed(1)+'" transform="rotate(-90 70 70)"/><text x="70" y="68" text-anchor="middle" fill="currentColor" font-size="24" font-weight="800">'+h1(d.remaining)+' h</text><text x="70" y="88" text-anchor="middle" fill="#9fb3c8" font-size="11">left</text></svg>';
+  const dot=c=>'<i style="display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:'+c+'"></i>';
+  const bm=byMonth(d.entries),ph=payHol();let rows='',tot=0,ptot=0,allOk=true;
+  for(const k of Object.keys(bm).sort()){tot+=bm[k];const p=ph[k];if(p!==undefined)ptot+=p;const ok=p===undefined?null:Math.abs(p-bm[k])<0.01;if(ok===false)allOk=false;rows+='<tr><td>'+mLab(k)+'</td><td>'+h1(bm[k])+'</td><td>'+(ok===null?'<span style="color:var(--mute)">not paid yet</span>':ok?'<span style="color:var(--good)">✓ '+h1(p)+'</span>':'<span style="color:var(--bad)">✗ '+h1(p)+'</span>')+'</td></tr>'}
+  const ly=d.leaveYear||{};const now7=now.slice(0,7);
+  let list=d.entries;if(mode==='month')list=list.filter(e=>e.from.slice(0,7)===now7||e.to.slice(0,7)===now7);else if(mode==='custom'&&cf&&ct)list=list.filter(e=>e.to.slice(0,10)>=cf&&e.from.slice(0,10)<=ct);
+  const seg=(m,l)=>'<button data-hm="'+m+'" class="'+(mode===m?'on':'')+'">'+l+'</button>';
+  const age=hol.at?Math.round((Date.now()-Date.parse(hol.at))/60000):null;
+  el.innerHTML='<div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+ring+'<div style="flex:1;min-width:150px">'
+   +'<div class="kv"><span>'+dot('#f1fc31')+'Taken</span><b>'+h1(sp.taken)+' h</b></div><div class="kv"><span>'+dot('#89cff0')+'Booked ahead</span><b>'+h1(sp.ahead)+' h</b></div><div class="kv"><span>'+dot('#43ec69')+'Left</span><b>'+h1(d.remaining)+' h</b></div><div class="kv"><span>Entitlement</span><b>'+h1(ent)+' h</b></div></div></div>'
+   +'<div class="card"><h2>By month · your FireWatch calendar</h2><table class="pay-table"><tr><th>Month</th><th>Hours</th><th>Payments</th></tr>'+(rows||'<tr><td colspan="3">No holiday this leave year</td></tr>')+'<tr><td><b>Total</b></td><td><b>'+h1(tot)+'</b></td><td></td></tr></table><p class="note">Payments shows each month\'s leave one month later, so it is matched to the month the leave was taken.'+(allOk?'':' <b style="color:var(--bad)">A month does not match Payments.</b>')+'</p></div>'
+   +'<div class="card"><h2>Search</h2><div class="pseg">'+seg('month','This month')+seg('year','Leave year')+seg('custom','Custom')+'</div>'+(mode==='custom'?'<div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="hcf" value="'+esc(cf)+'"><input type="date" id="hct" value="'+esc(ct)+'"></div>':'')
+   +(list.length?list.map(e=>'<div class="kv"><span>'+dot('#f1fc31')+esc(dLab(e.from))+' → '+esc(dLab(e.to))+'</span><b>'+h1(e.h)+' h</b></div>').join(''):'<p class="note">No holiday in this period.</p>')+'</div>'
+   +'<p class="note">Left is FireWatch\'s Entitlement figure. Taken and booked are added up from your calendar. Leave year '+esc(ly.from||'')+' to '+esc(ly.to||'')+(ly.confirmed?'':' (assumed Jan to Dec, not yet confirmed)')+'. '+(age!==null?'Updated '+(age<1?'just now':age<120?age+' min ago':Math.round(age/60)+' h ago')+'.':'')+'</p>'}
+async function fetchHol(){let k='';try{k=localStorage.getItem('oncall-relay-key')||''}catch(e){}if(!k){render();return}
+  try{const r=await fetch(RELAY_URL+'/data/holiday',{headers:{'X-Relay-Key':k},cache:'no-store'});if(r.ok){const j=await r.json();if(j&&j.ok&&j.data){hol={at:j.at,data:j.data};try{localStorage.setItem(KEY,JSON.stringify(hol))}catch(e){}}}}catch(e){}render()}
+document.addEventListener('click',e=>{const b=e.target.closest('#holbody [data-hm]');if(!b)return;mode=b.dataset.hm;render()});
+document.addEventListener('change',e=>{if(e.target.id==='hcf'){cf=e.target.value;render()}if(e.target.id==='hct'){ct=e.target.value;render()}});
+window.holidayPage={render,fetchHol,split,byMonth,payHol};
+render();fetchHol();setInterval(()=>{if(!document.hidden)fetchHol()},600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchHol()});
 })();
 </script>
 </body>
