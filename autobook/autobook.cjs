@@ -102,7 +102,7 @@ async function main() {
     try {
       if (Date.now() - lastHb > 120000) { await relay.heartbeat(); lastHb = Date.now(); }
       await once(deps);
-      if (Date.now() - lastPay > 3600000) { lastPay = Date.now(); try { const n = await require('./pay-sync.cjs').syncPay(fw.getTab, relay); console.log(now() + ' pay synced ' + n + ' months'); } catch (e) { console.log(now() + ' pay sync error ' + e.message); } }
+      if (Date.now() - lastPay > 3600000) { lastPay = Date.now(); try { const n = await require('./pay-sync.cjs').syncPay(fw.getTab, relay); console.log(now() + ' pay synced ' + n + ' months'); } catch (e) { lastPay = Date.now() - 3300000; console.log(now() + ' pay sync error ' + e.message + ' (retry in 5 min)'); } }
     } catch (e) { console.log(now() + ' tick error ' + e.message); }
     busy = false;
   }, 10000);
