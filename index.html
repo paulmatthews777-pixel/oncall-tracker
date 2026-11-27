@@ -300,7 +300,7 @@ main>.tab,.tab>.card{min-width:0}
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
-async function relaySend(text){try{const k=relayKey();if(!k)return false;const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL+'/req',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();if(r.ok&&j&&j.ok===true){if(typeof window!=="undefined"&&window.trackBookingResult)window.trackBookingResult(j);return true}return false}finally{clearTimeout(t)}}catch(e){return false}}
+async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#BOOK(?:\s|$)/m.test(text)){const result=await sendApprovedBookOff(text,k);window.lastBookOffSend=result;return result.ok===true}const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(RELAY_URL+'/req',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Key':k},body:JSON.stringify({text}),signal:c.signal});if(r.status===403){try{localStorage.removeItem('oncall-relay-key')}catch(e){}}const j=await r.json();if(r.ok&&j&&j.ok===true){if(typeof window!=="undefined"&&window.trackBookingResult)window.trackBookingResult(j);return true}return false}finally{clearTimeout(t)}}catch(e){return false}}
 (function(){const s=document.getElementById('splash');const hide=()=>{if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),550)};s.onclick=hide;setTimeout(hide,2200)})();</script>
 <div class="top"><div class="brand"><i></i>Live Crewing</div><span class="chip warn" id="src">No data yet</span></div>
 <main>
@@ -353,7 +353,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;const c
     <div style="display:flex;gap:8px"><input type="date" id="cfd" aria-label="From date" style="flex:1;min-width:0"><input type="time" id="cft" aria-label="From time" style="flex:1;min-width:0"></div>
     <div style="display:flex;gap:8px;margin-top:8px"><input type="date" id="ctd" aria-label="To date" style="flex:1;min-width:0"><input type="time" id="ctt" aria-label="To time" style="flex:1;min-width:0"></div>
     <p class="note" id="cnote" style="margin:10px 0"></p>
-    <button class="btn primary" id="csend">Save and send to Claude</button></div>
+    <button class="btn primary" id="csend">Review booking</button></div>
 
 </section>
 <section class="tab" id="t-station"><button type="button" class="menu-back" data-page="live">‹ Home</button>
@@ -672,23 +672,24 @@ function extras(w,r,audit,sub,specT,totT,now){
       document.body.appendChild(ov);
       $('cfmNo').onclick=()=>ov.remove();
       const y=$('cfmYes');if(y)y.onclick=async()=>{
+        if(y.disabled)return;
+        y.disabled=true;
         const txt=title+' – please book these in FireWatch now:\n'+lines.join('\n')+(book.length?'\n#BOOK '+JSON.stringify(book):'');
         try{localStorage.setItem('oncall-offsel-'+btnId,JSON.stringify({at:Date.now(),lines}))}catch(e){}
-        let copied=false;try{await navigator.clipboard.writeText(txt);copied=true}catch(e){}
         const relayOk=await relaySend(txt);
-        ov.remove();b.textContent=relayOk?'Sent to relay':'Sent – paste it to Claude if it did not open';
-        try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
+        ov.remove();b.textContent=window.lastBookOffSend?.message||(relayOk?'Sent to relay':'Submission not confirmed · Check FireWatch before retrying');
         setTimeout(()=>b.textContent='Save and send to Claude',4000)}};
   };
   const wireSave=(box,btn,title,label)=>{const b=$(btn);if(!b)return;b.textContent=label;
     b.onclick=async()=>{const sel=[...$(box).querySelectorAll('.offc:checked')].map(c=>c.dataset.l);
+      if(b.disabled||!sel.length)return;
+      b.disabled=true;
       const txt=title+':\n'+(sel.join('\n')||'(nothing selected)');
       try{localStorage.setItem('oncall-offsel-'+btn,JSON.stringify({at:Date.now(),sel}))}catch(e){}
       try{await navigator.clipboard.writeText(txt)}catch(e){}
       const relayOk=await relaySend(txt);
       b.textContent=relayOk?'Sent to relay':'Saved and copied – paste it to Claude';
-      try{if(!relayOk&&navigator.share)await navigator.share({text:txt})}catch(e){}
-      setTimeout(()=>b.textContent=label,3000)}};
+      setTimeout(()=>{b.textContent=label;b.disabled=false},3000)}};
   const freeH=x=>x.off?x.tot:(x.partH||0);
   const listTxt=rows=>rows.filter(x=>freeH(x)>0.005).map(x=>DAYN[(x.dn+3)%7]+' '+fm(x.dn)+(x.off?' all day':' '+mergeParts(x.parts).map(p=>p.s+'-'+p.e).join(', '))+' ('+f1(freeH(x))+' h)').join('\n');
   const sp={P1:r.all.P1-T.P1,P3:r.all.P3-T.P3,P4:r.all.P4-T.P4,S:r.all.S+r.all.ABS-specT,T:r.all.T-totT};
@@ -1202,16 +1203,16 @@ const show=m=>{const v=val();g('cnote').textContent=m||(v?(mode==='off'?'Book of
 g('cmode').querySelectorAll('button').forEach(bt=>bt.onclick=()=>{mode=bt.dataset.cm;g('cmode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===bt));g('ctitle').textContent=mode==='off'?'Custom time off':'Custom time on';show()});
 show();
 g('csend').onclick=async()=>{const v=val();if(!v){show();return}const b=g('csend');if(b.disabled)return;b.disabled=true;
- if(!await reviewSheet(mode==='off'?'Confirm booking off':'Confirm booking on',[dl(v.from),dl(v.to),mode==='off'?'On-Call Unavailable':'On-Call Available'],'Confirm and send')){b.disabled=false;return}
+ if(!await reviewSheet(mode==='off'?'Confirm booking off':'Confirm booking on',[dl(v.from),dl(v.to),mode==='off'?'On-Call Unavailable':'On-Call Available'],mode==='off'?'Continue to verification':'Confirm and send')){b.disabled=false;return}
  b.textContent='Sending...';
  const txt='Custom time '+mode+' - please book this in FireWatch now:\n'+dl(v.from)+' to '+dl(v.to)+'\n'+(mode==='off'?'#BOOK ':'#BOOKON ')+JSON.stringify([v]);
- try{await navigator.clipboard.writeText(txt)}catch(e){}
+ if(mode==='on')try{await navigator.clipboard.writeText(txt)}catch(e){}
  const ok=await relaySend(txt);let k='';try{k=localStorage.getItem('oncall-relay-key')||''}catch(e){}
  b.textContent=ok?'Sent to relay':'Not sent';
  if(ok&&mode==='off')window.setTimeout(()=>document.getElementById('t-booking').classList.contains('on')&&document.querySelector('[data-page=results]').click(),300);
- show(ok?(mode==='off'?'Sent to relay. See Booking results for the outcome.':'Sent as a message. Claude has to book this one by hand.'):'Did not reach the relay'+(k?' (check your signal and try again).':' (no relay key saved on this phone).')+' Text copied.');
- try{if(!ok&&navigator.share)await navigator.share({text:txt})}catch(e){}
- setTimeout(()=>{b.textContent='Save and send to Claude';b.disabled=false},5000)};})();
+  show(mode==='off'?(window.lastBookOffSend?.message||'Booking not sent. Check FireWatch before retrying.'):ok?'Sent as a message. Book On is not automated.':'Submission not confirmed. Text copied.');
+ try{if(mode==='on'&&!ok&&navigator.share)await navigator.share({text:txt})}catch(e){}
+ setTimeout(()=>{b.textContent='Review booking';b.disabled=false},5000)};})();
 /* ===== #BOOK machine line for the PC auto-booker: UK local ISO ranges, minutes are from the start of day dn ===== */
 function bookRanges(rs,dn){const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
   return rs.map(x=>({from:iso(dn+Math.floor(x.s/1440))+'T'+hm(x.s),to:iso(dn+Math.floor(x.e/1440))+'T'+hm(x.e)}))}
@@ -1312,13 +1313,14 @@ $('csvgo').onclick=function(){
     queued:'Sent to relay · Waiting for FireWatch',
     claimed:'Picked up by Autobook',
     booking:'Booking in FireWatch',
-    booked:'Booked · Confirmed by Autobook',
+    booked:'Booked off · Confirmed present in FireWatch (new or existing)',
     failed:'Check FireWatch · Autobook could not complete or verify this booking',
     stalled:'Check FireWatch · Autobook stopped reporting progress',
     unavailable:'Awaiting confirmation · Status temporarily unavailable',
-    missing:'Check FireWatch · Booking result unavailable'
+    missing:'Check FireWatch · Booking result unavailable',
+    reconciled:'Owner reconciled a missing relay attempt · Nothing automatically resent'
   };
-  const final=new Set(['booked','failed','missing']);
+  const final=new Set(['booked','failed','reconciled']);
   let results=[];
   try {
     const saved=JSON.parse(localStorage.getItem(storageKey)||'[]');
@@ -1358,7 +1360,7 @@ $('csvgo').onclick=function(){
           const response=await fetch(RELAY_URL+'/status?id='+encodeURIComponent(item.id),{headers:{'X-Relay-Key':key},cache:'no-store',signal:controller.signal});
           if(response.status===404){item.status='missing';return}
           const body=response.ok?await response.json():null;
-          item.status=body&&body.ok&&body.id===item.id&&Object.hasOwn(messages,body.status)?body.status:'unavailable';
+          item.status=body&&body.ok&&body.id===item.id&&Object.hasOwn(messages,body.status)?(body.status==='booked'&&!body.readbackVerified?'missing':body.status):'unavailable';
         }catch{item.status='unavailable'}
         finally{clearTimeout(timeout)}
       }));
@@ -1367,11 +1369,13 @@ $('csvgo').onclick=function(){
   }
   window.trackBookingResult=function(receipt){
     if(!idPattern.test(receipt.id)||typeof receipt.id!=='string')return;
+    if(receipt.replacesId&&receipt.replacesId!==receipt.id)results=results.filter(item=>item.id!==receipt.replacesId);
+    if(receipt.reconciled){const previous=results.find(item=>item.id===receipt.id);if(previous)previous.status='reconciled';save();render();return}
     if(!results.some(item=>item.id===receipt.id)){
-      results=[{id:receipt.id,at:Date.now(),status:'queued'},...results].slice(0,10);
+       results=[{id:receipt.id,at:Date.now(),status:receipt.uncertain?'unavailable':'queued'},...results].slice(0,10);
       save();render();
     }
-    refresh();
+    if(!receipt.deferRefresh)refresh();
   };
   render();
   refresh();
@@ -1379,7 +1383,44 @@ $('csvgo').onclick=function(){
   document.addEventListener('visibilitychange',refresh);
 })();
 </script>
+<script src="bookoff-client.js"></script>
 <script>
+let approvedBookOffClient,approvedBookOffKey;
+async function sendApprovedBookOff(text,key){
+  if(!approvedBookOffClient||approvedBookOffKey!==key){approvedBookOffKey=key;approvedBookOffClient=BookOffSecurity.create({url:RELAY_URL,key,storage:localStorage,verify:verifyBookOff})}
+  const result=await approvedBookOffClient.submit(text);
+  if(result.recoverable&&await reviewSheet('Resolve an unconfirmed attempt',[
+    'Check both FireWatch calendars first. If the coverage exists, do not resend.',
+    'This checks the existing booking ID. It never retries the booking.',
+    'Only if the relay still has no record after three minutes can a fresh system verification clear the local retry guard. You must review and approve again to send.'
+  ],'Check relay / verify reset'))return approvedBookOffClient.reconcile(text);
+  return result;
+}
+function verifyBookOff(getAssertion){
+  const dialog=document.createElement('dialog');
+  dialog.className='review-sheet';
+  dialog.setAttribute('aria-labelledby','off-verify-title');
+  dialog.innerHTML='<form method="dialog"><h2 id="off-verify-title">Verify booking off</h2><p role="status">Use your phone’s system verification to continue.</p><button class="btn primary" type="button">Verify on this device</button><button class="btn" value="cancel">Cancel</button></form>';
+  const button=dialog.querySelector('button[type="button"]'),status=dialog.querySelector('[role="status"]');
+   const available=window.isSecureContext&&window.PublicKeyCredential&&navigator.credentials?.get;
+  if(!available){button.disabled=true;status.textContent='Device verification is unavailable here. Open the HTTPS app in a supported browser.'}
+  document.body.append(dialog);
+  return new Promise(resolve=>{
+    const controller=new AbortController();
+    let credential=null;
+    dialog.addEventListener('close',()=>{controller.abort();const result=dialog.returnValue==='verified'?credential:null;dialog.remove();resolve(result)},{once:true});
+    button.onclick=async()=>{
+      button.disabled=true;
+      status.textContent='Waiting for your device…';
+      try{
+        credential=await getAssertion(controller.signal);
+        if(credential&&dialog.open)dialog.close('verified');
+      }catch{if(dialog.open)status.textContent='Device verification didn’t complete. You can try again or cancel.'}
+      finally{button.disabled=false}
+    };
+    dialog.showModal();
+  });
+}
 function reviewSheet(title,lines,action){
   const dialog=document.createElement('dialog');dialog.className='review-sheet';dialog.setAttribute('aria-label',title);
   const form=document.createElement('form');form.method='dialog';
