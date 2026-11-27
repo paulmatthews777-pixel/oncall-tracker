@@ -262,6 +262,9 @@ body{background:radial-gradient(ellipse at top,#123349 0,transparent 620px),var(
 main>.tab,.tab>.card{min-width:0}
 #activity-history:not([hidden]),#activity-drafts:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
 #activity-history .card,#activity-drafts .card,#abody{min-width:0;overflow-wrap:anywhere}
+#station-data-source{display:block;width:100%;margin-top:6px}
+#planner-event-history:not([hidden]){display:grid;gap:10px;min-width:0}
+#winterton-events[hidden],#planner-event-history[hidden]{display:none}
 .activity-date-label{display:block;margin-top:8px}
 .activity-date-label input{display:block;margin-top:4px;max-width:100%}
 #afrm .af-pair input{max-width:100%}
@@ -405,12 +408,28 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 </section>
 
 <section class="tab" id="t-activity">
-<h1>Events</h1>
+<h1>Station data</h1>
 <button class="btn primary" id="aplus" aria-label="Add activity">+ Add activity</button>
-<div class="pseg activity-switch" aria-label="Event views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
+<div class="pseg activity-switch" aria-label="Station data views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
 <div id="activity-history">
+<label class="card" for="station-data-source">Data source
+<select id="station-data-source">
+<option value="planner">Planner activity</option>
+<option value="firewatch">FireWatch events</option>
+</select>
+</label>
+<div class="card" id="winterton-events" hidden>
+<h2>Winterton FireWatch Events</h2>
+<form id="winterton-events-connect">
+<label>Private Events access key <input name="events-key" type="password" required autocomplete="off"></label>
+<button type="submit" class="btn">Connect</button>
+</form>
+<p class="note" id="winterton-events-status" role="status"></p>
+<div id="winterton-events-list"></div>
+</div>
+<div id="planner-event-history">
 <div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><label class="activity-date-label">Date recorded <input type="date" id="adate"></label><p class="note" id="anote" style="margin:10px 0 0"></p></div>
-<div id="abody"></div></div>
+<div id="abody"></div></div></div>
 <div id="activity-drafts" hidden></div>
 </section>
 <section class="tab" id="t-pi"><button type="button" class="menu-back" data-page="more">‹ More</button>
@@ -459,7 +478,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 <nav aria-label="Main navigation">
   <button class="on" data-t="live" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10H3zM9 20v-6h6v6"/></svg>Home</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
-<button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Events</button>
+<button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Station data</button>
   <button data-t="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</button>
 </nav>
 
@@ -1419,7 +1438,7 @@ $('csvgo').onclick=function(){
   document.addEventListener('visibilitychange',refresh);
 })();
 </script>
-<script src="bookoff-client.js"></script>
+<script src="bookoff-client.js"></script><script src="winterton-events.js"></script>
 <script>
 let approvedBookOffClient,approvedBookOffKey;
 async function sendApprovedBookOff(text,key){

@@ -1,4 +1,4 @@
-﻿// Minimal CDP client over Node's built-in WebSocket (node >= 22)
+// Minimal CDP client over Node's built-in WebSocket (node >= 22)
 const HOST = 'http://127.0.0.1:9222';
 async function listTabs() { const r = await fetch(HOST + '/json'); return r.json(); }
 async function newTab(url) { const r = await fetch(HOST + '/json/new?' + encodeURI(url), {method: 'PUT'}); return r.json(); }
@@ -10,13 +10,13 @@ function connect(wsUrl) {
     ws.onmessage = ev => { const m = JSON.parse(ev.data); if (m.id && pending.has(m.id)) { const p = pending.get(m.id); pending.delete(m.id); m.error ? p.rej(new Error(m.error.message)) : p.res(m.result); } };
     ws.onerror = e => reject(new Error('ws error'));
     ws.onopen = () => resolve({
-      send: (method, params) => new Promise((res, rej) => { const id = ++n; pending.set(id, {res, rej}); ws.send(JSON.stringify({id, method, params: params || {}})); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('timeout ' + method)); } }, 20000); }),
+      send: (method, params, timeout = 20000) => new Promise((res, rej) => { const id = ++n; pending.set(id, {res, rej}); ws.send(JSON.stringify({id, method, params: params || {}})); setTimeout(() => { if (pending.has(id)) { pending.delete(id); rej(new Error('timeout ' + method)); } }, timeout); }),
       close: () => ws.close()
     });
   });
 }
-async function evalJs(c, expr) {
-  const r = await c.send('Runtime.evaluate', {expression: expr, awaitPromise: true, returnByValue: true});
+async function evalJs(c, expr, timeout) {
+  const r = await c.send('Runtime.evaluate', {expression: expr, awaitPromise: true, returnByValue: true}, timeout);
   if (r.exceptionDetails) throw new Error('js: ' + (r.exceptionDetails.exception && r.exceptionDetails.exception.description || r.exceptionDetails.text));
   return r.result.value;
 }
