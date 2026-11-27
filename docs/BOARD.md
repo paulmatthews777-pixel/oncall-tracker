@@ -8,7 +8,7 @@ Read this before starting any job. Claim a job here first (owner, files, start t
 |---|---|---|---|---|
 | Events sync (all calendar types into app) | Codex | in progress | C:\Users\paulm\relay\winterton-events-worker.js, wrangler.events.toml, Events-tab sync code | 2026-11-27 06:42 |
 | Pay page + Home tile | Claude | done (v50) | index.html (#t-pay, Home tiles), autobook/pay-sync.cjs, autobook/autobook.cjs (pay timer), C:\Users\paulm\relay\worker.js (/data routes) | 2026-11-27 07:00 |
-| Holiday page + Home tile | Claude | queued | index.html (#t-holiday), autobook/holiday-sync.cjs | |
+| Holiday page + Home tile | Claude | in progress | index.html (#t-holiday, holiday tile), autobook/holiday-sync.cjs, autobook/autobook.cjs (holiday timer) | 2026-11-27 07:26 |
 | Personal info page + Home tile | Claude | queued | index.html (#t-personal), autobook/personal-sync.cjs | |
 | Notifications | Claude | queued | sw.js, relay push | |
 | Daily check | Claude | queued | scheduled task, scripts/daily-check | |
