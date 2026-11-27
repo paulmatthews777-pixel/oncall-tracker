@@ -396,16 +396,16 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 </section>
 
 <section class="tab" id="t-activity">
-<h1>Activity</h1>
+<h1>Events</h1>
 <button class="btn primary" id="aplus" aria-label="Add activity">+ Add activity</button>
-<div class="pseg activity-switch" aria-label="Activity views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
+<div class="pseg activity-switch" aria-label="Event views"><button type="button" class="on" id="activity-history-button" aria-pressed="true">History</button><button type="button" id="activity-drafts-button" aria-pressed="false">Drafts</button></div>
 <div id="activity-history">
 <div class="card"><div class="pseg" id="amode"><button data-am="week" class="on">This week</button><button data-am="month">This month</button></div><div style="display:flex;gap:8px;margin-top:10px"><select id="akind" aria-label="Type" style="flex:1;min-width:0"></select><select id="awho" aria-label="Crew member" style="flex:1;min-width:0"></select></div><label class="activity-date-label">Date recorded <input type="date" id="adate"></label><p class="note" id="anote" style="margin:10px 0 0"></p></div>
 <div id="abody"></div></div>
 <div id="activity-drafts" hidden></div>
 </section>
 <section class="tab" id="t-pi"><button type="button" class="menu-back" data-page="more">‹ More</button>
-<div class="card"><div class="pseg" id="pimode"><button data-pi="all" class="on">All</button><button data-pi="on">Booked on</button><button data-pi="off">Booked off</button><button data-pi="event">Events</button></div>
+<div class="card"><div class="pseg" id="pimode"><button data-pi="all" class="on">All</button><button data-pi="on">Booked on</button><button data-pi="off">Booked off</button></div>
 <div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="pisearch" placeholder="Search a name" aria-label="Search a name" style="flex:1;min-width:0"><input type="date" id="pidate" aria-label="Date" style="width:140px"></div>
 <label style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;cursor:pointer"><input type="checkbox" id="picrit" checked style="accent-color:var(--accent);width:20px;height:20px">Critical only (run-affecting)</label>
 <p class="note" id="pinote" style="margin:10px 0 0"></p></div>
@@ -450,7 +450,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
 <nav aria-label="Main navigation">
   <button class="on" data-t="live" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10H3zM9 20v-6h6v6"/></svg>Home</button>
   <button data-t="planner"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M9 9.5V20M3.5 14.7h17"/></svg>Planner</button>
-<button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Activity</button>
+<button data-t="activity"><svg viewBox="0 0 24 24"><path d="M3.5 12h4l2.5-6.5 4 13 2.5-6.5h4"/></svg>Events</button>
   <button data-t="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</button>
 </nav>
 
@@ -1147,11 +1147,11 @@ function actFilter(all,per,f){const dk=ms=>new Date(ms).toISOString().slice(0,10
 function renderActivity(){const el=$('abody');if(!el)return;[...document.querySelectorAll('#amode button')].forEach(b=>b.classList.toggle('on',b.dataset.am===ac.mode));
 if(!rng){el.innerHTML='<p class="note" style="padding:8px">No planner range data yet</p>';$('anote').textContent='';return}
 const per=actPeriod(londonNow().date,ac.mode),all=parseActivity(rng),inP=all.filter(e=>e.updatedAt>=per.from&&e.updatedAt<per.to);
-const kinds=[...new Set(inP.map(e=>e.type))].sort(),whos=[...new Set(inP.map(e=>e.who))].sort();if(ac.k!=='all'&&ac.k!=='__inc'&&!kinds.includes(ac.k))ac.k='all';if(ac.w!=='all'&&!whos.includes(ac.w))ac.w='all';
+const kinds=[...new Set(inP.map(e=>e.type))].sort(),whos=[...new Set(inP.map(e=>e.who))].sort();if(ac.k!=='all'&&ac.k!=='__inc'&&!kinds.includes(ac.k)&&!Object.values(ACT_TYPES).flat().includes(ac.k))ac.k='all';if(ac.w!=='all'&&!whos.includes(ac.w))ac.w='all';
 const es=actFilter(all,per,ac),ag=actAgg(es),age=Math.round((Date.now()-rng.t)/60000),f=ms=>{const d=new Date(ms),p=n=>String(n).padStart(2,'0');return p(d.getUTCDate())+'/'+p(d.getUTCMonth()+1)+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())};
 acTypes=ag.types;if(ac.sel&&!ag.types.some(t=>t.type===ac.sel))ac.sel='';
 const opt=(o,cur)=>'<option value="'+pesc(o[0])+'"'+(cur===o[0]?' selected':'')+'>'+pesc(o[1])+'</option>';
-const ks=$('akind'),ws=$('awho');if(ks)ks.innerHTML=[['all','All types'],['__inc','Incident / turnout']].concat(kinds.map(k=>[k,k])).map(o=>opt(o,ac.k)).join('');if(ws)ws.innerHTML=[['all','All crew']].concat(whos.map(w=>[w,w])).map(o=>opt(o,ac.w)).join('');
+const ks=$('akind'),ws=$('awho');if(ks){const listed=new Set(Object.values(ACT_TYPES).flat()),other=kinds.filter(k=>!listed.has(k));ks.innerHTML=[['all','All event types'],['__inc','Incident / turnout']].map(o=>opt(o,ac.k)).join('')+Object.entries(ACT_TYPES).map(([g,ts])=>'<optgroup label="'+pesc(g)+'">'+ts.map(t=>opt([t,t],ac.k)).join('')+'</optgroup>').join('')+(other.length?'<optgroup label="Other">'+other.map(t=>opt([t,t],ac.k)).join('')+'</optgroup>':'')}if(ws)ws.innerHTML=[['all','All crew']].concat(whos.map(w=>[w,w])).map(o=>opt(o,ac.w)).join('');
 $('anote').textContent=(ac.mode==='week'?'Recorded this week':'Recorded this month')+' · '+ag.total+' entries · updated '+(age<1?'just now':age+' min ago');
 if(!ag.total){el.innerHTML='<div class="card"><p class="note" style="margin:0">No events match</p></div>';return}
 const grp=actGroups(es),verb=g=>actResp(g.colour)||(/turn/i.test(g.type)?'Turned out':(/attend|drill/i.test(g.type)?'Attended':'Recorded for'));
@@ -1183,7 +1183,7 @@ function renderPI(){const el=$('pibody');if(!el)return;
 [...document.querySelectorAll('#pimode button')].forEach(b=>b.classList.toggle('on',b.dataset.pi===pif.k));
 if(!chg||!Array.isArray(chg.items)){el.innerHTML='<div class="card"><p class="note" style="margin:0">No changes logged yet. The FireWatch feed script logs them once it has seen two reads.</p></div>';$('pinote').textContent='';return}
 const lf=(ms,o)=>new Intl.DateTimeFormat('en-GB',Object.assign({timeZone:'Europe/London'},o)).format(new Date(ms)),dk=ms=>lf(ms,{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-'),tm=ms=>lf(ms,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
-const all=chg.items,today=dk(Date.now()),wk=Date.now()-7*864e5,q=pif.q.trim().toLowerCase();
+const all=chg.items.filter(e=>e.kind==='on'||e.kind==='off'),today=dk(Date.now()),wk=Date.now()-7*864e5,q=pif.q.trim().toLowerCase();
 const es0=all.filter(e=>(pif.k==='all'||(pif.k==='event'?/^event/.test(e.kind):e.kind===pif.k))&&(!q||String(e.who||'').toLowerCase().includes(q))&&(!pif.d||dk(e.t)===pif.d)),es=pif.crit?es0.filter(piCritical):es0,hid=es0.length-es.length;
 const age=Math.round((Date.now()-chg.t)/60000);
 $('pinote').textContent=all.filter(e=>dk(e.t)===today).length+' today \u00b7 '+all.filter(e=>e.t>=wk).length+' this week \u00b7 updated '+(age<1?'just now':age+' min ago')+(hid?' \u00b7 '+hid+' minor hidden':'');
@@ -1211,7 +1211,7 @@ function renderPlanner(){
   $('pleg').innerHTML=[['46D93C','On-call'],['FD0022','Sickness'],['F1FC31','Annual leave'],['E5B9B7','Leave'],['94CDDB','Detached'],['28FFFE','Turn out'],['FD50E9','Attended'],['F9BF92','Drill'],['21B4FA','Training'],['FD42D1','On-call EFR'],['FFBF28','Name = on-call now']].map(x=>'<span><i style="background:#'+x[0]+'"></i>'+x[1]+'</span>').join('')}
 document.addEventListener('click',e=>{const t=e.target.closest('#t-planner [data-m],#t-planner [data-nav],#t-planner [data-d],#t-planner [data-p]');if(!t)return;
   if(t.dataset.m){pv.mode=t.dataset.m;renderPlanner();return}
-  if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=plannerWeekStart(n===0?today:addD(pv.from,n));renderPlanner();return}
+  if(t.dataset.nav!==undefined){const n=+t.dataset.nav,today=londonNow().date;if(pv.mode==='day')pv.date=n===0?today:addD(pv.date,n);else pv.from=plannerWeekStart(n===0?today:addD(pv.from,n));renderPlanner();if(n===0&&typeof scrollNow==="function")scrollNow();return}
   if(t.dataset.d){pv.mode='day';pv.date=t.dataset.d;renderPlanner();window.scrollTo(0,0);return}
   if(t.dataset.p!==undefined){$('ppop').textContent=pops[+t.dataset.p]||''}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#pctl'))return;if(t.id==='pdate')pv.date=t.value||pv.date;if(t.id==='pfrom')pv.from=pv.mode==='week'?plannerWeekStart(t.value||pv.from):(t.value||pv.from);if(t.id==='pto')pv.to=t.value||pv.to;renderPlanner()});
