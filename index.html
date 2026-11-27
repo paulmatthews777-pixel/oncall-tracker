@@ -307,7 +307,7 @@ main>.tab,.tab>.card{min-width:0}
 </head>
 <body>
 <div id="splash"><div class="splash-title">Live Crewing</div></div>
-<script>const APP_VERSION='v57';
+<script>const APP_VERSION='v58';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -324,7 +324,7 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="card"><h2>Weekly contract breakdown</h2><div class="wk"><button class="btn sq" id="bands-prev" aria-label="Previous week">‹</button><label>Choose a date<input type="date" id="bands-date"></label><button class="btn sq" id="bands-next" aria-label="Next week">›</button></div><p class="note">Green: done · Red: booked ahead</p><div id="wbands"></div><div class="stats" id="wstats"></div></div>
 
   
-  <details class="card week-detail"><summary>Book-off options for coming weeks</summary><div id="oweeks" class="week-detail-body"></div></details>
+  <details class="card week-detail"><summary>Book-off options for coming weeks</summary><div class="wk"><button type="button" class="btn sq" id="off-prev" aria-label="Previous coming week">‹</button><label>Choose a date<input type="date" id="off-date"></label><button type="button" class="btn sq" id="off-next" aria-label="Next coming week">›</button></div><div id="oweeks" class="week-detail-body"></div></details>
   <button class="btn" id="tw">Back to this week</button>
 </section>
 
@@ -549,7 +549,7 @@ function calcRange(entries,from,to,now){
 <script>
 const $=id=>document.getElementById(id);
 const KEY='oncall-tracker-v2';
-let entries=[], source='none', importedAt=null, weekStart=0;
+let entries=[], source='none', importedAt=null, weekStart=0, offViewWeek=null;
 const pad=n=>String(n).padStart(2,'0');
 const iso=dn=>{const d=new Date(dn*86400000);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
 const mondayNum=dn=>dn-((new Date(dn*86400000).getUTCDay()+6)%7);
@@ -636,6 +636,9 @@ function fullTable(r,T){
 function kv(k,v){return '<div class="kv"><span>'+k+'</span><b>'+v+'</b></div>'}
 const DAYN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const TYN={avail:'Available',turnout:'Turn out',drill:'Drill',rota:'Rota',leave:'Annual leave',absence:'Absence',detach:'Detachment',unavail:'Unavailable',course:'Course'};
+function selectUpcomingWeek(weeks,selected){
+  return weeks[selected] || '';
+}
 function extras(w,r,audit,sub,specT,totT,now){
   try{renderHoliday();renderWtd();renderPay()}catch(e){}
   const today=Math.floor(now/86400000);
@@ -766,7 +769,7 @@ function extras(w,r,audit,sub,specT,totT,now){
   $('afree').innerHTML='<div id="asv"></div>';
   saver('asv','copyoff','Book me off (8 week audit)',{...sp0a},today+1,dayNum(audit));
   // week on week: each week against its own weekly targets
-  let wh='',wTot=0,curH=0,curW=null,curHtml='<p class="note">Nothing booked this week.</p>';
+  let wh={},wTot=0,curH=0,curW=null,curHtml='<p class="note">Nothing booked this week.</p>';
   for(let m=mondayNum(today);m<dayNum(audit)+7&&m<mondayNum(today)+7*WEEKS;m+=7){
     const x=calcRange(entries,m,m+7,now); if(x.all.T<0.005)continue;
     const wsp={P1:x.all.P1-WEEKLY.P1,P3:x.all.P3-WEEKLY.P3,P4:x.all.P4-WEEKLY.P4,S:x.all.S+x.all.ABS-specT/WEEKS,T:x.all.T-CONTRACT};
@@ -776,7 +779,7 @@ function extras(w,r,audit,sub,specT,totT,now){
     const body=kv('Booked this week',f1(x.all.T)+' / '+CONTRACT)+kv('Over the weekly target',f1(Math.max(0,x.all.T-CONTRACT))+' h')+kv('You can take off',f1(h)+' h')+(rows.map(rowH).join('')||'<p class="note">No future days left this week.</p>');
     if(m===mondayNum(today)){curH=h;curHtml=body+'<p class="rule" style="margin-top:10px">Keeps this week at 85 h with P1 35, P3 13, P4 12 and 60 specified.</p>';continue}
     wTot+=h;
-    wh+='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
+    wh[m]='<details class="in" style="margin-top:0"><summary><span>'+fm(m)+' – '+fm(m+6)+'</span><span style="margin-left:auto;margin-right:10px" class="diff '+(h>0?'ok':'no')+'">'+(h>0?'Free '+f1(h)+' h':'Keep all')+'</span></summary><div>'+body+'</div></details>';
   }
   const firstWeek=mondayNum(today);
   const weekPicker=$('book-week');
@@ -807,7 +810,16 @@ function extras(w,r,audit,sub,specT,totT,now){
     $('week-safety').textContent='Choose this week or a coming week to plan Book Off';
     $('wcur').innerHTML='';
   }
-  $('oweeks').innerHTML=wh||'<p class="note">Nothing booked ahead.</p>';
+  if(offViewWeek===null)offViewWeek=mondayNum(today)+7;
+  $('off-date').value=iso(offViewWeek);
+  let selectedWeek=selectUpcomingWeek(wh,offViewWeek);
+  if(!selectedWeek && offViewWeek>=mondayNum(today)){
+    const x=calcRange(entries,offViewWeek,offViewWeek+7,now);
+    if(x.all.T>=0.005){
+      selectedWeek='<div class="card"><b>'+fm(offViewWeek)+' – '+fm(offViewWeek+6)+'</b>'+kv('Recorded this week',f1(x.all.T)+' h')+'<p class="note">A book-off estimate is not available for this week.</p></div>';
+    }
+  }
+  $('oweeks').innerHTML=selectedWeek||'<p class="note">No coming-week information available for '+fm(offViewWeek)+' – '+fm(offViewWeek+6)+'.</p>';
   $('ohero').style.display='block';$('ohero').innerHTML='<div style="display:flex;gap:16px"><div style="flex:1"><p style="margin:0">This week (to hit 85)</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(curH)+' h</div></div><div style="flex:1"><p style="margin:0">8 week audit</p><div style="font:700 40px var(--display);color:var(--accent);margin:6px 0">'+f1(afh)+' h</div></div></div><p style="margin:0">Hours you can take off and still meet each one. Coming weeks: '+f1(wTot)+' h.</p>';
   // ---- audit: week by week
   const a0=dayNum(audit)-WINDOW_DAYS, a1=dayNum(audit); let wk='';
@@ -833,6 +845,9 @@ $('tw').onclick=()=>{weekStart=mondayNum(Math.floor(Date.now()/86400000));render
 $('bands-date').onchange=()=>{if($('bands-date').value){weekStart=mondayNum(dayNum($('bands-date').value));render()}};
 $('bands-prev').onclick=()=>{weekStart-=7;render()};
 $('bands-next').onclick=()=>{weekStart+=7;render()};
+$('off-prev').onclick=()=>{offViewWeek-=7;render()};
+$('off-next').onclick=()=>{offViewWeek+=7;render()};
+$('off-date').onchange=()=>{if($('off-date').value){offViewWeek=mondayNum(dayNum($('off-date').value));render()}};
 $('auditDate').onchange=render; $('sub').onchange=render;
 $('clip').onclick=async()=>{try{const t=await navigator.clipboard.readText();const p=parsePaste(t);if(p.length){setEntries(p);show('week')}else{$('paste').value=t;$('clip').textContent='No hours found. Copy from FireWatch first'}}catch(e){$('clip').textContent='Clipboard blocked. Use Paste by hand'}};
 $('import').onclick=()=>{const p=parsePaste($('paste').value);if(p.length){setEntries(p);show('week')}};
