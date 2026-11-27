@@ -307,7 +307,7 @@ main>.tab,.tab>.card{min-width:0}
 </head>
 <body>
 <div id="splash"><div class="splash-title">Live Crewing</div></div>
-<script>const APP_VERSION='v56';
+<script>const APP_VERSION='v57';
 const RELAY_URL='https://live-crewing-relay.paulm-crewing.workers.dev';
 function captureRelayKey(){try{const m=/[#&]rk=([A-Za-z0-9]{16,64})/.exec(location.hash);if(m){localStorage.setItem('oncall-relay-key',m[1]);const h=location.hash.replace(m[0],'').replace(/^[#&]+/,'');history.replaceState(null,'',location.pathname+location.search+(h?'#'+h:''))}}catch(e){}}captureRelayKey();
 function relayKey(){try{let k=localStorage.getItem('oncall-relay-key')||'';if(!k&&typeof prompt==='function'){k=(prompt('Relay key (asked once, kept on this phone only)')||'').trim();if(k)localStorage.setItem('oncall-relay-key',k)}return k}catch(e){return ''}}
@@ -321,9 +321,8 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
   <div class="wk"><button class="btn sq" id="pw" aria-label="Previous week">‹</button><div class="t" id="wtitle"></div><button class="btn sq" id="nw" aria-label="Next week">›</button></div>
   <div class="card"><h2>Contract position</h2><div class="hero" id="whero"></div><div class="legend"><span><i style="background:var(--accent)"></i>Done</span><span><i style="background:rgba(255,42,95,.45)"></i>Booked ahead</span></div></div>
   <div class="card"><h2>Book off and stay in contract</h2><label>Choose booking week<select id="book-week"></select></label><div class="week-safety" id="week-safety"></div><div id="wcur"></div></div>
-  <div class="card"><h2>Contract bands</h2><div id="wbands"></div><div class="stats" id="wstats"></div></div>
-  <details class="card week-detail"><summary>Day by day</summary><div id="wdays" class="week-detail-body"></div></details>
-  <details class="card week-detail"><summary>Full hours breakdown</summary><div id="wfull" class="week-detail-body"></div></details>
+  <div class="card"><h2>Weekly contract breakdown</h2><div class="wk"><button class="btn sq" id="bands-prev" aria-label="Previous week">‹</button><label>Choose a date<input type="date" id="bands-date"></label><button class="btn sq" id="bands-next" aria-label="Next week">›</button></div><p class="note">Green: done · Red: booked ahead</p><div id="wbands"></div><div class="stats" id="wstats"></div></div>
+
   
   <details class="card week-detail"><summary>Book-off options for coming weeks</summary><div id="oweeks" class="week-detail-body"></div></details>
   <button class="btn" id="tw">Back to this week</button>
@@ -413,10 +412,6 @@ async function relaySend(text){try{const k=relayKey();if(!k)return false;if(/^#B
     <button type="button" class="dashboard-tile" data-page="notifications"><span class="tile-icon" aria-hidden="true">&#128276;</span><span>Notifications</span></button>
     <button type="button" class="dashboard-tile" data-page="daily"><span class="tile-icon" aria-hidden="true">&#129658;</span><span>Daily check<br><small>App, feeds and relay</small></span></button>
     <button type="button" class="dashboard-tile" data-page="results"><span class="tile-icon" aria-hidden="true">&#10003;</span><span>Booking results</span></button>
-  </div>
-  <div class="personal-dashboard">
-  <div class="card" id="hcard"></div>
-  <div class="card" id="wtdcard"></div>
   </div>
 </section>
 <section class="tab" id="t-personal">
@@ -584,6 +579,14 @@ function band(name,sub,done,all,target){
   return '<div class="band"><div class="bhead"><div class="bname">'+name+'<small>'+sub+'</small></div><div class="bnum">'+f1(all)+' <span style="color:var(--mute);font-weight:400">/ '+f1(target)+' h</span><small><span class="diff '+(met?'ok':'no')+'">'+(diff>=0?'+':'')+f1(diff)+'</span></small></div></div>'
    +'<div class="track '+(met?'met':'')+'"><div class="seg-done" style="width:'+pd+'%"></div><div class="seg-book" style="width:'+pa+'%"></div></div></div>';
 }
+function weeklyBand(name,sub,done,all,target){
+  const doneWidth=Math.max(0,Math.min(100,done/target*100));
+  const aheadWidth=Math.max(0,Math.min(100-doneWidth,(all-done)/target*100));
+  const diff=all-target;
+  return '<div class="band"><div class="bhead"><div class="bname">'+name+'<small>'+sub+'</small></div><div class="bnum">'+f1(all)+' / '+f1(target)+' h</div></div>'+
+    '<div class="track"><div style="width:'+doneWidth+'%;background:#67e6a0;height:100%"></div><div style="width:'+aheadWidth+'%;background:#ff526d;height:100%"></div></div>'+
+    '<div class="fcells">'+cell('Target',f2(target))+cell('Done',f2(done))+cell('Ahead',f2(Math.max(0,all-done)))+cell('Total',f2(all))+cell('Over',(diff>=0?'+':'')+f2(diff),diff>=-0.005?'ok':'no')+'</div></div>';
+}
 function stat(v,l){return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'}
 
 function render(){
@@ -592,7 +595,8 @@ function render(){
   const w=calcRange(entries,weekStart,weekStart+7,now), thisMon=mondayNum(Math.floor(now/86400000));
   $('wtitle').innerHTML=fm(weekStart)+' – '+fm(weekStart+6)+'<small>'+(weekStart===thisMon?'This week':(weekStart<thisMon?'Past week':'Coming week'))+'</small>';
   $('whero').innerHTML=hero(w,85,60,'Week of '+fm(weekStart));
-  $('wbands').innerHTML=band('P1 weekdays','Mon–Fri daytime',w.done.P1,w.all.P1,WEEKLY.P1)+band('P2','25 h weekly allocation',w.done.U,w.all.U,CONTRACT-(WEEKLY.P1+WEEKLY.P3+WEEKLY.P4))+band('P3 weekend nights','Fri and Sat nights',w.done.P3,w.all.P3,WEEKLY.P3)+band('P4 weekend days','Sat and Sun daytime',w.done.P4,w.all.P4,WEEKLY.P4);
+  $('bands-date').value=iso(weekStart);
+  $('wbands').innerHTML=weeklyBand('P1 weekdays','Mon–Fri daytime',w.done.P1,w.all.P1,WEEKLY.P1)+weeklyBand('P2','25 h weekly allocation',w.done.U,w.all.U,25)+weeklyBand('P3 weekend nights','Fri and Sat nights',w.done.P3,w.all.P3,WEEKLY.P3)+weeklyBand('P4 weekend days','Sat and Sun daytime',w.done.P4,w.all.P4,WEEKLY.P4)+weeklyBand('Specified','P1 + P3 + P4',w.done.S,w.all.S,60)+weeklyBand('Total','Weekly contract',w.done.T,w.all.T,85);
   $('wstats').innerHTML=stat(f1(w.all.S+w.all.ABS)+' <small style="color:var(--mute);font-weight:400">/ 60</small>','Specified (with absence)')+stat(f1(w.all.U),'P2 hours of 25')+stat(f1(w.all.ABS),'Absence credit');
   // Audit
   const r=calcRange(entries,a-WINDOW_DAYS,a,now), specT=SPEC_BY_SUB[sub]*WEEKS, totT=CONTRACT*WEEKS;
@@ -634,21 +638,7 @@ const DAYN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const TYN={avail:'Available',turnout:'Turn out',drill:'Drill',rota:'Rota',leave:'Annual leave',absence:'Absence',detach:'Detachment',unavail:'Unavailable',course:'Course'};
 function extras(w,r,audit,sub,specT,totT,now){
   try{renderHoliday();renderWtd();renderPay()}catch(e){}
-  // ---- week: day by day
   const today=Math.floor(now/86400000);
-  let dh='';
-  for(let i=0;i<7;i++){
-    const dn=weekStart+i, ds=iso(dn), es=entries.filter(e=>e.date===ds).sort((a,b)=>a.start.localeCompare(b.start));
-    const sum={P1:0,P3:0,P4:0,U:0}; let abs=0;
-    es.forEach(e=>{const h=entryHours(e); if(e.type==='absence')abs+=h; else if(COUNTS.includes(e.type)&&sum[e.band]!==undefined)sum[e.band]+=h;});
-    const tot=sum.P1+sum.P3+sum.P4+sum.U, chips=['P1','P3','P4','U'].filter(k=>sum[k]>0.005).map(k=>k+' '+f1(sum[k])).join(' · ');
-    const rows=es.map(e=>{const h=entryHours(e),s0=new Date(e.date+'T'+e.start).getTime(),e0=s0+h*36e5,x=NEVER.includes(e.type);
-      const st=x?'Not counted':(now>=e0?'Done':(now>=s0?'Now':'Ahead')), cl=st==='Done'?' done':(st==='Now'?' now':'');
-      return '<div class="shift'+(x?' x':'')+'"><span class="tm">'+e.start+'–'+e.end+'</span><span class="ty">'+(TYN[e.type]||e.type)+' · '+(e.type==='absence'?'credit '+f1(h*CONTRACT/168):e.band)+'</span><span class="hb">'+f1(h)+'</span><span class="st'+cl+'">'+st+'</span></div>'}).join('');
-    dh+='<details class="day'+(dn===today?' today':'')+'"><summary><span class="dl">'+DAYN[i]+' '+fm(dn)+'<small>'+(es.length?es.length+' block'+(es.length>1?'s':''):'Nothing booked')+'</small></span><span class="dr">'+f1(tot)+' h<small>'+(chips||(abs>0?'absence':'–'))+'</small></span></summary><div style="padding-bottom:12px">'+(rows||'<p class="note">No on-call booked this day.</p>')+'</div></details>';
-  }
-  $('wdays').innerHTML=dh;
-  $('wfull').innerHTML=fullTable(w,{P1:35,P3:13,P4:12,S:60,U:25,T:85});
   // ---- audit: left to do
   const aEnd=dayNum(audit)*86400000, left=Math.max(0,(aEnd-now)/864e5), inside=now>=(dayNum(audit)-WINDOW_DAYS)*86400000;
   const T={P1:WEEKLY.P1*WEEKS,P3:WEEKLY.P3*WEEKS,P4:WEEKLY.P4*WEEKS,S:specT,U:totT-specT,T:totT};
@@ -840,6 +830,9 @@ $('book-week').onchange=()=>{weekStart=Number($('book-week').value);render()};
 $('pw').onclick=()=>{weekStart-=7;render()};
 $('nw').onclick=()=>{weekStart+=7;render()};
 $('tw').onclick=()=>{weekStart=mondayNum(Math.floor(Date.now()/86400000));render()};
+$('bands-date').onchange=()=>{if($('bands-date').value){weekStart=mondayNum(dayNum($('bands-date').value));render()}};
+$('bands-prev').onclick=()=>{weekStart-=7;render()};
+$('bands-next').onclick=()=>{weekStart+=7;render()};
 $('auditDate').onchange=render; $('sub').onchange=render;
 $('clip').onclick=async()=>{try{const t=await navigator.clipboard.readText();const p=parsePaste(t);if(p.length){setEntries(p);show('week')}else{$('paste').value=t;$('clip').textContent='No hours found. Copy from FireWatch first'}}catch(e){$('clip').textContent='Clipboard blocked. Use Paste by hand'}};
 $('import').onclick=()=>{const p=parsePaste($('paste').value);if(p.length){setEntries(p);show('week')}};

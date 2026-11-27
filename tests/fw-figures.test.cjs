@@ -28,7 +28,7 @@ const r=F.payCalc([{type:'drill',date:'2026-11-03',h:8.5},{type:'avail',date:'20
 assert.strictEqual(r.lines[1].h,8.5);assert.strictEqual(r.lines[1].pay,122.35);assert.strictEqual(r.lines[0].h,1.25);
 assert.strictEqual(r.pay,Math.round(r.lines.reduce((q,l)=>q+l.pay,0)*100)/100,'total equals the sum of the lines');
 assert.strictEqual(r.fw,Math.round((8.5*14.40+1.25*14.40)*100)/100);
-// the cards are on the Week tab and drawn on start-up
-assert(/id="hcard"/.test(src)&&/id="wtdcard"/.test(src)&&/id="t-pay"/.test(src)&&/data-page="pay"/.test(src));
+// The duplicate dashboard cards are removed; the separate pay page remains available
+assert(!/id="hcard"/.test(src)&&!/id="wtdcard"/.test(src)&&/id="t-pay"/.test(src)&&/data-page="pay"/.test(src));
 assert(/renderHoliday\(\);renderWtd\(\);renderPay\(\)/.test(src));
 console.log('fw-figures PASS');
